@@ -1,0 +1,122 @@
+[
+  {
+    "id": 1,
+    "title": "AI-Powered Chatbot Development",
+    "description": "A project focused on building a customer support chatbot using machine learning and natural language processing.",
+    "supervisor": "Dr. Emily Carter",
+    "students": ["Alice Johnson", "Bob Smith"],
+    "part": "A",
+    "status": "Completed",
+    "gradeStatus": "Submitted",
+    "feedbackStatus": "Submitted",
+    "deadline": "2024-07-15"
+  },
+  {
+    "id": 2,
+    "title": "E-Commerce Platform for Local Businesses",
+    "description": "Developing a scalable e-commerce platform to support small local businesses with inventory management and online sales.",
+    "supervisor": "Prof. John Smith",
+    "students": ["Charlie Brown", "Dana White"],
+    "part": "B",
+    "status": "Pending",
+    "gradeStatus": "Not Submitted",
+    "feedbackStatus": "Not Submitted",
+    "deadline": "2024-08-01"
+  },
+  {
+    "id": 3,
+    "title": "Blockchain-Based Voting System",
+    "description": "Creating a secure and transparent voting system using blockchain technology to ensure election integrity.",
+    "supervisor": "Dr. Sarah Lee",
+    "students": ["Eve Black", "Frank Green"],
+    "part": "A",
+    "status": "Overdue",
+    "gradeStatus": "Submitted",
+    "feedbackStatus": "Not Submitted",
+    "deadline": "2024-06-20"
+  },
+  {
+    "id": 4,
+    "title": "Mobile App for Mental Health Monitoring",
+    "description": "A mobile application to help users track their mental health and receive insights based on their activity and mood.",
+    "supervisor": "Prof. Michael Johnson",
+    "students": ["Grace Blue", "Henry Orange"],
+    "part": "B",
+    "status": "Completed",
+    "gradeStatus": "Submitted",
+    "feedbackStatus": "Submitted",
+    "deadline": "2024-05-30"
+  },
+  {
+    "id": 5,
+    "title": "IoT-Enabled Smart Home System",
+    "description": "An IoT-based solution to control and monitor home appliances remotely, focusing on energy efficiency and security.",
+    "supervisor": "Dr. Linda Wong",
+    "students": ["Ivy Yellow", "Jack Purple"],
+    "part": "A",
+    "status": "Pending",
+    "gradeStatus": "Not Submitted",
+    "feedbackStatus": "Submitted",
+    "deadline": "2024-07-10"
+  },
+  {
+    "id": 6,
+    "title": "Real-Time Traffic Analysis Using Computer Vision",
+    "description": "This project uses computer vision to analyze traffic flow in real-time, aiming to optimize traffic management.",
+    "supervisor": "Dr. Kevin Brown",
+    "students": ["Laura Red", "Mike Cyan"],
+    "part": "B",
+    "status": "Pending",
+    "gradeStatus": "Not Submitted",
+    "feedbackStatus": "Not Submitted",
+    "deadline": "2024-08-05"
+  },
+  {
+    "id": 7,
+    "title": "Personalized Learning Platform Using AI",
+    "description": "Developing a personalized learning platform that adapts to students' learning styles and pace using AI algorithms.",
+    "supervisor": "Prof. Rachel Davis",
+    "students": ["Nancy Gray", "Oscar White"],
+    "part": "A",
+    "status": "Overdue",
+    "gradeStatus": "Submitted",
+    "feedbackStatus": "Not Submitted",
+    "deadline": "2024-06-01"
+  },
+  {
+    "id": 8,
+    "title": "Cybersecurity Threat Detection System",
+    "description": "Building a system that identifies and mitigates potential cybersecurity threats in real-time.",
+    "supervisor": "Dr. James Wilson",
+    "students": ["Pat Green", "Quinn Pink"],
+    "part": "B",
+    "status": "Completed",
+    "gradeStatus": "Submitted",
+    "feedbackStatus": "Submitted",
+    "deadline": "2024-05-20"
+  },
+  {
+    "id": 9,
+    "title": "Autonomous Drone Navigation System",
+    "description": "A project focused on building an autonomous drone that can navigate complex environments using sensors and AI.",
+    "supervisor": "Dr. Anna Peterson",
+    "students": ["Ryan Indigo", "Sophia Lime"],
+    "part": "A",
+    "status": "Pending",
+    "gradeStatus": "Not Submitted",
+    "feedbackStatus": "Not Submitted",
+    "deadline": "2024-07-25"
+  },
+  {
+    "id": 10,
+    "title": "Social Media Sentiment Analysis Tool",
+    "description": "Analyzing public sentiment on social media platforms to provide insights into brand perception and user feedback.",
+    "supervisor": "Prof. David Clark",
+    "students": ["Tom Brown", "Uma Blue"],
+    "part": "B",
+    "status": "Completed",
+    "gradeStatus": "Submitted",
+    "feedbackStatus": "Submitted",
+    "deadline": "2024-06-15"
+  }
+]
