@@ -10,4 +10,4 @@ export function ErrorMessage({ message }) {
   )
 }
 
-export default ErrorMessage
+export default ErrorMessage;
