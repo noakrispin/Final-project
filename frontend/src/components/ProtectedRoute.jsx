@@ -1,17 +1,36 @@
-import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import React, { useEffect } from "react"
+import { useNavigate, Outlet, useLocation } from "react-router-dom"
+import { useAuth } from "../context/AuthContext"
+import { Loader2 } from 'lucide-react'
 
-const ProtectedRoute = () => {
-  const { user } = useAuth();
+export default function ProtectedRoute({ allowedRoles = ["Student", "Supervisor"] }) {
+  const { user, isLoading } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
 
-  if (!user) {
-    // If the user is not authenticated, redirect to the login page
-    return <Navigate to="/login" replace />;
+  useEffect(() => {
+    if (!isLoading && !user) {
+      // Redirect to login while saving the attempted url
+      navigate("/login", { state: { from: location.pathname } })
+    }
+
+    if (!isLoading && user && !allowedRoles.includes(user.role)) {
+      // Redirect to home if user's role is not allowed
+      navigate("/")
+    }
+  }, [user, isLoading, navigate, location, allowedRoles])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
   }
 
-  // If the user is authenticated, render the child routes
-  return <Outlet />;
-};
+  if (!user || !allowedRoles.includes(user.role)) {
+    return null
+  }
 
-export default ProtectedRoute;
+  return <Outlet />
+}

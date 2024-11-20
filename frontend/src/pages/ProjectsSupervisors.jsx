@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { Table } from '../components/Table';
 import { Button } from '../components/Button';
@@ -26,12 +27,13 @@ const ProjectsSupervisors = () => {
   const [tasksFilter, setTasksFilter] = useState('all');
   const [searchProjects, setSearchProjects] = useState('');
   const [searchTasks, setSearchTasks] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     setProjects(projectsData);
   }, []);
 
-  const filterData = (data, searchTerm, filterKey, filterValue) => {
+  const filterData = useCallback((data, searchTerm, filterKey, filterValue) => {
     return data.filter(item => {
       const matchesSearch = Object.values(item)
         .some(val => typeof val === 'string' && val.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -39,12 +41,23 @@ const ProjectsSupervisors = () => {
       if (filterValue === 'all') return matchesSearch;
       return matchesSearch && item[filterKey]?.toLowerCase() === filterValue.toLowerCase();
     });
-  };
+  }, []);
 
-  const filteredProjects = filterData(projects, searchProjects, 'status', projectsFilter);
-  const filteredTasks = filterData(projects, searchTasks, 'gradeStatus', tasksFilter);
+  const filteredProjects = useMemo(() => 
+    filterData(projects, searchProjects, 'status', projectsFilter),
+    [projects, searchProjects, projectsFilter, filterData]
+  );
 
-  const projectColumns = [
+  const filteredTasks = useMemo(() => 
+    filterData(projects, searchTasks, 'gradeStatus', tasksFilter),
+    [projects, searchTasks, tasksFilter, filterData]
+  );
+
+  const handleNavigateToEvaluationForms = useCallback(() => {
+    navigate('/evaluation-forms');
+  }, [navigate]);
+
+  const projectColumns = useMemo(() => [
     { key: 'id', header: '#', sortable: true },
     { key: 'title', header: 'Project Title', sortable: true },
     { key: 'students', header: 'Students', render: (value) => value.join(', ') },
@@ -60,11 +73,11 @@ const ProjectsSupervisors = () => {
     {
       key: 'actions',
       header: 'Actions',
-      render: (_, row) => <Actions row={row} />
+      render: (_, row) => <Actions row={row} onNavigate={handleNavigateToEvaluationForms} />
     }
-  ];
+  ], [handleNavigateToEvaluationForms]);
 
-  const taskColumns = [
+  const taskColumns = useMemo(() => [
     { key: 'id', header: '#', sortable: true },
     { key: 'title', header: 'Project Title', sortable: true },
     {
@@ -81,18 +94,18 @@ const ProjectsSupervisors = () => {
     {
       key: 'actions',
       header: 'Actions',
-      render: (_, row) => <Actions row={row} />
+      render: (_, row) => <Actions row={row} onNavigate={handleNavigateToEvaluationForms} />
     }
-  ];
+  ], [handleNavigateToEvaluationForms]);
 
   return (
     <div className="relative bg-white min-h-screen overflow-hidden">
       <BlurElements />
 
-      <div className="relative z-10 p-4 md:p-8">
+      <div className="relative z-10 p-4 md:p-6">
         <Section
           title="Projects Supervised"
-          description="This table lists all the projects currently under your supervision."
+          description="Projects under your supervision."
           filters={FILTERS.PROJECTS}
           filterState={[projectsFilter, setProjectsFilter]}
           searchState={[searchProjects, setSearchProjects]}
@@ -101,8 +114,8 @@ const ProjectsSupervisors = () => {
         />
 
         <Section
-          title="Pending Grading and Feedback Tasks"
-          description="Here are the tasks requiring your immediate attention. Submit grades and provide feedback."
+          title="Pending Tasks"
+          description="Tasks requiring your attention."
           filters={FILTERS.TASKS}
           filterState={[tasksFilter, setTasksFilter]}
           searchState={[searchTasks, setSearchTasks]}
@@ -114,24 +127,24 @@ const ProjectsSupervisors = () => {
   );
 };
 
-const BlurElements = () => (
+const BlurElements = React.memo(() => (
   <>
-    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#c8d7ff]/70 rounded-full blur-[70px]" />
-    <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-[#c8d7ff]/70 rounded-full blur-[50px]" />
+    <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-[#c8d7ff]/70 rounded-full blur-[50px]" />
+    <div className="absolute bottom-0 left-0 w-[200px] h-[200px] bg-[#c8d7ff]/70 rounded-full blur-[40px]" />
   </>
-);
+));
 
-const Section = ({ title, description, filters, filterState, searchState, tableData, tableColumns }) => {
+const Section = React.memo(({ title, description, filters, filterState, searchState, tableData, tableColumns }) => {
   const [filter, setFilter] = filterState;
   const [search, setSearch] = searchState;
 
   return (
-    <div className="mb-8 md:mb-16">
-      <h1 className="text-3xl md:text-5xl font-bold text-black mb-4 md:mb-6">{title}</h1>
-      <p className="text-gray-600 text-lg md:text-xl mb-6 md:mb-8 max-w-3xl">{description}</p>
+    <div className="mb-6 md:mb-8">
+      <h2 className="text-2xl md:text-3xl font-bold text-black mb-2 md:mb-3">{title}</h2>
+      <p className="text-gray-600 text-sm md:text-base mb-4 md:mb-5 max-w-2xl">{description}</p>
 
-      <div className="space-y-4 md:space-y-6">
-        <div className="flex flex-wrap gap-2 md:gap-4">
+      <div className="space-y-3 md:space-y-4">
+        <div className="flex flex-wrap gap-2">
           {filters.map(filterOption => (
             <Button
               key={filterOption}
@@ -150,22 +163,22 @@ const Section = ({ title, description, filters, filterState, searchState, tableD
       </div>
     </div>
   );
-};
+});
 
-const SearchBar = ({ value, onChange, placeholder }) => (
+const SearchBar = React.memo(({ value, onChange, placeholder }) => (
   <div className="relative">
-    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2" />
+    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" />
     <input
       type="text"
       placeholder={placeholder}
-      className="w-full h-12 pl-12 pr-4 bg-[#ebecf5] rounded-lg text-lg"
+      className="w-full h-10 pl-9 pr-3 bg-[#ebecf5] rounded-md text-sm"
       value={value}
       onChange={(e) => onChange(e.target.value)}
     />
   </div>
-);
+));
 
-const StatusBadge = ({ value, statusType }) => {
+const StatusBadge = React.memo(({ value, statusType }) => {
   const classes = {
     [statusType.COMPLETED]: 'bg-[#e4ffe1] text-[#686b80] border-[#92e799]',
     [statusType.OVERDUE]: 'bg-[#ffe1e1] text-[#686b80] border-[#e79292]',
@@ -174,18 +187,18 @@ const StatusBadge = ({ value, statusType }) => {
     [SubmissionStatus.NOT_SUBMITTED]: 'bg-[#ffe1e1] text-[#686b80] border-[#e79292]'
   };
 
-  return <span className={`px-2 py-1 rounded-lg text-sm md:text-lg ${classes[value]}`}>{value}</span>;
-};
+  return <span className={`px-2 py-0.5 rounded text-xs ${classes[value]}`}>{value}</span>;
+});
 
-const Actions = ({ row }) => (
-  <div className="space-y-2">
-    <a href="#" className="text-[#686b80] underline block">
-      {row.status === ProjectStatus.COMPLETED ? 'View Feedback & Grade' : 'Submit Grade'}
-    </a>
-    {row.status !== ProjectStatus.COMPLETED && (
-      <a href="#" className="text-[#686b80] underline block">Pending Task</a>
-    )}
+const Actions = React.memo(({ row, onNavigate }) => (
+  <div className="text-right">
+    <button
+      onClick={onNavigate}
+      className="text-[#686b80] text-sm hover:underline focus:outline-none"
+    >
+      {row.status === ProjectStatus.COMPLETED ? 'View Feedback' : 'Pending Tasks'}
+    </button>
   </div>
-);
+));
 
 export default ProjectsSupervisors;

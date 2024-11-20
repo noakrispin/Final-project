@@ -89,3 +89,9 @@ export const Table = ({ data, columns, className = '' }) => {
     </div>
   );
 };
+
+export const TableHeader = ({ children }) => <thead>{children}</thead>;
+export const TableBody = ({ children }) => <tbody>{children}</tbody>;
+export const TableRow = ({ children, ...props }) => <tr {...props}>{children}</tr>;
+export const TableHead = ({ children }) => <th>{children}</th>;
+export const TableCell = ({ children }) => <td>{children}</td>;
