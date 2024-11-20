@@ -66,7 +66,7 @@ const Navbar = () => {
           <NavLink to='/'>HOME</NavLink>
           <NavLink to='/projectsSupervisors'>PROJECTS</NavLink>
           <NavLink to='/supervisorsStatus'>STATUS</NavLink>
-          <NavLink to='/feedback'>FEEDBACK</NavLink>
+          <NavLink to='/evaluation-forms'>FEEDBACK</NavLink>
           <NavLink to='/contact'>CONTACT</NavLink>
         </ul>
         <div className='flex items-center gap-4 flex-none'>

@@ -9,7 +9,7 @@ import Supervisors from './pages/SupervisorsStatus'; // Supervisors' status over
 import Login from './pages/Login'; // Login page placeholder
 import Contact from './pages/Contact'; // Contact page
 import SignUp from './pages/SignUp'; // Registration page placeholder
-import Feedbackform from './pages/Feedbackform'; // Feedback form
+import EvaluationForms from './pages/EvaluationForm'; // Feedback form
 import NotFound from './pages/NotFound'; // 404 Page
 
 // Component imports
@@ -27,7 +27,7 @@ const App = () => {
         <Route path="/supervisorsStatus" element={<Supervisors />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
-        <Route path="/feedback" element={<Feedbackform />} />
+        <Route path="/evaluation-forms" element={<EvaluationForms />} />
         <Route path="/contact" element={<Contact />} />
 
         {/* 404 Page */}
