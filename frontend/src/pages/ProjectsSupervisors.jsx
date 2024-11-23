@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search } from 'lucide-react';
-import { Table } from '../components/Table';
-import { Button } from '../components/Button';
-import projectsData from '../data/projects.json';
+import { useAuth } from '../context/AuthContext';
+import { api } from '../services/api';
+import { BlurElements } from '../components/BlurElements';
+import { Section } from '../components/Section';
+import { StatusBadge } from '../components/StatusBadge';
+import { Actions } from '../components/Actions';
 
 const ProjectStatus = {
   OVERDUE: 'Overdue',
@@ -27,11 +29,33 @@ const ProjectsSupervisors = () => {
   const [tasksFilter, setTasksFilter] = useState('all');
   const [searchProjects, setSearchProjects] = useState('');
   const [searchTasks, setSearchTasks] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
-    setProjects(projectsData);
-  }, []);
+    const fetchProjects = async () => {
+      if (!user) return;
+      
+      try {
+        setIsLoading(true);
+        const projectsData = await api.getProjects();
+        const filteredProjects = projectsData.filter(project => 
+          project.supervisor === user.fullName || 
+          (project.presentationAttendees && project.presentationAttendees.includes(user.fullName))
+        );
+        setProjects(filteredProjects);
+      } catch (err) {
+        console.error('Error fetching projects:', err);
+        setError('Failed to fetch projects. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, [user]);
 
   const filterData = useCallback((data, searchTerm, filterKey, filterValue) => {
     return data.filter(item => {
@@ -73,7 +97,7 @@ const ProjectsSupervisors = () => {
     {
       key: 'actions',
       header: 'Actions',
-      render: (_, row) => <Actions row={row} onNavigate={handleNavigateToEvaluationForms} />
+      render: () => <Actions onNavigate={handleNavigateToEvaluationForms} />
     }
   ], [handleNavigateToEvaluationForms]);
 
@@ -94,18 +118,27 @@ const ProjectsSupervisors = () => {
     {
       key: 'actions',
       header: 'Actions',
-      render: (_, row) => <Actions row={row} onNavigate={handleNavigateToEvaluationForms} />
+      render: () => <Actions onNavigate={handleNavigateToEvaluationForms} />
     }
   ], [handleNavigateToEvaluationForms]);
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="flex justify-center items-center h-screen text-red-500">{error}</div>;
+  }
 
   return (
     <div className="relative bg-white min-h-screen overflow-hidden">
       <BlurElements />
 
       <div className="relative z-10 p-4 md:p-6">
+        <h1 className="text-3xl font-bold mb-6">Projects Dashboard</h1>
         <Section
           title="Projects Supervised"
-          description="Projects under your supervision."
+          description="Projects under your supervision or requiring your evaluation."
           filters={FILTERS.PROJECTS}
           filterState={[projectsFilter, setProjectsFilter]}
           searchState={[searchProjects, setSearchProjects]}
@@ -126,79 +159,5 @@ const ProjectsSupervisors = () => {
     </div>
   );
 };
-
-const BlurElements = React.memo(() => (
-  <>
-    <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-[#c8d7ff]/70 rounded-full blur-[50px]" />
-    <div className="absolute bottom-0 left-0 w-[200px] h-[200px] bg-[#c8d7ff]/70 rounded-full blur-[40px]" />
-  </>
-));
-
-const Section = React.memo(({ title, description, filters, filterState, searchState, tableData, tableColumns }) => {
-  const [filter, setFilter] = filterState;
-  const [search, setSearch] = searchState;
-
-  return (
-    <div className="mb-6 md:mb-8">
-      <h2 className="text-2xl md:text-3xl font-bold text-black mb-2 md:mb-3">{title}</h2>
-      <p className="text-gray-600 text-sm md:text-base mb-4 md:mb-5 max-w-2xl">{description}</p>
-
-      <div className="space-y-3 md:space-y-4">
-        <div className="flex flex-wrap gap-2">
-          {filters.map(filterOption => (
-            <Button
-              key={filterOption}
-              onClick={() => setFilter(filterOption)}
-              variant={filter === filterOption ? 'default' : 'outline'}
-              size="sm"
-            >
-              {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
-            </Button>
-          ))}
-        </div>
-
-        <SearchBar value={search} onChange={setSearch} placeholder={`Search ${title.toLowerCase()}...`} />
-
-        <Table data={tableData} columns={tableColumns} />
-      </div>
-    </div>
-  );
-});
-
-const SearchBar = React.memo(({ value, onChange, placeholder }) => (
-  <div className="relative">
-    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" />
-    <input
-      type="text"
-      placeholder={placeholder}
-      className="w-full h-10 pl-9 pr-3 bg-[#ebecf5] rounded-md text-sm"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-    />
-  </div>
-));
-
-const StatusBadge = React.memo(({ value, statusType }) => {
-  const classes = {
-    [statusType.COMPLETED]: 'bg-[#e4ffe1] text-[#686b80] border-[#92e799]',
-    [statusType.OVERDUE]: 'bg-[#ffe1e1] text-[#686b80] border-[#e79292]',
-    [statusType.PENDING]: 'bg-[#efefef] text-[#686b80] border-[#8c8c8c]',
-    [SubmissionStatus.SUBMITTED]: 'bg-[#e4ffe1] text-[#686b80] border-[#92e799]',
-    [SubmissionStatus.NOT_SUBMITTED]: 'bg-[#ffe1e1] text-[#686b80] border-[#e79292]'
-  };
-
-  return <span className={`px-2 py-0.5 rounded text-xs ${classes[value]}`}>{value}</span>;
-});
-
-const Actions = React.memo(({ row, onNavigate }) => (
-  <div className="text-right">
-    <button
-      onClick={onNavigate}
-      className="text-[#686b80] text-sm hover:underline focus:outline-none"
-    >
-      {row.status === ProjectStatus.COMPLETED ? 'View Feedback' : 'Pending Tasks'}
-    </button>
-  </div>
-));
 
 export default ProjectsSupervisors;

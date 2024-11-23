@@ -190,6 +190,7 @@ const RoleDropdown = ({ isOpen, onSelect, toggle, selectedRole, error }) => (
     <label htmlFor="role" className="block text-gray-600 mb-1">Role</label>
     <div className="relative">
       <button
+        id="role" // Add the id here
         type="button"
         onClick={toggle}
         className="w-full h-[50px] px-4 flex items-center justify-between border border-[#dadada] rounded-md bg-white"
