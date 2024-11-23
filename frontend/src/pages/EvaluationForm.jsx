@@ -1,111 +1,18 @@
 import React, { useState } from 'react'
 import { Search } from 'lucide-react'
 import { Button } from '../components/Button'
-
-const FormField = ({ label, type, value, onChange, min, max }) => (
-  <div className="mb-4">
-    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor={label}>
-      {label}
-    </label>
-    <input
-      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-      id={label}
-      type={type}
-      value={value}
-      onChange={onChange}
-      min={min}
-      max={max}
-    />
-  </div>
-)
-
-const EvaluationForm = ({ formConfig, onSubmit }) => {
-  const [formData, setFormData] = useState(
-    formConfig.fields.reduce((acc, field) => ({ ...acc, [field.name]: '' }), {})
-  )
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.id]: e.target.value })
-  }
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    onSubmit(formData)
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-      <h2 className="text-2xl font-bold mb-4">{formConfig.title}</h2>
-      {formConfig.fields.map((field) => (
-        <FormField
-          key={field.name}
-          label={field.label}
-          type={field.type}
-          value={formData[field.name]}
-          onChange={handleChange}
-          min={field.min}
-          max={field.max}
-        />
-      ))}
-      <Button type="submit" variant="primary" size="lg">
-        Submit
-      </Button>
-    </form>
-  )
-}
+import SupervisorForm from '../components/forms/SupervisorForm'
+import PresentationFormA from '../components/forms/PresentationFormA'
+import PresentationFormB from '../components/forms/PresentationFormB'
+import BookReviewFormA from '../components/forms/BookReviewFormA'
+import BookReviewFormB from '../components/forms/BookReviewFormB'
 
 const formConfigs = [
-  {
-    id: 'supervisor',
-    title: 'Supervisor Evaluation Form',
-    fields: [
-      { name: 'projectName', label: 'Project Name', type: 'text' },
-      { name: 'supervisorName', label: 'Supervisor Name', type: 'text' },
-      { name: 'workQuality', label: 'Quality of Work Process (0-100)', type: 'number', min: 0, max: 100 },
-      { name: 'deliverables', label: 'Quality of Project Deliverables (0-100)', type: 'number', min: 0, max: 100 },
-      { name: 'overallEvaluation', label: 'Overall Evaluation (0-100)', type: 'number', min: 0, max: 100 },
-    ]
-  },
-  {
-    id: 'presentation-a',
-    title: 'Presentation Evaluation - Step A',
-    fields: [
-      { name: 'projectTitle', label: 'Project Title', type: 'text' },
-      { name: 'presenters', label: 'Presenters', type: 'text' },
-      { name: 'contentQuality', label: 'Content Quality (0-100)', type: 'number', min: 0, max: 100 },
-      { name: 'presentationSkills', label: 'Presentation Skills (0-100)', type: 'number', min: 0, max: 100 },
-    ]
-  },
-  {
-    id: 'presentation-b',
-    title: 'Presentation Evaluation - Step B',
-    fields: [
-      { name: 'projectTitle', label: 'Project Title', type: 'text' },
-      { name: 'presenters', label: 'Presenters', type: 'text' },
-      { name: 'implementation', label: 'Implementation Quality (0-100)', type: 'number', min: 0, max: 100 },
-      { name: 'results', label: 'Results and Conclusions (0-100)', type: 'number', min: 0, max: 100 },
-    ]
-  },
-  {
-    id: 'book-a',
-    title: 'Book Review - Step A',
-    fields: [
-      { name: 'bookTitle', label: 'Book Title', type: 'text' },
-      { name: 'authors', label: 'Authors', type: 'text' },
-      { name: 'contentQuality', label: 'Content Quality (0-100)', type: 'number', min: 0, max: 100 },
-      { name: 'organization', label: 'Organization and Structure (0-100)', type: 'number', min: 0, max: 100 },
-    ]
-  },
-  {
-    id: 'book-b',
-    title: 'Book Review - Step B',
-    fields: [
-      { name: 'bookTitle', label: 'Book Title', type: 'text' },
-      { name: 'authors', label: 'Authors', type: 'text' },
-      { name: 'finalContent', label: 'Final Content Quality (0-100)', type: 'number', min: 0, max: 100 },
-      { name: 'overallQuality', label: 'Overall Quality (0-100)', type: 'number', min: 0, max: 100 },
-    ]
-  },
+  { id: 'supervisor', title: 'Supervisor Evaluation Form', component: SupervisorForm },
+  { id: 'presentation-a', title: 'Presentation Evaluation - Step A', component: PresentationFormA },
+  { id: 'presentation-b', title: 'Presentation Evaluation - Step B', component: PresentationFormB },
+  { id: 'book-a', title: 'Book Review - Step A', component: BookReviewFormA },
+  { id: 'book-b', title: 'Book Review - Step B', component: BookReviewFormB },
 ]
 
 const EvaluationForms = () => {
@@ -120,6 +27,8 @@ const EvaluationForms = () => {
   const filteredForms = formConfigs.filter(config => 
     config.title.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  const ActiveFormComponent = formConfigs.find(config => config.id === activeForm)?.component || null
 
   return (
     <div className="relative bg-white min-h-screen overflow-hidden">
@@ -157,19 +66,14 @@ const EvaluationForms = () => {
             ))}
           </div>
 
-          {formConfigs.map((config) => (
-            activeForm === config.id && (
-              <EvaluationForm
-                key={config.id}
-                formConfig={config}
-                onSubmit={handleSubmit}
-              />
-            )
-          ))}
+          <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+            <h2 className="text-2xl font-bold mb-4">{formConfigs.find(config => config.id === activeForm)?.title}</h2>
+            {ActiveFormComponent && <ActiveFormComponent onSubmit={handleSubmit} />}
+          </div>
         </div>
       </div>
     </div>
   )
 }
 
-export default EvaluationForms; 
+export default EvaluationForms

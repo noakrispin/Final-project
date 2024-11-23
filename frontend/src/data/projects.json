@@ -9,7 +9,8 @@
     "status": "Completed",
     "gradeStatus": "Submitted",
     "feedbackStatus": "Submitted",
-    "deadline": "2024-07-15"
+    "deadline": "2024-11-15",
+    "presentationAttendees": ["Dr. Emily Carter", "Prof. John Smith", "Dr. Sarah Lee"]
   },
   {
     "id": 2,
@@ -21,7 +22,8 @@
     "status": "Pending",
     "gradeStatus": "Not Submitted",
     "feedbackStatus": "Not Submitted",
-    "deadline": "2024-08-01"
+    "deadline": "2024-10-01",
+    "presentationAttendees": ["Prof. John Smith", "Dr. Sarah Lee"]
   },
   {
     "id": 3,
@@ -33,7 +35,8 @@
     "status": "Overdue",
     "gradeStatus": "Submitted",
     "feedbackStatus": "Not Submitted",
-    "deadline": "2024-06-20"
+    "deadline": "2024-11-01",
+    "presentationAttendees": ["Dr. Sarah Lee", "Dr. Emily Carter"]
   },
   {
     "id": 4,
@@ -45,78 +48,7 @@
     "status": "Completed",
     "gradeStatus": "Submitted",
     "feedbackStatus": "Submitted",
-    "deadline": "2024-05-30"
-  },
-  {
-    "id": 5,
-    "title": "IoT-Enabled Smart Home System",
-    "description": "An IoT-based solution to control and monitor home appliances remotely, focusing on energy efficiency and security.",
-    "supervisor": "Dr. Linda Wong",
-    "students": ["Ivy Yellow", "Jack Purple"],
-    "part": "A",
-    "status": "Pending",
-    "gradeStatus": "Not Submitted",
-    "feedbackStatus": "Submitted",
-    "deadline": "2024-07-10"
-  },
-  {
-    "id": 6,
-    "title": "Real-Time Traffic Analysis Using Computer Vision",
-    "description": "This project uses computer vision to analyze traffic flow in real-time, aiming to optimize traffic management.",
-    "supervisor": "Dr. Kevin Brown",
-    "students": ["Laura Red", "Mike Cyan"],
-    "part": "B",
-    "status": "Pending",
-    "gradeStatus": "Not Submitted",
-    "feedbackStatus": "Not Submitted",
-    "deadline": "2024-08-05"
-  },
-  {
-    "id": 7,
-    "title": "Personalized Learning Platform Using AI",
-    "description": "Developing a personalized learning platform that adapts to students' learning styles and pace using AI algorithms.",
-    "supervisor": "Prof. Rachel Davis",
-    "students": ["Nancy Gray", "Oscar White"],
-    "part": "A",
-    "status": "Overdue",
-    "gradeStatus": "Submitted",
-    "feedbackStatus": "Not Submitted",
-    "deadline": "2024-06-01"
-  },
-  {
-    "id": 8,
-    "title": "Cybersecurity Threat Detection System",
-    "description": "Building a system that identifies and mitigates potential cybersecurity threats in real-time.",
-    "supervisor": "Dr. James Wilson",
-    "students": ["Pat Green", "Quinn Pink"],
-    "part": "B",
-    "status": "Completed",
-    "gradeStatus": "Submitted",
-    "feedbackStatus": "Submitted",
-    "deadline": "2024-05-20"
-  },
-  {
-    "id": 9,
-    "title": "Autonomous Drone Navigation System",
-    "description": "A project focused on building an autonomous drone that can navigate complex environments using sensors and AI.",
-    "supervisor": "Dr. Anna Peterson",
-    "students": ["Ryan Indigo", "Sophia Lime"],
-    "part": "A",
-    "status": "Pending",
-    "gradeStatus": "Not Submitted",
-    "feedbackStatus": "Not Submitted",
-    "deadline": "2024-07-25"
-  },
-  {
-    "id": 10,
-    "title": "Social Media Sentiment Analysis Tool",
-    "description": "Analyzing public sentiment on social media platforms to provide insights into brand perception and user feedback.",
-    "supervisor": "Prof. David Clark",
-    "students": ["Tom Brown", "Uma Blue"],
-    "part": "B",
-    "status": "Completed",
-    "gradeStatus": "Submitted",
-    "feedbackStatus": "Submitted",
-    "deadline": "2024-06-15"
+    "deadline": "2024-10-30",
+    "presentationAttendees": ["Prof. Michael Johnson"]
   }
 ]
