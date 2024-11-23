@@ -1,26 +1,28 @@
 import { useState, useEffect } from 'react';
+import { api } from '../services/api';
 
 export const useProjects = () => {
   const [projects, setProjects] = useState([]);
+  const [projectRequests, setProjectRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filter, setFilter] = useState('all');
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        // Replace this with your actual API call
-        const response = await fetch('https://api.example.com/projects');
-        if (!response.ok) {
-          throw new Error('Failed to fetch projects');
-        }
-        const data = await response.json();
-        setProjects(data);
-        setIsLoading(false);
+        setIsLoading(true);
+        const [projectsData, requestsData] = await Promise.all([
+          api.getProjects(),
+          api.getProjectRequests()
+        ]);
+        setProjects(projectsData || []);
+        setProjectRequests(requestsData || []);
       } catch (err) {
         console.error('Error fetching projects:', err);
-        setError(err.message || 'Failed to fetch projects');
+        setError('Failed to fetch projects. Please try again later.');
+        setProjects([]);
+        setProjectRequests([]);
+      } finally {
         setIsLoading(false);
       }
     };
@@ -28,13 +30,5 @@ export const useProjects = () => {
     fetchProjects();
   }, []);
 
-  return {
-    projects,
-    isLoading,
-    error,
-    searchTerm,
-    setSearchTerm,
-    filter,
-    setFilter,
-  };
+  return { projects, projectRequests, isLoading, error };
 };
