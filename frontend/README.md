@@ -1,49 +1,76 @@
-# Final Project Portal - Frontend
-This project is a full-stack application for managing final project processes. It includes a frontend built with React and Vite and a backend powered by Node.js and Express.
 
-# Prerequisites
-Ensure you have the following installed:
+# Instructions for Pulling and Running the Project
 
-Node.js [https://nodejs.org/en] (v18 or higher recommended)
-npm (bundled with Node.js)
+## Prerequisites
 
-# Installation
-1. Clone the repository:
+Ensure the following are installed on your system:
 
-git clone https://github.com/noakrispin/Final-project.git
-cd Final-project/frontend
+- [Node.js](https://nodejs.org/) (version 18 or higher recommended)
+- npm (bundled with Node.js)
+- A code editor like [Visual Studio Code](https://code.visualstudio.com/)
 
-2. Install dependencies:
+---
 
-npm install
+## Pulling the Project from GitHub
 
-# Running the Project 
-1. Start the project (frontend and backend simultaneously) from the root directory:
-npm run dev
+1. Open your terminal or command prompt.
+2. Navigate to the directory where you want to clone the project.
+3. Run the following command to clone the repository:
 
-2. Open your browser
+   ```bash
+   git clone https://github.com/noakrispin/Final-project.git
+   ```
 
-# Server-Side Dependencies
-The backend uses the following key dependencies:
+4. Navigate into the project directory:
 
-* express: Web server framework.
-* cors: Cross-Origin Resource Sharing middleware.
+   ```bash
+   cd Final-project
+   ```
 
-For a complete list, see the backend/package.json file.
+---
 
-# Frontend Dependencies
-The frontend leverages:
+## Installing Dependencies
 
-* React: Component-based UI library.
-* Tailwind CSS: Utility-first CSS framework.
-* Vite: Development server and build tool.
+1. Install all necessary dependencies by running the following command in the root project directory:
 
-For more details, refer to frontend/package.json.
+   ```bash
+   npm install
+   ```
 
-# Troubleshooting
-Ensure all dependencies are installed (npm install from the root directory).
-Check Node.js and npm versions:
-node -v
-npm -v
+   This will install dependencies for both the frontend and backend.
 
+---
 
+## Running the Project
+
+1. Start both the frontend and backend simultaneously by running:
+
+   ```bash
+   npm run dev
+   ```
+
+2. Open your browser and navigate to the following URLs:
+   - **Frontend**: [http://localhost:5173](http://localhost:5173)
+   - **Backend API**: [http://localhost:3000](http://localhost:3000)
+
+---
+
+## Troubleshooting
+
+1. Ensure Node.js and npm are installed correctly:
+   - Check Node.js version:
+     ```bash
+     node -v
+     ```
+   - Check npm version:
+     ```bash
+     npm -v
+     ```
+
+2. If you encounter issues, ensure all dependencies are installed using:
+
+   ```bash
+   npm install
+   ```
+
+3. Verify that ports 5173 (frontend) and 3000 (backend) are available.
