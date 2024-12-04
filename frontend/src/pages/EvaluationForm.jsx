@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Search } from 'lucide-react'
-import { Button } from '../components/Button'
+import { Button } from '../components/ui/Button'
 import SupervisorForm from '../components/forms/SupervisorForm'
 import PresentationFormA from '../components/forms/PresentationFormA'
 import PresentationFormB from '../components/forms/PresentationFormB'

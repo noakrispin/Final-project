@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { FaFacebookF, FaTwitter, FaLinkedinIn, FaYoutube, FaInstagram } from 'react-icons/fa';
 import { ArrowRight } from 'lucide-react';
 import { assets } from '../assets/assets';
-import { Button } from '../components/Button';
+import { Button } from '../components/ui/Button';
 
 export default function Home() {
   return (

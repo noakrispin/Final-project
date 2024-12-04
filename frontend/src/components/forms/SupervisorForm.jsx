@@ -130,7 +130,6 @@ export default function SupervisorForm({ onSubmit }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <h1 className="text-2xl font-bold mb-4">Supervisor Evaluation Form</h1>
       <p className="text-gray-600 mb-6">Intended to be filled out by the supervisor at the end of stage A or B - please write a score on a scale of (0-100)</p>
 
       <FormField

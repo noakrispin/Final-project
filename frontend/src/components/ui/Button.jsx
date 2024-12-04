@@ -2,7 +2,7 @@ import React from 'react';
 // Import cva to manage dynamic className combinations.
 import { cva } from 'class-variance-authority';
 // Import cn utility to merge classNames conditionally.
-import { cn } from '../lib/utils';
+import { cn } from '../../lib/utils';
 
 const buttonVariants = cva(
     // Base styles for the button, applied regardless of variant or size.
