@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronDown, Search, LogOut, User, FileText, SwitchCamera, Edit, Save } from 'lucide-react'
-import { Button } from '../components/Button'
+import { Button } from '../components/ui/Button'
 import { useAuth } from '../context/AuthContext'
 import mockUsers from '../data/mockUsers.json'
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
-import { Button } from './Button';
+import { Button } from '../ui/Button';
 
 export const TaskList = ({ tasks, addTask, selectedDate }) => {
   const [newTask, setNewTask] = useState({ title: '', date: '' });
