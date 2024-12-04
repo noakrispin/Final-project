@@ -3,10 +3,10 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FaCircleUser } from "react-icons/fa6";
 import { RiArrowDropDownLine, RiMenu3Line } from "react-icons/ri";
 import { FiSearch } from "react-icons/fi";
-import { Button } from './Button';
-import { useAuth } from '../context/AuthContext'; // Import AuthContext
-import projectsData from '../data/projects.json';
-import { assets } from '../assets/assets';
+import { Button } from '../ui/Button';
+import { useAuth } from '../../context/AuthContext'; // Import AuthContext
+import projectsData from '../../data/projects.json';
+import { assets } from '../../assets/assets';
 
 const Navbar = () => {
   const location = useLocation();

@@ -1,7 +1,7 @@
 import React from 'react';
-import { Button } from './Button';
-import { Table } from './Table';
-import { SearchBar } from './SearchBar';
+import { Button } from '../ui/Button';
+import { Table } from '../ui/Table';
+import { SearchBar } from '../shared/SearchBar';
 
 export const Section = React.memo(({ title, description, filters, filterState, searchState, tableData, tableColumns }) => {
   const [filter, setFilter] = filterState;

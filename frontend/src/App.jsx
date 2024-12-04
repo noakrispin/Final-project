@@ -13,7 +13,7 @@ import EvaluationForms from './pages/EvaluationForm'; // Feedback form
 import NotFound from './pages/NotFound'; // 404 Page
 
 // Component imports
-import Navbar from './components/Navbar'; // Navigation bar
+import Navbar from './components/layout/Navbar'; // Navigation bar
 
 const App = () => {
   return (

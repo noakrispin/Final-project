@@ -2,10 +2,10 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
-import { BlurElements } from '../components/BlurElements';
-import { Section } from '../components/Section';
-import { StatusBadge } from '../components/StatusBadge';
-import { Actions } from '../components/Actions';
+import { BlurElements } from '../components/shared/BlurElements';
+import { Section } from '../components/sections/Section';
+import { StatusBadge } from '../components/ui/StatusBadge';
+import { Actions } from '../components/actions/Actions';
 
 const ProjectStatus = {
   OVERDUE: 'Overdue',
