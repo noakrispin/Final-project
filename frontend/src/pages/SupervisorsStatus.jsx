@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Table } from '../components/Table';
-import { Button } from '../components/Button';
+import { Table } from '../components/ui/Table';
+import { Button } from '../components/ui/Button';
 import { Check, X, Search, Bell, MessageSquare } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
-import { Calendar } from '../components/Calendar';
-import { TaskList } from '../components/TaskList';
-import { ProgressBar } from '../components/ProgressBar';
+import { Calendar } from '../components/ui/Calendar';
+import { TaskList } from '../components/data-display/TaskList';
+import { ProgressBar } from '../components/ui/ProgressBar';
 import { useProjects } from '../hooks/useProjects';
 import { useTasks } from '../hooks/useTasks';
 
