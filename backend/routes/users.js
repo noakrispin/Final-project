@@ -1,46 +1,36 @@
+// backend/routes/users.js
 const express = require('express');
 const db = require('../db');
 const router = express.Router();
 
-// Check if ID exists
-router.get('/check', async (req, res) => {
-    const { id } = req.query; // Extract 'id' from query parameters
-    try {
-      const [user] = await db.query('SELECT * FROM users WHERE id = ?', [id]);
-      if (user.length > 0) {
-        return res.json({ exists: true });
-      }
-      res.json({ exists: false });
-    } catch (error) {
-      console.error('Error checking user existence:', error);
-      res.status(500).json({ error: 'Error checking user existence' });
-    }
-  });
-
-
 // Sign Up Route
 router.post('/signup', async (req, res) => {
-  const { id, fullName, email, password, role } = req.body;
+  const { ID, fullName, email, password, role } = req.body;
   try {
     // Check if the ID already exists
-    const [existingUser] = await db.query('SELECT * FROM users WHERE id = ?', [id]);
-    if (existingUser.length > 0) {
+    const [existingID] = await db.query('SELECT * FROM users WHERE id = ?', [ID]);
+    if (existingID.length > 0) {
       return res.status(400).json({ error: 'User with the same ID already exists' });
+    }
+
+    // Check if the email already exists
+    const [existingEmail] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+    if (existingEmail.length > 0) {
+      return res.status(400).json({ error: 'User with the same email already exists' });
     }
 
     // Insert new user
     const [result] = await db.query(
       'INSERT INTO users (id, username, email, password, role) VALUES (?, ?, ?, ?, ?)',
-      [id, fullName, email, password, role]
+      [ID, fullName, email, password, role]
     );
 
-    res.status(201).json({ message: 'User created successfully', user: { id, fullName, email, role } });
+    res.status(201).json({ message: 'User created successfully', user: { ID, fullName, email, role } });
   } catch (error) {
     console.error('Signup error:', error);
     res.status(500).json({ error: 'Failed to create user' });
   }
 });
-
 
 // Login Route
 router.post('/login', async (req, res) => {
@@ -83,6 +73,5 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ error: 'Failed to login' });
   }
 });
-
 
 module.exports = router;
