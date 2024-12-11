@@ -1,50 +1,90 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Table } from '../components/ui/Table';
 import { Button } from '../components/ui/Button';
 import { Check, X, Search, Bell, MessageSquare } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { api } from '../services/api';
 import { Calendar } from '../components/ui/Calendar';
 import { TaskList } from '../components/data-display/TaskList';
 import { ProgressBar } from '../components/ui/ProgressBar';
-import { useProjects } from '../hooks/useProjects';
-import { useTasks } from '../hooks/useTasks';
 
 const SupervisorsStatus = () => {
   const { user } = useAuth();
-  const { projects, projectRequests, isLoading: isProjectsLoading, error: projectsError } = useProjects();
-  const { tasks, addTask, isLoading: isTasksLoading, error: tasksError } = useTasks();
+  const [projects, setProjects] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const filteredProjectRequests = projectRequests ? projectRequests.filter(request =>
-    request.projectTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    request.students.some(student => student.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    request.supervisor.toLowerCase().includes(searchTerm.toLowerCase())
-  ) : [];
+  // Fetch projects and tasks data from the database
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [projectsResponse, tasksResponse] = await Promise.all([
+          fetch('http://localhost:3001/api/projects'),
+          fetch('http://localhost:3001/api/tasks'),
+        ]);
+
+        if (!projectsResponse.ok || !tasksResponse.ok) {
+          throw new Error('Failed to fetch data from the server');
+        }
+
+        const [projectsData, tasksData] = await Promise.all([
+          projectsResponse.json(),
+          tasksResponse.json(),
+        ]);
+
+        setProjects(projectsData);
+        setTasks(tasksData);
+        setIsLoading(false);
+      } catch (err) {
+        console.error(err);
+        setError('Error fetching data. Please try again later.');
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleProjectAction = async (projectId, action) => {
     try {
-      await api.updateProjectRequest(projectId, action);
+      const response = await fetch(`http://localhost:3001/api/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: action }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update project status');
+      }
+
       // Refresh projects after update
-      await api.getProjects();
-    } catch (error) {
-      console.error('Error updating project request:', error);
+      const updatedProjects = await fetch('http://localhost:3001/api/projects');
+      setProjects(await updatedProjects.json());
+    } catch (err) {
+      console.error('Error updating project status:', err);
     }
   };
 
+  const filteredProjects = projects.filter(
+    (project) =>
+      project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const projectColumns = [
-    { key: 'id', header: '#', sortable: true },
-    { key: 'projectTitle', header: 'Project Title', sortable: true },
-    { key: 'students', header: 'Students', render: (value) => value.join(', ') },
-    { 
-      key: 'status', 
-      header: 'Status',
-      render: (value) => (
+    { key: 'id', header: 'ProjectID', sortable: true },
+    { key: 'title', header: 'Project Title', sortable: true },
+    { key: 'student_id', header: 'Students', sortable: true }, ///////////////////////////////////////////////////
+    /////////////////////CHANGE FROM STUDENT ID TO STUDENT NAMES - FROM USERS TABLE////////////////////////////
+    { key: 'status', header: 'Status', sortable: true, render: (value) => (
         <span className={`px-2 py-1 rounded-full text-sm ${
-          value === "Approved" ? "bg-green-100 text-green-800" :
-          value === "Rejected" ? "bg-red-100 text-red-800" :
-          "bg-yellow-100 text-yellow-800"
+          value === 'Unassigned' ? 'bg-gray-300 text-gray-800' :
+          value === 'Approved' ? 'bg-green-100 text-green-800' :
+          value === 'Rejected' ? 'bg-red-100 text-red-800' :
+          value === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+          'bg-gray-100 text-gray-800'
         }`}>
           {value}
         </span>
@@ -53,12 +93,12 @@ const SupervisorsStatus = () => {
     {
       key: 'actions',
       header: 'Actions',
-      render: (_, request) => (
+      render: (_, project) => (
         <div className="flex space-x-2">
-          {request.status === 'Pending' && (
+          {project.status === 'Pending' && (
             <>
               <Button
-                onClick={() => handleProjectAction(request.id, 'Approved')}
+                onClick={() => handleProjectAction(project.id, 'Approved')}
                 variant="ghost"
                 size="sm"
                 className="p-1 hover:bg-gray-100 rounded"
@@ -67,7 +107,7 @@ const SupervisorsStatus = () => {
                 <span className="sr-only">Approve</span>
               </Button>
               <Button
-                onClick={() => handleProjectAction(request.id, 'Rejected')}
+                onClick={() => handleProjectAction(project.id, 'Rejected')}
                 variant="ghost"
                 size="sm"
                 className="p-1 hover:bg-gray-100 rounded"
@@ -75,27 +115,28 @@ const SupervisorsStatus = () => {
                 <X className="w-4 h-4 text-red-600" />
                 <span className="sr-only">Reject</span>
               </Button>
+              <Button
+              variant="ghost"
+              size="sm"
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              <MessageSquare className="w-4 h-4 text-blue-600" />
+              <span className="sr-only">Request More Information</span>
+            </Button>
             </>
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="p-1 hover:bg-gray-100 rounded"
-          >
-            <MessageSquare className="w-4 h-4 text-blue-600" />
-            <span className="sr-only">Request More Information</span>
-          </Button>
+          
         </div>
-      )
-    }
+      ),
+    },
   ];
 
-  if (isProjectsLoading || isTasksLoading) {
+  if (isLoading) {
     return <div className="p-6 text-center">Loading...</div>;
   }
 
-  if (projectsError || tasksError) {
-    return <div className="p-6 text-center text-red-600">Error: {projectsError || tasksError}</div>;
+  if (error) {
+    return <div className="p-6 text-center text-red-600">Error: {error}</div>;
   }
 
   return (
@@ -106,51 +147,35 @@ const SupervisorsStatus = () => {
         {/* Project Requests Section */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-primary">My Project Requests</h2>
-            <div className="flex items-center space-x-2">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search requests..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8 pr-2 py-1 border rounded focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-                <Search className="w-4 h-4 absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              </div>
-              <Button variant="primary" size="sm" className="rounded-full relative">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                  {projectRequests ? projectRequests.filter(p => p.status === 'Pending').length : 0}
-                </span>
-              </Button>
+            <h2 className="text-xl font-semibold text-primary">My Projects</h2>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search projects..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8 pr-2 py-1 border rounded focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+              <Search className="w-4 h-4 absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
             </div>
           </div>
           <div className="overflow-x-auto">
-            <Table data={filteredProjectRequests} columns={projectColumns} />
+            <Table data={filteredProjects} columns={projectColumns} />
           </div>
         </div>
 
         {/* Tasks and Calendar Section */}
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Calendar */}
-          <Calendar 
-            tasks={tasks || []} 
-            selectedDate={selectedDate} 
-            setSelectedDate={setSelectedDate} 
-          />
+          <Calendar tasks={tasks} selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
 
           {/* Task List */}
-          <TaskList 
-            tasks={tasks || []} 
-            addTask={addTask} 
-            selectedDate={selectedDate}
-          />
+          <TaskList tasks={tasks} selectedDate={selectedDate} />
 
           {/* Job Completed */}
-          <ProgressBar 
-            completedTasks={(projects || []).filter(p => p.gradeStatus === 'Submitted' && p.feedbackStatus === 'Submitted').length}
-            totalTasks={(projects || []).length * 2}
+          <ProgressBar
+            completedTasks={tasks.filter((task) => task.task_status === 'Completed').length}
+            totalTasks={tasks.length}
           />
         </div>
       </div>
