@@ -116,7 +116,7 @@ const Navbar = () => {
               onClick={() => navigate('/signUp')}
               className='bg-primary text-white px-4 py-2 rounded-full text-sm'
             >
-              Create account
+              Log In
             </Button>
           )}
         </div>
