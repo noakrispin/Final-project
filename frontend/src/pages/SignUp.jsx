@@ -12,6 +12,7 @@ function SignUp() {
   const navigate = useNavigate();
   const [users, setUsers] = useState(usersData); // Simulate user data
   const [formData, setFormData] = useState({
+    ID: '', 
     fullName: '',
     email: '',
     role: '',
@@ -34,7 +35,11 @@ function SignUp() {
   // Validate form inputs
   const validateForm = () => {
     const newErrors = {};
+    const idRegex = /^\d+$/;
 
+    if (!idRegex.test(formData.ID)) {
+      newErrors.ID = 'ID must contain only numbers';
+    }
     if (!formData.fullName.trim()) newErrors.fullName = 'Full name is required';
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
@@ -61,44 +66,44 @@ function SignUp() {
 
   // Simulate form submission
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (validateForm()) {  // Ensure validation passes
-    try {
-      const newUser = { id: users.length + 1, ...formData };
+    if (validateForm()) {  // Ensure validation passes
+      try {
+        const newUser = { id: users.length + 1, ...formData };
 
-      // Simulate adding the user to the system
-      setUsers((prevUsers) => [...prevUsers, newUser]);
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API response delay
+        // Simulate adding the user to the system
+        setUsers((prevUsers) => [...prevUsers, newUser]);
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API response delay
 
-      // Show success toast only after user is added
-      toast.success('Account created successfully!', {
+        // Show success toast only after user is added
+        toast.success('Account created successfully!', {
+          duration: 3000,
+          position: 'top-center',
+        });
+
+        // Clear form after success
+        setFormData({ ID: '', fullName: '', email: '', role: '', password: '' });
+
+        // Navigate or provide additional feedback
+        setTimeout(() => {
+          navigate('/');
+        }, 3000);
+      } catch (error) {
+        console.error('Error creating account:', error);
+        toast.error('An error occurred. Please try again.', {
+          duration: 5000,
+          position: 'top-center',
+        });
+      }
+    } else {
+      // Optionally, show a general error if the form validation fails
+      toast.error('Please correct the errors before submitting.', {
         duration: 3000,
         position: 'top-center',
       });
-
-      // Clear form after success
-      setFormData({ fullName: '', email: '', role: '', password: '' });
-
-      // Navigate or provide additional feedback
-      setTimeout(() => {
-        navigate('/');
-      }, 3000);
-    } catch (error) {
-      console.error('Error creating account:', error);
-      toast.error('An error occurred. Please try again.', {
-        duration: 5000,
-        position: 'top-center',
-      });
     }
-  } else {
-    // Optionally, show a general error if the form validation fails
-    toast.error('Please correct the errors before submitting.', {
-      duration: 3000,
-      position: 'top-center',
-    });
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-white relative overflow-hidden flex justify-center items-center py-12">
@@ -110,6 +115,15 @@ function SignUp() {
         <p className="text-lg text-gray-600 mb-6">Sign up to access the Final Project Portal.</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <InputField
+            label="ID"
+            name="ID"
+            type="text"
+            value={formData.ID}
+            onChange={handleInputChange}
+            error={errors.ID}
+          />
+
           {['fullName', 'email'].map((field) => (
             <InputField
               key={field}
@@ -190,7 +204,7 @@ const RoleDropdown = ({ isOpen, onSelect, toggle, selectedRole, error }) => (
     <label htmlFor="role" className="block text-gray-600 mb-1">Role</label>
     <div className="relative">
       <button
-        id="role" // Add the id here
+        id="role"
         type="button"
         onClick={toggle}
         className="w-full h-[50px] px-4 flex items-center justify-between border border-[#dadada] rounded-md bg-white"
