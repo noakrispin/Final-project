@@ -1,5 +1,6 @@
 // Router for `student_projects`
 ////////////////////////////////verify logic of pairs////////////////////////////////////////
+
 const express = require('express');
 const db = require('../db'); // Import database connection
 const router = express.Router();
@@ -15,21 +16,26 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Fetch projects a specific student is associated with
-router.get('/student/:studentId', async (req, res) => {
-  const { studentId } = req.params;
+// Fetch students assigned to a specific project
+router.get('/:projectId', async (req, res) => {
+  const { projectId } = req.params;
   try {
+    // Query to fetch student names and partner names associated with the project
     const [rows] = await db.query(
-      `SELECT DISTINCT ap.* 
-       FROM student_projects sp 
-       JOIN all_projects ap ON sp.project_id = ap.id 
-       WHERE sp.student_id = ? OR sp.partner_id = ?`,
-      [studentId, studentId]
+      `
+      SELECT u1.id AS student_id, u1.username AS student_name, u2.id AS partner_id, u2.username AS partner_name
+      FROM student_projects sp
+      LEFT JOIN users u1 ON sp.student_id = u1.id
+      LEFT JOIN users u2 ON sp.partner_id = u2.id
+      WHERE sp.project_id = ?;
+      `,
+      [projectId]
     );
+
     res.json(rows);
   } catch (error) {
-    console.error('Error fetching projects for student:', error);
-    res.status(500).json({ error: 'Failed to fetch projects for student' });
+    console.error('Error fetching students for project:', error);
+    res.status(500).json({ error: 'Failed to fetch students for project' });
   }
 });
 
@@ -64,21 +70,6 @@ router.delete('/project/:projectId/student/:studentId', async (req, res) => {
   } catch (error) {
     console.error('Error removing student from project:', error);
     res.status(500).json({ error: 'Failed to remove student from project' });
-  }
-});
-
-// Update partner for a student-project mapping
-router.patch('/:mappingId', async (req, res) => {
-  const { mappingId } = req.params;
-  const { partner_id } = req.body;
-
-  try {
-    // Update the partner_id for the specific mapping
-    await db.query('UPDATE student_projects SET partner_id = ? WHERE id = ?', [partner_id, mappingId]);
-    res.status(200).json({ message: 'Partner updated successfully' });
-  } catch (error) {
-    console.error('Error updating partner for student-project mapping:', error);
-    res.status(500).json({ error: 'Failed to update partner' });
   }
 });
 

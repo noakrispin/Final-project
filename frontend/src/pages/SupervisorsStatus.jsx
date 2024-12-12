@@ -34,7 +34,36 @@ const SupervisorsStatus = () => {
           tasksResponse.json(),
         ]);
 
-        setProjects(projectsData);
+        // Enhance project data with student names
+        const enhancedProjects = await Promise.all(
+          projectsData.map(async (project) => {
+            try {
+              const studentsResponse = await fetch(`http://localhost:3001/api/student_projects/${project.id}`);
+              if (!studentsResponse.ok) {
+                throw new Error(`Failed to fetch student data for project ${project.id}`);
+              }
+              const students = await studentsResponse.json();
+              const studentNames = students
+                .map((student) =>
+                  `${student.student_name}${student.partner_name ? ` & ${student.partner_name}` : ''}`
+                )
+                .join(', ');
+
+              return {
+                ...project,
+                students: studentNames || 'None',
+              };
+            } catch (err) {
+              console.error(err);
+              return {
+                ...project,
+                students: 'Error fetching student data',
+              };
+            }
+          })
+        );
+
+        setProjects(enhancedProjects);
         setTasks(tasksData);
         setIsLoading(false);
       } catch (err) {
@@ -63,7 +92,35 @@ const SupervisorsStatus = () => {
       const updatedProjectsResponse = await fetch(`http://localhost:3001/api/all_projects/lecturer/${user.id}`);
       const updatedProjectsData = await updatedProjectsResponse.json();
 
-      setProjects(updatedProjectsData);
+      const enhancedProjects = await Promise.all(
+        updatedProjectsData.map(async (project) => {
+          try {
+            const studentsResponse = await fetch(`http://localhost:3001/api/student_projects/${project.id}`);
+            if (!studentsResponse.ok) {
+              throw new Error(`Failed to fetch student data for project ${project.id}`);
+            }
+            const students = await studentsResponse.json();
+            const studentNames = students
+              .map((student) =>
+                `${student.student_name}${student.partner_name ? ` & ${student.partner_name}` : ''}`
+              )
+              .join(', ');
+
+            return {
+              ...project,
+              students: studentNames || 'None',
+            };
+          } catch (err) {
+            console.error(err);
+            return {
+              ...project,
+              students: 'Error fetching student data',
+            };
+          }
+        })
+      );
+
+      setProjects(enhancedProjects);
     } catch (err) {
       console.error('Error updating project status:', err);
     }
@@ -81,7 +138,7 @@ const SupervisorsStatus = () => {
     {
       key: 'students',
       header: 'Students',
-      render: (value) => (Array.isArray(value) && value.length > 0 ? value.join(', ') : 'None'),
+      render: (value) => (value ? value : 'None'),
     },
     {
       key: 'status',
