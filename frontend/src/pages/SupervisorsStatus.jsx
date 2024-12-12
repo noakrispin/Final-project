@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Table } from '../components/ui/Table';
 import { Button } from '../components/ui/Button';
-import { Check, X, Search, Bell, MessageSquare } from 'lucide-react';
+import { Check, X, Search, MessageSquare } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Calendar } from '../components/ui/Calendar';
 import { TaskList } from '../components/data-display/TaskList';
@@ -21,7 +21,7 @@ const SupervisorsStatus = () => {
     const fetchData = async () => {
       try {
         const [projectsResponse, tasksResponse] = await Promise.all([
-          fetch('http://localhost:3001/api/projects'),
+          fetch(`http://localhost:3001/api/all_projects/lecturer/${user.id}`),
           fetch('http://localhost:3001/api/tasks'),
         ]);
 
@@ -45,14 +45,14 @@ const SupervisorsStatus = () => {
     };
 
     fetchData();
-  }, []);
+  }, [user.id]);
 
   const handleProjectAction = async (projectId, action) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/projects/${projectId}`, {
+      const response = await fetch(`http://localhost:3001/api/all_projects/${projectId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: action }),
+        body: JSON.stringify({ action }),
       });
 
       if (!response.ok) {
@@ -60,8 +60,10 @@ const SupervisorsStatus = () => {
       }
 
       // Refresh projects after update
-      const updatedProjects = await fetch('http://localhost:3001/api/projects');
-      setProjects(await updatedProjects.json());
+      const updatedProjectsResponse = await fetch(`http://localhost:3001/api/all_projects/lecturer/${user.id}`);
+      const updatedProjectsData = await updatedProjectsResponse.json();
+
+      setProjects(updatedProjectsData);
     } catch (err) {
       console.error('Error updating project status:', err);
     }
@@ -70,25 +72,36 @@ const SupervisorsStatus = () => {
   const filteredProjects = projects.filter(
     (project) =>
       project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      project.key_interests?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const projectColumns = [
-    { key: 'id', header: 'ProjectID', sortable: true },
+    { key: 'id', header: 'Project ID', sortable: true },
     { key: 'title', header: 'Project Title', sortable: true },
-    { key: 'student_id', header: 'Students', sortable: true }, ///////////////////////////////////////////////////
-    /////////////////////CHANGE FROM STUDENT ID TO STUDENT NAMES - FROM USERS TABLE////////////////////////////
-    { key: 'status', header: 'Status', sortable: true, render: (value) => (
-        <span className={`px-2 py-1 rounded-full text-sm ${
-          value === 'Unassigned' ? 'bg-gray-300 text-gray-800' :
-          value === 'Approved' ? 'bg-green-100 text-green-800' :
-          value === 'Rejected' ? 'bg-red-100 text-red-800' :
-          value === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-          'bg-gray-100 text-gray-800'
-        }`}>
+    {
+      key: 'students',
+      header: 'Students',
+      render: (value) => (Array.isArray(value) && value.length > 0 ? value.join(', ') : 'None'),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      sortable: true,
+      render: (value) => (
+        <span
+          className={`px-2 py-1 rounded-full text-sm ${
+            value === 'Unassigned'
+              ? 'bg-gray-300 text-gray-800'
+              : value === 'Approved'
+              ? 'bg-green-100 text-green-800'
+              : value === 'Pending'
+              ? 'bg-yellow-100 text-yellow-800'
+              : 'bg-gray-100 text-gray-800'
+          }`}
+        >
           {value}
         </span>
-      )
+      ),
     },
     {
       key: 'actions',
@@ -98,7 +111,7 @@ const SupervisorsStatus = () => {
           {project.status === 'Pending' && (
             <>
               <Button
-                onClick={() => handleProjectAction(project.id, 'Approved')}
+                onClick={() => handleProjectAction(project.id, 'approve')}
                 variant="ghost"
                 size="sm"
                 className="p-1 hover:bg-gray-100 rounded"
@@ -107,7 +120,7 @@ const SupervisorsStatus = () => {
                 <span className="sr-only">Approve</span>
               </Button>
               <Button
-                onClick={() => handleProjectAction(project.id, 'Rejected')}
+                onClick={() => handleProjectAction(project.id, 'reject')}
                 variant="ghost"
                 size="sm"
                 className="p-1 hover:bg-gray-100 rounded"
@@ -116,16 +129,15 @@ const SupervisorsStatus = () => {
                 <span className="sr-only">Reject</span>
               </Button>
               <Button
-              variant="ghost"
-              size="sm"
-              className="p-1 hover:bg-gray-100 rounded"
-            >
-              <MessageSquare className="w-4 h-4 text-blue-600" />
-              <span className="sr-only">Request More Information</span>
-            </Button>
+                variant="ghost"
+                size="sm"
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <MessageSquare className="w-4 h-4 text-blue-600" />
+                <span className="sr-only">Request More Information</span>
+              </Button>
             </>
           )}
-          
         </div>
       ),
     },
@@ -141,7 +153,7 @@ const SupervisorsStatus = () => {
 
   return (
     <div className="p-6 bg-gray-100">
-      <h1 className="text-2xl font-bold mb-6 text-primary">My Status - {user?.fullName}</h1>
+      <h1 className="text-2xl font-bold mb-6 text-primary">{user?.username}'s Status</h1>
 
       <div className="space-y-6">
         {/* Project Requests Section */}

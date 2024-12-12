@@ -3,17 +3,27 @@ const cors = require('cors');
 const db = require('./db'); // Import the database connection
 const app = express();
 const port = 3001;
+
 // Import route files
 const userRoutes = require('./routes/users');
-const projectRoutes = require('./routes/projects');
+const allProjectsRoutes = require('./routes/allProjects');
+const approvedProjectsRoutes = require('./routes/approvedProjects');
+const lecturerProjectsRoutes = require('./routes/lecturerProjects');
+const studentProjectsRoutes = require('./routes/studentProjects');
+const projectNotesRoutes = require('./routes/projectNotes');
 const taskRoutes = require('./routes/tasks');
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Register routes with prefixes
+// Register routes with correct prefixes
 app.use('/api/users', userRoutes);
-app.use('/api/projects', projectRoutes);
+app.use('/api/all_projects', allProjectsRoutes);
+app.use('/api/approved_projects', approvedProjectsRoutes);
+app.use('/api/lecturer_projects', lecturerProjectsRoutes);
+app.use('/api/student_projects', studentProjectsRoutes);
+app.use('/api/project_notes', projectNotesRoutes);
 app.use('/api/tasks', taskRoutes);
 
 // Function to start the server after confirming the database connected successfully
@@ -28,10 +38,7 @@ const startServer = async () => {
     console.error('Error connecting to the database:', error);
     process.exit(1); // Exit if the database connection fails
   }
-  
 };
-
-
 
 // Start the server
 startServer();
