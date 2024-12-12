@@ -35,33 +35,10 @@ const SupervisorsStatus = () => {
         ]);
 
         // Enhance project data with student names
-        const enhancedProjects = await Promise.all(
-          projectsData.map(async (project) => {
-            try {
-              const studentsResponse = await fetch(`http://localhost:3001/api/student_projects/${project.id}`);
-              if (!studentsResponse.ok) {
-                throw new Error(`Failed to fetch student data for project ${project.id}`);
-              }
-              const students = await studentsResponse.json();
-              const studentNames = students
-                .map((student) =>
-                  `${student.student_name}${student.partner_name ? ` & ${student.partner_name}` : ''}`
-                )
-                .join(', ');
-
-              return {
-                ...project,
-                students: studentNames || 'None',
-              };
-            } catch (err) {
-              console.error(err);
-              return {
-                ...project,
-                students: 'Error fetching student data',
-              };
-            }
-          })
-        );
+        const enhancedProjects = projectsData.map((project) => ({
+          ...project,
+          students: project.students || 'None', // Fetched student names from the backend
+        }));
 
         setProjects(enhancedProjects);
         setTasks(tasksData);
@@ -92,33 +69,10 @@ const SupervisorsStatus = () => {
       const updatedProjectsResponse = await fetch(`http://localhost:3001/api/all_projects/lecturer/${user.id}`);
       const updatedProjectsData = await updatedProjectsResponse.json();
 
-      const enhancedProjects = await Promise.all(
-        updatedProjectsData.map(async (project) => {
-          try {
-            const studentsResponse = await fetch(`http://localhost:3001/api/student_projects/${project.id}`);
-            if (!studentsResponse.ok) {
-              throw new Error(`Failed to fetch student data for project ${project.id}`);
-            }
-            const students = await studentsResponse.json();
-            const studentNames = students
-              .map((student) =>
-                `${student.student_name}${student.partner_name ? ` & ${student.partner_name}` : ''}`
-              )
-              .join(', ');
-
-            return {
-              ...project,
-              students: studentNames || 'None',
-            };
-          } catch (err) {
-            console.error(err);
-            return {
-              ...project,
-              students: 'Error fetching student data',
-            };
-          }
-        })
-      );
+      const enhancedProjects = updatedProjectsData.map((project) => ({
+        ...project,
+        students: project.students || 'None', // Fetched student names from the backend
+      }));
 
       setProjects(enhancedProjects);
     } catch (err) {

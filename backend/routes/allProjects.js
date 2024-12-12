@@ -6,7 +6,6 @@ const router = express.Router();
 // Fetch all projects
 router.get('/', async (req, res) => {
   try {
-    // Query to fetch all rows from the `all_projects` table
     const [rows] = await db.query('SELECT * FROM all_projects');
     res.json(rows);
   } catch (error) {
@@ -17,12 +16,22 @@ router.get('/', async (req, res) => {
 
 // Fetch projects by lecturer ID
 router.get('/lecturer/:lecturerId', async (req, res) => {
-  const { lecturerId } = req.params; // Extract lecturer ID from URL parameters
+  const { lecturerId } = req.params;
   try {
-    // Query to fetch projects created by a specific lecturer
     const [rows] = await db.query(
-      'SELECT * FROM all_projects WHERE created_by_lecturer_id = ?',
-      [lecturerId]
+      `
+      SELECT ap.*, 
+        GROUP_CONCAT(DISTINCT CONCAT(u.username, IFNULL(CONCAT(' & ', p.username), '')) SEPARATOR ', ') AS students,
+        SUM(CASE WHEN sp.is_registered = TRUE THEN 1 ELSE 0 END) AS registered_count
+      FROM all_projects ap
+      LEFT JOIN student_projects sp ON ap.id = sp.project_id
+      LEFT JOIN users u ON sp.student_id = u.id
+      LEFT JOIN users p ON sp.partner_id = p.id
+      JOIN lecturer_projects lp ON lp.project_id = ap.id
+      WHERE lp.lecturer_id = ? OR lp.lecturer2_id = ?
+      GROUP BY ap.id;
+      `,
+      [lecturerId, lecturerId]
     );
     res.json(rows);
   } catch (error) {
@@ -33,12 +42,11 @@ router.get('/lecturer/:lecturerId', async (req, res) => {
 
 // Change project status (approve or reject)
 router.patch('/:projectId', async (req, res) => {
-  const { projectId } = req.params; // Extract project ID from URL parameters
-  const { action } = req.body; // Extract action from request body
+  const { projectId } = req.params;
+  const { action } = req.body;
 
   try {
     if (action === 'approve') {
-      // Approve project and move it to `approved_projects`
       const [project] = await db.query('SELECT * FROM all_projects WHERE id = ?', [projectId]);
 
       if (!project.length) {
@@ -47,10 +55,8 @@ router.patch('/:projectId', async (req, res) => {
 
       const projectData = project[0];
 
-      // Update the project status to "Approved" in `all_projects`
       await db.query('UPDATE all_projects SET status = ? WHERE id = ?', ['Approved', projectId]);
 
-      // Insert the approved project into the `approved_projects` table
       await db.query(
         `INSERT INTO approved_projects (id, title, description, type, key_interests, outside_companies, 
          approved_by_lecturer_id, year, status, grade_status, feedback_status, deadline, git_link) 
@@ -63,24 +69,24 @@ router.patch('/:projectId', async (req, res) => {
           projectData.key_interests,
           projectData.outside_companies,
           projectData.created_by_lecturer_id,
-          new Date().getFullYear(), // Current year
+          new Date().getFullYear(),
           'On Track',
           'Not Submitted',
           'Not Submitted',
-          null, // Deadline can be set later
-          null, // Git link can be added later
+          null,
+          null,
         ]
       );
 
-      res.status(200).json({ message: 'Project approved and added to approved_projects' });
+      await db.query('UPDATE student_projects SET is_registered = TRUE WHERE project_id = ?', [projectId]);
+
+      res.status(200).json({ message: 'Project approved, added to approved_projects, and student registrations updated' });
     } else if (action === 'reject') {
-      // Reject project and reset its status
       await db.query('UPDATE all_projects SET status = ? WHERE id = ?', ['Unassigned', projectId]);
 
-      // Remove the project association from `student_projects`
-      await db.query('DELETE FROM student_projects WHERE project_id = ?', [projectId]);
+      await db.query('UPDATE student_projects SET is_registered = FALSE WHERE project_id = ?', [projectId]);
 
-      res.status(200).json({ message: 'Project status reset to Unassigned and student associations removed' });
+      res.status(200).json({ message: 'Project status reset to Unassigned and student registrations updated' });
     } else {
       res.status(400).json({ error: 'Invalid action' });
     }
