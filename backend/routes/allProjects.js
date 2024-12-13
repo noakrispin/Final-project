@@ -55,8 +55,10 @@ router.patch('/:projectId', async (req, res) => {
 
       const projectData = project[0];
 
+      // Update the project status to "Approved"
       await db.query('UPDATE all_projects SET status = ? WHERE id = ?', ['Approved', projectId]);
 
+      // Insert the approved project into `approved_projects`
       await db.query(
         `INSERT INTO approved_projects (id, title, description, type, key_interests, outside_companies, 
          approved_by_lecturer_id, year, status, grade_status, feedback_status, deadline, git_link) 
@@ -78,21 +80,26 @@ router.patch('/:projectId', async (req, res) => {
         ]
       );
 
+      // Mark students as registered for the project
       await db.query('UPDATE student_projects SET is_registered = TRUE WHERE project_id = ?', [projectId]);
 
-      res.status(200).json({ message: 'Project approved, added to approved_projects, and student registrations updated' });
+      res.status(200).json({ message: 'Project approved, added to approved_projects, and student registrations updated.' });
     } else if (action === 'reject') {
+      // Reset project status to "Unassigned"
       await db.query('UPDATE all_projects SET status = ? WHERE id = ?', ['Unassigned', projectId]);
 
-      await db.query('UPDATE student_projects SET is_registered = FALSE WHERE project_id = ?', [projectId]);
+      // Unlink students by setting `project_id` to NULL and resetting `is_registered`
+      await db.query('UPDATE student_projects SET project_id = NULL, is_registered = FALSE WHERE project_id = ?', [
+        projectId,
+      ]);
 
-      res.status(200).json({ message: 'Project status reset to Unassigned and student registrations updated' });
+      res.status(200).json({ message: 'Project rejected, students unlinked, and registrations reset successfully.' });
     } else {
-      res.status(400).json({ error: 'Invalid action' });
+      res.status(400).json({ error: 'Invalid action.' });
     }
   } catch (error) {
     console.error('Error updating project status:', error);
-    res.status(500).json({ error: 'Failed to update project status' });
+    res.status(500).json({ error: 'Failed to update project status.' });
   }
 });
 

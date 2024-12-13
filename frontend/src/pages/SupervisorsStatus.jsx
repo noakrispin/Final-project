@@ -60,25 +60,26 @@ const SupervisorsStatus = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),
       });
-
+  
       if (!response.ok) {
         throw new Error('Failed to update project status');
       }
-
+  
       // Refresh projects after update
       const updatedProjectsResponse = await fetch(`http://localhost:3001/api/all_projects/lecturer/${user.id}`);
       const updatedProjectsData = await updatedProjectsResponse.json();
-
+  
       const enhancedProjects = updatedProjectsData.map((project) => ({
         ...project,
-        students: project.students || 'None', // Fetched student names from the backend
+        students: project.students || 'None',
       }));
-
+  
       setProjects(enhancedProjects);
     } catch (err) {
       console.error('Error updating project status:', err);
     }
   };
+  
 
   const filteredProjects = projects.filter(
     (project) =>
