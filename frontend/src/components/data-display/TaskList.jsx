@@ -1,26 +1,63 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '../ui/Button';
 
-export const TaskList = ({ tasks, addTask, selectedDate }) => {
+export const TaskList = ({ selectedDate }) => {
+  const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState({ title: '', date: '' });
   const [displayedTasks, setDisplayedTasks] = useState(3);
 
-  const handleNewTaskSubmit = (e) => {
+  // Fetch tasks from the database
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/tasks');
+        if (!response.ok) {
+          throw new Error('Failed to fetch tasks');
+        }
+        const data = await response.json();
+        setTasks(data);
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+      }
+    };
+
+    fetchTasks();
+  }, []);
+
+  const handleNewTaskSubmit = async (e) => {
     e.preventDefault();
     if (newTask.title && newTask.date) {
-      addTask({
-        title: newTask.title,
-        deadline: new Date(newTask.date),
-        priority: 'medium',
-        type: 'custom'
-      });
-      setNewTask({ title: '', date: '' });
+      try {
+        const response = await fetch('http://localhost:3001/api/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            task_title: newTask.title,
+            task_due_date: newTask.date,
+            task_status: 'Pending', // Default value
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to add task');
+        }
+
+        const createdTask = await response.json();
+        setTasks((prevTasks) => [...prevTasks, createdTask]);
+        setNewTask({ title: '', date: '' });
+      } catch (error) {
+        console.error('Error adding task:', error);
+      }
     }
   };
 
   const tasksForSelectedDate = selectedDate
-    ? tasks.filter(task => new Date(task.deadline).toDateString() === selectedDate.toDateString())
+    ? tasks.filter(
+        (task) =>
+          new Date(task.task_due_date).toDateString() ===
+          selectedDate.toDateString()
+      )
     : tasks;
 
   return (
@@ -51,20 +88,21 @@ export const TaskList = ({ tasks, addTask, selectedDate }) => {
             {selectedDate ? `Tasks for ${selectedDate.toDateString()}` : 'All Tasks'}
           </h3>
           {tasksForSelectedDate.slice(0, displayedTasks).map((task) => (
-            <div
-              key={task.id}
-              className="p-3 bg-gray-50 rounded-lg mb-2"
-            >
-              <p className="text-sm font-medium">{task.title}</p>
-              <p className="text-xs text-gray-500">{new Date(task.deadline).toDateString()}</p>
-              <p className="text-xs text-blue-600">{task.type}</p>
+            <div key={task.taskID} className="p-3 bg-gray-50 rounded-lg mb-2">
+              <p className="text-sm font-medium">{task.task_title}</p>
+              <p className="text-xs text-gray-500">
+                {new Date(task.task_due_date).toDateString()}
+              </p>
+              <p className="text-xs text-blue-600">{task.task_status}</p>
             </div>
           ))}
           {tasksForSelectedDate.length > 3 && (
             <Button
-              onClick={() => setDisplayedTasks(prevDisplayed => 
-                prevDisplayed === 3 ? tasksForSelectedDate.length : 3
-              )}
+              onClick={() =>
+                setDisplayedTasks((prevDisplayed) =>
+                  prevDisplayed === 3 ? tasksForSelectedDate.length : 3
+                )
+              }
               className="mt-2 w-full"
             >
               {displayedTasks === 3 ? 'Show More' : 'Show Less'}
