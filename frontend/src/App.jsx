@@ -14,26 +14,60 @@ import NotFound from './pages/NotFound'; // 404 Page
 
 // Component imports
 import Navbar from './components/layout/Navbar'; // Navigation bar
+import ProtectedRoute from './components/ProtectedRoute'; // ProtectedRoute component
+import { AuthProvider } from './context/AuthContext'; // Auth Context
 
 const App = () => {
   return (
-    <div className="mx-4 sm:mx-[10%]">
-      <Navbar />
-      <Routes>
-        {/* Basic Routes */}
-        <Route path="/" element={<Home />} />
-        <Route path="/projectsSupervisors" element={<ProjectsSupervisors />} />
-        <Route path="/profile" element={<MyProfile />} />
-        <Route path="/supervisorsStatus" element={<Supervisors />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/evaluation-forms" element={<EvaluationForms />} />
-        <Route path="/contact" element={<Contact />} />
+    <AuthProvider>
+      <div className="mx-4 sm:mx-[10%]">
+        <Navbar />
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/contact" element={<Contact />} />
 
-        {/* 404 Page */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </div>
+          {/* Protected Routes */}
+          <Route
+            path="/projectsSupervisors"
+            element={
+              <ProtectedRoute>
+                <ProjectsSupervisors />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <MyProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/supervisorsStatus"
+            element={
+              <ProtectedRoute>
+                <Supervisors />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/evaluation-forms"
+            element={
+              <ProtectedRoute>
+                <EvaluationForms />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 404 Page */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </div>
+    </AuthProvider>
   );
 };
 
