@@ -128,7 +128,7 @@ export default function MyProfile() {
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-4 mb-6">
           <div>
-            <h1 className="text-4xl font-bold text-gray-800">Profile of {user.username}</h1>
+            <h1 className="text-4xl font-bold text-gray-800">{user.username}'s Profile</h1>
             <p className="text-gray-600 font-semibold">
               {user.role} | <span className="text-blue-600 cursor-pointer">{user.email}</span>
             </p>
