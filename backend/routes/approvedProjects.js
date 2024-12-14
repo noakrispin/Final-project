@@ -14,13 +14,18 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Fetch approved projects by lecturer ID
+// Fetch approved projects for a specific lecturer or co-lecturer
 router.get('/lecturer/:lecturerId', async (req, res) => {
   const { lecturerId } = req.params;
   try {
     const [rows] = await db.query(
-      'SELECT * FROM approved_projects WHERE approved_by_lecturer_id = ?',
-      [lecturerId]
+      `
+      SELECT ap.*
+      FROM approved_projects ap
+      JOIN lecturer_projects lp ON ap.id = lp.project_id
+      WHERE lp.lecturer_id = ? OR lp.lecturer2_id = ?
+      `,
+      [lecturerId, lecturerId]
     );
     res.json(rows);
   } catch (error) {
@@ -28,6 +33,7 @@ router.get('/lecturer/:lecturerId', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch approved projects for lecturer' });
   }
 });
+
 
 // Fetch approved projects by year
 router.get('/year/:year', async (req, res) => {

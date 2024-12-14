@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FaCircleUser } from "react-icons/fa6";
 import { RiArrowDropDownLine, RiMenu3Line } from "react-icons/ri";
@@ -19,6 +19,18 @@ const Navbar = () => {
   const [showResults, setShowResults] = useState(false);
 
   const { user, logout } = useAuth(); // Get user and logout from AuthContext
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, []);
 
   const handleSearch = (e) => {
     const query = e.target.value;
@@ -41,6 +53,11 @@ const Navbar = () => {
     navigate(`/project/${projectId}`);
     setShowResults(false);
     setSearchQuery('');
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login'); // Redirect to login page after logout
   };
 
   return (
@@ -104,16 +121,16 @@ const Navbar = () => {
               <FaCircleUser className='w-6 h-6 rounded-full' aria-hidden="true" />
               <RiArrowDropDownLine className="w-6 h-6" aria-hidden="true" />
               {dropdownOpen && (
-                <div className='absolute top-10 right-0 pt-2 text-sm font-medium text-gray-600 z-20 bg-stone-50 py-2 space-y-1 rounded-md shadow-md'>
+                <div className='absolute top-10 right-0 pt-2 text-sm font-medium text-gray-600 z-20 bg-white py-2 space-y-1 rounded-md shadow-md'>
                   <button onClick={() => navigate('/profile')} className="hover:bg-gray-200 cursor-pointer px-4 py-2 w-full text-left">My Profile</button>
                   <button onClick={() => navigate('/supervisorsStatus')} className="hover:bg-gray-200 cursor-pointer px-4 py-2 w-full text-left">My Status</button>
-                  <button onClick={logout} className="hover:bg-gray-200 cursor-pointer px-4 py-2 w-full text-left">Logout</button>
+                  <button onClick={handleLogout} className="hover:bg-gray-200 cursor-pointer px-4 py-2 w-full text-left">Logout</button>
                 </div>
               )}
             </div>
           ) : (
             <Button
-              onClick={() => navigate('/Login')}
+              onClick={() => navigate('/login')}
               className='bg-primary text-white px-4 py-2 rounded-full text-sm'
             >
               Log In

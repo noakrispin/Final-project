@@ -1,19 +1,18 @@
-
-import React, { useState } from 'react'; 
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import ErrorMessage from '../components/shared/ErrorMessage';
-import toast, { Toaster } from 'react-hot-toast'; 
+import toast, { Toaster } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
 function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth(); 
+  const { login } = useAuth();
   const [formData, setFormData] = useState({ usernameOrEmail: '', password: '' });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false); 
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -50,7 +49,7 @@ function Login() {
         if (response.ok) {
           toast.success('Login successful!');
           login(data.user); // Store user info in context
-          navigate('/');
+          navigate('/SupervisorsStatus'); // Redirect to Projects Status
         } else {
           toast.error(data.error || 'Login failed');
         }
@@ -76,7 +75,9 @@ function Login() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="usernameOrEmail" className="block text-gray-600 mb-1">Username or Email</label>
+            <label htmlFor="usernameOrEmail" className="block text-gray-600 mb-1">
+              Username or Email
+            </label>
             <input
               id="usernameOrEmail"
               name="usernameOrEmail"
@@ -90,7 +91,9 @@ function Login() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-gray-600 mb-1">Password</label>
+            <label htmlFor="password" className="block text-gray-600 mb-1">
+              Password
+            </label>
             <div className="relative">
               <input
                 id="password"
