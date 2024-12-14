@@ -3,19 +3,19 @@ import { Route, Routes } from 'react-router-dom';
 
 // Page imports
 import Home from './pages/Home';
-import ProjectsSupervisors from './pages/ProjectsSupervisors'; // Dashboard for supervisors
-import MyProfile from './pages/MyProfile'; // User profile page
-import Supervisors from './pages/SupervisorsStatus'; // Supervisors' status overview
-import Login from './pages/Login'; // Login page placeholder
-import Contact from './pages/Contact'; // Contact page
-import SignUp from './pages/SignUp'; // Registration page placeholder
-import EvaluationForms from './pages/EvaluationForm'; // Feedback form
-import NotFound from './pages/NotFound'; // 404 Page
+import ProjectsSupervisors from './pages/ProjectsSupervisors';
+import MyProfile from './pages/MyProfile';
+import Supervisors from './pages/SupervisorsStatus';
+import Login from './pages/Login';
+import Contact from './pages/Contact';
+import SignUp from './pages/SignUp';
+import EvaluationForms from './pages/EvaluationForm';
+import NotFound from './pages/NotFound';
 
 // Component imports
-import Navbar from './components/layout/Navbar'; // Navigation bar
-import ProtectedRoute from './components/ProtectedRoute'; // ProtectedRoute component
-import { AuthProvider } from './context/AuthContext'; // Auth Context
+import Navbar from './components/layout/Navbar';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import { AuthProvider } from './context/AuthContext';
 
 const App = () => {
   return (
@@ -33,7 +33,7 @@ const App = () => {
           <Route
             path="/projectsSupervisors"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['lecturer', 'admin']}>
                 <ProjectsSupervisors />
               </ProtectedRoute>
             }
@@ -41,7 +41,7 @@ const App = () => {
           <Route
             path="/profile"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['student', 'lecturer', 'admin']}>
                 <MyProfile />
               </ProtectedRoute>
             }
@@ -49,7 +49,7 @@ const App = () => {
           <Route
             path="/supervisorsStatus"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['lecturer', 'admin']}>
                 <Supervisors />
               </ProtectedRoute>
             }
@@ -57,7 +57,7 @@ const App = () => {
           <Route
             path="/evaluation-forms"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['lecturer', 'admin']}>
                 <EvaluationForms />
               </ProtectedRoute>
             }
