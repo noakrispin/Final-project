@@ -122,7 +122,7 @@ const Navbar = () => {
               <RiArrowDropDownLine className="w-6 h-6" aria-hidden="true" />
               {dropdownOpen && (
                 <div className='absolute top-10 right-0 pt-2 text-sm font-medium text-gray-600 z-20 bg-white py-2 space-y-1 rounded-md shadow-md'>
-                  <button onClick={() => navigate('/profile')} className="hover:bg-gray-200 cursor-pointer px-4 py-2 w-full text-left">My Profile</button>
+                  <button onClick={() => navigate('/MyProfile')} className="hover:bg-gray-200 cursor-pointer px-4 py-2 w-full text-left">My Profile</button>
                   <button onClick={() => navigate('/supervisorsStatus')} className="hover:bg-gray-200 cursor-pointer px-4 py-2 w-full text-left">My Status</button>
                   <button onClick={handleLogout} className="hover:bg-gray-200 cursor-pointer px-4 py-2 w-full text-left">Logout</button>
                 </div>
