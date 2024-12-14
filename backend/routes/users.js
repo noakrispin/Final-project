@@ -74,4 +74,30 @@ router.post('/login', async (req, res) => {
   }
 });
 
+
+//Change Paswword
+router.post('/change-password', async (req, res) => {
+  const { userId, currentPassword, newPassword } = req.body;
+
+  try {
+    const [user] = await db.query('SELECT * FROM users WHERE id = ?', [userId]);
+
+    if (!user.length) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    if (user[0].password !== currentPassword) {
+      return res.status(400).json({ error: 'Current password is incorrect.' });
+    }
+
+    await db.query('UPDATE users SET password = ? WHERE id = ?', [newPassword, userId]);
+
+    res.status(200).json({ message: 'Password updated successfully.' });
+  } catch (error) {
+    console.error('Error updating password:', error);
+    res.status(500).json({ error: 'Failed to update password. Please try again.' });
+  }
+});
+
+
 module.exports = router;

@@ -39,7 +39,7 @@ const App = () => {
             }
           />
           <Route
-            path="/profile"
+            path="/MyProfile"
             element={
               <ProtectedRoute allowedRoles={['student', 'lecturer', 'admin']}>
                 <MyProfile />
