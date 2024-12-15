@@ -1,6 +1,6 @@
 import React from 'react'
 
-function SudentStatus() {
+function StudentStatus() {
   return (
     <div>
         
@@ -8,4 +8,4 @@ function SudentStatus() {
   )
 }
 
-export default SudentStatus
+export default StudentStatus

@@ -1,11 +1,23 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FaFacebookF, FaTwitter, FaLinkedinIn, FaYoutube, FaInstagram } from 'react-icons/fa';
 import { ArrowRight } from 'lucide-react';
 import { assets } from '../assets/assets';
 import { Button } from '../components/ui/Button';
+import { useAuth } from '../context/AuthContext';
 
 export default function Home() {
+  const { user } = useAuth(); // Access user from the AuthContext
+  const navigate = useNavigate();
+
+  const handleGetStarted = () => {
+    if (user) {
+      navigate('/SupervisorsStatus'); // Navigate to the Status page if logged in
+    } else {
+      navigate('/Login'); // Navigate to the Login page if not logged in
+    }
+  };
+
   return (
     <div className="relative bg-gradient-to-b from-blue-600 to-blue-400 overflow-hidden min-h-screen flex items-center justify-center">
       {/* Background blur elements */}
@@ -27,14 +39,15 @@ export default function Home() {
             <p className="text-base lg:text-lg text-white/90 max-w-md mx-auto lg:mx-0">
               Streamline your journey, whether you're exploring projects or managing them.
             </p>
+            {/* Get Started Button */}
             <Button
-              asChild
+              onClick={handleGetStarted}
               className="bg-white text-gray-800 hover:bg-gray-100 shadow-md px-6 py-3 text-lg font-semibold"
             >
-              <Link to="/signup" className="inline-flex items-center gap-3">
+              <span className="inline-flex items-center gap-3">
                 Get Started
                 <ArrowRight className="w-5 h-5" />
-              </Link>
+              </span>
             </Button>
 
             {/* Braude Logo */}
