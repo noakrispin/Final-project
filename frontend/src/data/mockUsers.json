@@ -17,7 +17,7 @@
       "id": 3,
       "fullName": "Charlie Davis",
       "email": "charlie.davis@example.com",
-      "role": "Student",
+      "role": "Admin",
       "password": "Charlie@789"
   }
 ]

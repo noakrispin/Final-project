@@ -1,24 +1,22 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FaCircleUser } from "react-icons/fa6";
-import { RiArrowDropDownLine, RiMenu3Line } from "react-icons/ri";
+import { RiMenu3Line } from "react-icons/ri";
 import { FiSearch } from "react-icons/fi";
 import { Button } from '../ui/Button';
-import { useAuth } from '../../context/AuthContext'; // Import AuthContext
+import { useAuth } from '../../context/AuthContext';
 import projectsData from '../../data/projects.json';
 import { assets } from '../../assets/assets';
+import UserMenu from './UserMenu';
 
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
 
-  const { user, logout } = useAuth(); // Get user and logout from AuthContext
+  const { user } = useAuth();
 
   const handleSearch = (e) => {
     const query = e.target.value;
@@ -45,41 +43,45 @@ const Navbar = () => {
 
   return (
     <nav className="w-full bg-white border-b border-gray-200 sticky top-0 z-50">
-      <div className="flex justify-between items-center py-3 px-4 max-w-full mx-auto">
-        <div className="flex items-center gap-2 flex-none">
+      <div className="flex items-center h-16 px-4 max-w-[1400px] mx-auto">
+        <div className="flex-none">
           <Link to="/">
             <img
-              className='w-32 cursor-pointer'
+              className="w-40 cursor-pointer"
               src={assets.logo}
               alt="ProjectHub Logo"
             />
           </Link>
         </div>
+        
         <button
-          className="lg:hidden flex items-center gap-4"
+          className="lg:hidden ml-auto flex items-center"
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label="Toggle menu"
         >
           <RiMenu3Line className="w-6 h-6 cursor-pointer" />
         </button>
-        <ul className={`lg:flex gap-6 font-medium text-gray-800 text-xs lg:text-sm ${menuOpen ? 'block' : 'hidden'} absolute lg:static top-12 left-0 w-full lg:w-auto bg-white lg:bg-transparent flex-col lg:flex-row`}>
-          <NavLink to='/'>HOME</NavLink>
-          <NavLink to='/projectsSupervisors'>PROJECTS</NavLink>
-          <NavLink to='/supervisorsStatus'>STATUS</NavLink>
-          <NavLink to='/evaluation-forms'>FEEDBACK</NavLink>
-          <NavLink to='/contact'>CONTACT</NavLink>
-        </ul>
-        <div className='flex items-center gap-4 flex-none'>
+
+        <div className={`lg:flex flex-1 justify-center ${menuOpen ? 'block' : 'hidden'} absolute lg:static top-16 left-0 w-full lg:w-auto bg-white lg:bg-transparent`}>
+          <ul className="flex flex-col lg:flex-row items-center gap-2 lg:gap-12 font-medium text-gray-800 text-sm">
+            <NavLink to='/projectsSupervisors'>MY PROJECTS</NavLink>
+            <NavLink to='/supervisorsStatus'>PROJECTS FOR REVIEW</NavLink>
+            <NavLink to='/evaluation-forms'>GRADES</NavLink>
+            <NavLink to='/contact'>CONTACT</NavLink>
+          </ul>
+        </div>
+
+        <div className="flex items-center gap-4 ml-auto mr-4">
           <div className="relative hidden lg:block">
             <input
               type="text"
               placeholder="Search"
               value={searchQuery}
               onChange={handleSearch}
-              className="pl-8 pr-3 py-1 w-36 bg-[#ECEDF5] rounded-md text-sm text-gray-600 placeholder:text-gray-500 border"
+              className="pl-8 pr-3 py-1.5 w-48 bg-[#F4F4F8] rounded-md text-sm text-gray-600 placeholder:text-gray-500 border-none"
               aria-label="Search projects"
             />
-            <FiSearch className="absolute left-2 top-2 text-gray-500 w-4 h-4" aria-hidden="true" />
+            <FiSearch className="absolute left-2 top-2.5 text-gray-500 w-4 h-4" aria-hidden="true" />
             {showResults && searchResults.length > 0 && (
               <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-10">
                 {searchResults.map(result => (
@@ -96,25 +98,11 @@ const Navbar = () => {
             )}
           </div>
           {user ? (
-            <div
-              className='flex items-center gap-2 cursor-pointer relative'
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              ref={dropdownRef}
-            >
-              <FaCircleUser className='w-6 h-6 rounded-full' aria-hidden="true" />
-              <RiArrowDropDownLine className="w-6 h-6" aria-hidden="true" />
-              {dropdownOpen && (
-                <div className='absolute top-10 right-0 pt-2 text-sm font-medium text-gray-600 z-20 bg-stone-50 py-2 space-y-1 rounded-md shadow-md'>
-                  <button onClick={() => navigate('/profile')} className="hover:bg-gray-200 cursor-pointer px-4 py-2 w-full text-left">My Profile</button>
-                  <button onClick={() => navigate('/supervisorsStatus')} className="hover:bg-gray-200 cursor-pointer px-4 py-2 w-full text-left">My Status</button>
-                  <button onClick={logout} className="hover:bg-gray-200 cursor-pointer px-4 py-2 w-full text-left">Logout</button>
-                </div>
-              )}
-            </div>
+            <UserMenu />
           ) : (
             <Button
               onClick={() => navigate('/signUp')}
-              className='bg-primary text-white px-4 py-2 rounded-full text-sm'
+              className="bg-[#6366F1] hover:bg-[#5558E1] text-white px-6 py-2 rounded-md text-sm font-medium transition-colors"
             >
               Create account
             </Button>
@@ -131,11 +119,12 @@ const NavLink = ({ to, children }) => {
   return (
     <Link
       to={to}
-      className={`${isActive ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'}`}
+      className={`${isActive ? 'text-[#6366F1] border-b-2 border-[#6366F1]' : 'hover:text-[#6366F1]'} py-2 px-4 lg:py-1 text-base`}
     >
-      <li className='py-2 px-4 lg:py-1'>{children}</li>
+      <li>{children}</li>
     </Link>
   );
 };
 
 export default Navbar;
+
