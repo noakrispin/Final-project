@@ -28,8 +28,17 @@ export const Section = React.memo(({ title, description, filters, filterState, s
 
         <SearchBar value={search} onChange={setSearch} placeholder={`Search ${title.toLowerCase()}...`} />
 
-        <Table data={tableData} columns={tableColumns} />
+        <div className="overflow-x-auto">
+          <Table 
+            data={tableData} 
+            columns={tableColumns}
+            className="w-full"
+            thClassName="text-lg font-medium text-[#313131] px-6 py-4"
+            tdClassName="text-lg text-[#686b80] px-6 py-4"
+          />
+        </div>
       </div>
     </div>
   );
 });
+

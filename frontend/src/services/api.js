@@ -1,12 +1,17 @@
 import { mockUsers } from '../mocks/mockUsers';
 import { mockProjects } from '../mocks/mockProjects';
-import { mockProjectRequests } from '../mocks/mockProjectRequests';
 
 export const api = {
   getUsers: async () => {
     // Simulating API delay
     await new Promise(resolve => setTimeout(resolve, 500));
     return mockUsers;
+  },
+
+  getProjects: async () => {
+    // Simulating API delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return mockProjects;
   },
 
   getTasks: async () => {
@@ -26,27 +31,6 @@ export const api = {
     const task = { ...newTask, id: Math.max(...tasks.map(t => parseInt(t.id))) + 1 };
     tasks.push(task);
     return task;
-  },
-
-  getProjects: async () => {
-    // Simulating API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return mockProjects;
-  },
-
-  getProjectRequests: async () => {
-    // Simulating API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return mockProjectRequests;
-  },
-
-  updateProjectRequest: async (projectId, action) => {
-    // Simulating API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const index = mockProjectRequests.findIndex(req => req.id === projectId);
-    if (index !== -1) {
-      mockProjectRequests[index].status = action;
-    }
-    return mockProjectRequests[index];
   }
 };
+

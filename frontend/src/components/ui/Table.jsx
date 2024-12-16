@@ -35,7 +35,7 @@ export const Table = ({ data, columns, className = '' }) => {
                 <th
                   key={column.key}
                   scope="col"
-                  className={`px-6 py-4 text-left text-sm font-medium text-[#313131] ${
+                  className={`px-6 py-4 text-left text-base font-medium text-[#313131] ${
                     column.sortable ? 'cursor-pointer select-none' : ''
                   } ${column.key === 'gradeStatus' || column.key === 'feedbackStatus' ? 'whitespace-nowrap min-w-[140px]' : ''}`}
                   onClick={() => column.sortable && handleSort(column.key)}
@@ -74,7 +74,7 @@ export const Table = ({ data, columns, className = '' }) => {
                 {columns.map((column) => (
                   <td
                     key={column.key}
-                    className={`px-6 py-4 text-sm text-[#686b80] ${
+                    className={`px-6 py-4 text-base text-[#686b80] ${
                       column.key === 'gradeStatus' || column.key === 'feedbackStatus' ? 'whitespace-nowrap' : ''
                     }`}
                   >
