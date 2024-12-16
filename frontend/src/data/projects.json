@@ -10,26 +10,26 @@
     "gradeStatus": "Submitted",
     "feedbackStatus": "Submitted",
     "deadline": "2024-11-15",
-    "presentationAttendees": ["Dr. Emily Carter", "Prof. John Smith", "Dr. Sarah Lee"]
+    "presentationAttendees": ["Dr. Emily Carter", "Prof. Charlie Davis", "Dr. Sarah Lee"]
   },
   {
     "id": 2,
     "title": "E-Commerce Platform for Local Businesses",
     "description": "Developing a scalable e-commerce platform to support small local businesses with inventory management and online sales.",
-    "supervisor": "Prof. John Smith",
+    "supervisor": "Prof. Charlie Davis",
     "students": ["Charlie Brown", "Dana White"],
     "part": "B",
     "status": "Pending",
     "gradeStatus": "Not Submitted",
     "feedbackStatus": "Not Submitted",
     "deadline": "2024-10-01",
-    "presentationAttendees": ["Prof. John Smith", "Dr. Sarah Lee"]
+    "presentationAttendees": ["Prof. Charlie Davis", "Dr. Sarah Lee"]
   },
   {
     "id": 3,
     "title": "Blockchain-Based Voting System",
     "description": "Creating a secure and transparent voting system using blockchain technology to ensure election integrity.",
-    "supervisor": "Dr. Sarah Lee",
+    "supervisor": "Prof. Charlie Davis",
     "students": ["Eve Black", "Frank Green"],
     "part": "A",
     "status": "Overdue",
@@ -42,7 +42,7 @@
     "id": 4,
     "title": "Mobile App for Mental Health Monitoring",
     "description": "A mobile application to help users track their mental health and receive insights based on their activity and mood.",
-    "supervisor": "Prof. Michael Johnson",
+    "supervisor": "Prof. Charlie Davis",
     "students": ["Grace Blue", "Henry Orange"],
     "part": "B",
     "status": "Completed",
