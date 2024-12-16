@@ -4,33 +4,20 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { BlurElements } from '../components/shared/BlurElements';
 import { Section } from '../components/sections/Section';
-import { StatusBadge } from '../components/ui/StatusBadge';
 import { Actions } from '../components/actions/Actions';
+import { ProjectDetailsDialog } from '../components/shared/ProjectDetailsDialog';
+import { Button } from '../components/ui/Button';
 
-const ProjectStatus = {
-  OVERDUE: 'Overdue',
-  COMPLETED: 'Completed',
-  PENDING: 'Pending'
-};
-
-const SubmissionStatus = {
-  NOT_SUBMITTED: 'Not Submitted',
-  SUBMITTED: 'Submitted'
-};
-
-const FILTERS = {
-  PROJECTS: ['all', 'overdue', 'completed', 'pending'],
-  TASKS: ['all', 'Not Submitted', 'Submitted']
-};
+// Remove Project Code from filters
+const FILTERS = ['All', 'Part A', 'Part B'];
 
 const ProjectsSupervisors = () => {
   const [projects, setProjects] = useState([]);
-  const [projectsFilter, setProjectsFilter] = useState('all');
-  const [tasksFilter, setTasksFilter] = useState('all');
+  const [projectsFilter, setProjectsFilter] = useState('All');
   const [searchProjects, setSearchProjects] = useState('');
-  const [searchTasks, setSearchTasks] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedProject, setSelectedProject] = useState(null);
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -57,70 +44,82 @@ const ProjectsSupervisors = () => {
     fetchProjects();
   }, [user]);
 
-  const filterData = useCallback((data, searchTerm, filterKey, filterValue) => {
+  const filterData = useCallback((data, searchTerm, filterValue) => {
     return data.filter(item => {
       const matchesSearch = Object.values(item)
         .some(val => typeof val === 'string' && val.toLowerCase().includes(searchTerm.toLowerCase()));
 
-      if (filterValue === 'all') return matchesSearch;
-      return matchesSearch && item[filterKey]?.toLowerCase() === filterValue.toLowerCase();
+      if (filterValue === 'All') return matchesSearch;
+      return matchesSearch && item.part === filterValue.split(' ')[1];
     });
   }, []);
 
   const filteredProjects = useMemo(() => 
-    filterData(projects, searchProjects, 'status', projectsFilter),
+    filterData(projects, searchProjects, projectsFilter),
     [projects, searchProjects, projectsFilter, filterData]
   );
 
-  const filteredTasks = useMemo(() => 
-    filterData(projects, searchTasks, 'gradeStatus', tasksFilter),
-    [projects, searchTasks, tasksFilter, filterData]
-  );
-
-  const handleNavigateToEvaluationForms = useCallback(() => {
-    navigate('/evaluation-forms');
+  const handleNavigateToEvaluationForms = useCallback((projectId) => {
+    navigate(`/evaluation-forms/${projectId}`);
   }, [navigate]);
 
+  const handleProjectClick = useCallback((project) => {
+    setSelectedProject(project);
+  }, []);
+
+  const handleCloseDialog = useCallback(() => {
+    setSelectedProject(null);
+  }, []);
+
   const projectColumns = useMemo(() => [
-    { key: 'id', header: '#', sortable: true },
-    { key: 'title', header: 'Project Title', sortable: true },
-    { key: 'students', header: 'Students', render: (value) => value.join(', ') },
-    { key: 'part', header: 'Part' },
-    {
-      key: 'status',
-      header: 'Status',
-      render: (value) => (
-        <StatusBadge value={value} statusType={ProjectStatus} />
+    { 
+      key: 'id', 
+      header: '#', 
+      sortable: true,
+      className: 'text-base'
+    },
+    { 
+      key: 'title', 
+      header: 'Project Title', 
+      sortable: true,
+      render: (value, project) => (
+        <Button
+          variant="link"
+          className="p-0 h-auto font-normal text-left hover:underline text-[#686b80] text-base"
+          onClick={() => handleProjectClick(project)}
+        >
+          {value}
+        </Button>
       )
     },
-    { key: 'deadline', header: 'Deadline', sortable: true },
-    {
-      key: 'actions',
-      header: 'Actions',
-      render: () => <Actions onNavigate={handleNavigateToEvaluationForms} />
-    }
-  ], [handleNavigateToEvaluationForms]);
-
-  const taskColumns = useMemo(() => [
-    { key: 'id', header: '#', sortable: true },
-    { key: 'title', header: 'Project Title', sortable: true },
-    {
-      key: 'gradeStatus',
-      header: 'Grade Status',
-      render: (value) => <StatusBadge value={value} statusType={SubmissionStatus} />
+    { 
+      key: 'students', 
+      header: 'Students',
+      className: 'text-base',
+      render: (students) => (
+        <span className="text-base">
+          {students.map(student => student.name).join(', ')}
+        </span>
+      )
     },
-    {
-      key: 'feedbackStatus',
-      header: 'Feedback Status',
-      render: (value) => <StatusBadge value={value} statusType={SubmissionStatus} />
+    { 
+      key: 'projectCode', 
+      header: 'Project Code',
+      className: 'text-base',
+      sortable: true 
     },
-    { key: 'deadline', header: 'Deadline', sortable: true },
-    {
-      key: 'actions',
-      header: 'Actions',
-      render: () => <Actions onNavigate={handleNavigateToEvaluationForms} />
-    }
-  ], [handleNavigateToEvaluationForms]);
+    { 
+      key: 'specialNotes', 
+      header: 'Special Notes',
+      className: 'text-base'
+    },
+    { 
+      key: 'deadline', 
+      header: 'Deadline',
+      className: 'text-base',
+      sortable: true 
+    },
+  ], [handleProjectClick, handleNavigateToEvaluationForms]);
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
@@ -135,25 +134,20 @@ const ProjectsSupervisors = () => {
       <BlurElements />
 
       <div className="relative z-10 p-4 md:p-6">
-        <h1 className="text-3xl font-bold mb-6">Projects Dashboard</h1>
         <Section
-          title="Projects Supervised"
-          description="Projects under your supervision or requiring your evaluation."
-          filters={FILTERS.PROJECTS}
+          title={`My Projects - ${user?.fullName}`}
+          description="Here are all the projects currently under your supervision, categorized for easy tracking and management."
+          filters={FILTERS}
           filterState={[projectsFilter, setProjectsFilter]}
           searchState={[searchProjects, setSearchProjects]}
           tableData={filteredProjects}
           tableColumns={projectColumns}
         />
-
-        <Section
-          title="Pending Tasks"
-          description="Tasks requiring your attention."
-          filters={FILTERS.TASKS}
-          filterState={[tasksFilter, setTasksFilter]}
-          searchState={[searchTasks, setSearchTasks]}
-          tableData={filteredTasks}
-          tableColumns={taskColumns}
+        
+        <ProjectDetailsDialog
+          isOpen={selectedProject !== null}
+          onClose={handleCloseDialog}
+          project={selectedProject}
         />
       </div>
     </div>
