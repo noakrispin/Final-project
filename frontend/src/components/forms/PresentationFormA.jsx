@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import RatingScale from './RatingScale';
 
 const FormField = ({ label, type, name, value, onChange, min, max, description, required, disabled }) => (
@@ -42,7 +42,7 @@ const FormField = ({ label, type, name, value, onChange, min, max, description, 
     )}
     {description && <p className="mt-1 text-sm text-gray-500">{description}</p>}
   </div>
-)
+);
 
 const StudentEvaluation = ({ prefix, formData, handleChange }) => (
   <div className="mb-6 p-4 bg-gray-100 rounded-lg">
@@ -73,13 +73,16 @@ const StudentEvaluation = ({ prefix, formData, handleChange }) => (
       onChange={handleChange}
     />
   </div>
-)
+);
 
 export default function PresentationFormA({ onSubmit }) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const projectId = new URLSearchParams(location.search).get('projectId');
 
   const [formData, setFormData] = useState({
+    projectId: projectId || '',
     projectCode: '',
     evaluatorName: '',
     organizationScore: '',
@@ -101,13 +104,22 @@ export default function PresentationFormA({ onSubmit }) {
   useEffect(() => {
     if (!user) {
       navigate('/login');
+    } else if (user.role !== 'Supervisor' && user.role !== 'Admin') {
+      navigate('/');
     } else {
       setFormData(prevData => ({
         ...prevData,
         evaluatorName: user.fullName
       }));
+      
+      if (projectId) {
+        // Fetch project data and update formData
+        console.log('Fetching data for project:', projectId);
+        // You would typically call an API here to get the project details
+        // For now, we'll just log the projectId
+      }
     }
-  }, [user, navigate]);
+  }, [user, navigate, projectId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -123,7 +135,7 @@ export default function PresentationFormA({ onSubmit }) {
     onSubmit(formData);
   };
 
-  if (!user) {
+  if (!user || (user.role !== 'Supervisor' && user.role !== 'Admin')) {
     return null;
   }
 

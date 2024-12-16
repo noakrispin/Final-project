@@ -1,44 +1,72 @@
 import React from 'react';
-import { Button } from '../ui/Button';
 import { Table } from '../ui/Table';
-import { SearchBar } from '../shared/SearchBar';
+import { Input } from '../ui/Input';
 
-export const Section = React.memo(({ title, description, filters, filterState, searchState, tableData, tableColumns }) => {
-  const [filter, setFilter] = filterState;
-  const [search, setSearch] = searchState;
+export const Section = ({
+  title,
+  description,
+  filters,
+  filterState,
+  searchState,
+  progressBar,
+  tableData,
+  tableColumns,
+}) => {
+  // Remove destructuring of filterState and searchState
+  const activeFilter = filterState ? filterState[0] : null;
+  const setActiveFilter = filterState ? filterState[1] : null;
+  const searchTerm = searchState ? searchState[0] : '';
+  const setSearchTerm = searchState ? searchState[1] : null;
 
   return (
-    <div className="mb-6 md:mb-8">
-      <h2 className="text-2xl md:text-3xl font-bold text-black mb-2 md:mb-3">{title}</h2>
-      <p className="text-gray-600 text-sm md:text-base mb-4 md:mb-5 max-w-2xl">{description}</p>
+    <div className="bg-white rounded-lg shadow">
+      <div className="px-6 py-4">
+        <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+        <p className="mt-1 text-sm text-gray-500">{description}</p>
+        
+        {/* Progress Bar */}
+        {progressBar}
 
-      <div className="space-y-3 md:space-y-4">
-        <div className="flex flex-wrap gap-2">
-          {filters.map(filterOption => (
-            <Button
-              key={filterOption}
-              onClick={() => setFilter(filterOption)}
-              variant={filter === filterOption ? 'default' : 'outline'}
-              size="sm"
-            >
-              {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
-            </Button>
-          ))}
+        <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          {/* Filters */}
+          {filters && setActiveFilter && (
+            <div className="flex flex-wrap gap-2">
+              {filters.map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => setActiveFilter(filter)}
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    activeFilter === filter
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Search */}
+          {setSearchTerm && (
+            <div className="w-full sm:w-64">
+              <Input
+                type="search"
+                placeholder="Search projects..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full"
+              />
+            </div>
+          )}
         </div>
+      </div>
 
-        <SearchBar value={search} onChange={setSearch} placeholder={`Search ${title.toLowerCase()}...`} />
-
-        <div className="overflow-x-auto">
-          <Table 
-            data={tableData} 
-            columns={tableColumns}
-            className="w-full"
-            thClassName="text-lg font-medium text-[#313131] px-6 py-4"
-            tdClassName="text-lg text-[#686b80] px-6 py-4"
-          />
-        </div>
+      {/* Table */}
+      <div className="mt-4">
+        <Table columns={tableColumns} data={tableData} />
       </div>
     </div>
   );
-});
+};
 

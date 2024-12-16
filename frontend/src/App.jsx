@@ -1,39 +1,83 @@
 import React from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 
 // Page imports
 import Home from './pages/Home';
-import ProjectsSupervisors from './pages/ProjectsSupervisors'; // Dashboard for supervisors
-import MyProfile from './pages/MyProfile'; // User profile page
-import Supervisors from './pages/SupervisorsStatus'; // Supervisors' status overview
-import Login from './pages/Login'; // Login page placeholder
-import Contact from './pages/Contact'; // Contact page
-import SignUp from './pages/SignUp'; // Registration page placeholder
-import EvaluationForms from './pages/EvaluationForm'; // Feedback form
-import NotFound from './pages/NotFound'; // 404 Page
+import ProjectsSupervisors from './pages/ProjectsSupervisors';
+import ProjectToReview from './pages/ProjectToReview';
+import MyProfile from './pages/MyProfile';
+import Supervisors from './pages/SupervisorsStatus';
+import Login from './pages/Login';
+import Contact from './pages/Contact';
+import SignUp from './pages/SignUp';
+import EvaluationForms from './pages/EvaluationForms';
+import NotFound from './pages/NotFound';
+import Unauthorized from './pages/Unauthorized';
 
 // Component imports
-import Navbar from './components/layout/Navbar'; // Navigation bar
+import Navbar from './components/layout/Navbar';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
 const App = () => {
   return (
-    <div className="w-full">
-      <Navbar />
-      <Routes>
-        {/* Basic Routes */}
-        <Route path="/" element={<Home />} />
-        <Route path="/projectsSupervisors" element={<ProjectsSupervisors />} />
-        <Route path="/profile" element={<MyProfile />} />
-        <Route path="/supervisorsStatus" element={<Supervisors />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/evaluation-forms" element={<EvaluationForms />} />
-        <Route path="/contact" element={<Contact />} />
+    <Router>
+      <div className="w-full">
+        <Navbar />
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
 
-        {/* 404 Page */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </div>
+          {/* Protected Routes */}
+          <Route 
+            path="/projectsSupervisors" 
+            element={
+              <ProtectedRoute allowedRoles={["Supervisor", "Admin"]}>
+                <ProjectsSupervisors />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/ProjectToReview" 
+            element={
+              <ProtectedRoute allowedRoles={["Supervisor", "Admin"]}>
+                <ProjectToReview />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute allowedRoles={["Student", "Supervisor", "Admin"]}>
+                <MyProfile />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/supervisorsStatus" 
+            element={
+              <ProtectedRoute allowedRoles={["Admin"]}>
+                <Supervisors />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/evaluation-forms/*" 
+            element={
+              <ProtectedRoute allowedRoles={["Supervisor", "Admin"]}>
+                <EvaluationForms />
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* 404 Page */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </div>
+    </Router>
   );
 };
 
