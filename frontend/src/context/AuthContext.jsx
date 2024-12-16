@@ -4,19 +4,21 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user data exists in localStorage
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
+    setIsLoading(false);
   }, []);
 
   const login = (userData) => {
     const updatedUserData = {
       ...userData,
-      isAdmin: userData.role === 'Admin' || userData.role === 'Supervisor'
+      isSupervisor: userData.role === 'Supervisor' || userData.role === 'Admin',
+      isAdmin: userData.role === 'Admin'
     };
     setUser(updatedUserData);
     localStorage.setItem('user', JSON.stringify(updatedUserData));
@@ -27,16 +29,8 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('user');
   };
 
-  const switchToAdmin = () => {
-    if (user && user.role === 'Supervisor') {
-      const updatedUser = { ...user, isAdmin: true };
-      setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-    }
-  };
-
   return (
-    <AuthContext.Provider value={{ user, login, logout, switchToAdmin }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

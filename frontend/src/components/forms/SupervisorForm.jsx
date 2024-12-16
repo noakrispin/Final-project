@@ -1,38 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-
-const FormField = ({ label, type, name, value, onChange, min, max, description, disabled }) => (
-  <div className="mb-4">
-    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor={name}>
-      {label}
-    </label>
-    {type === 'textarea' ? (
-      <textarea
-        id={name}
-        name={name}
-        value={value}
-        onChange={onChange}
-        disabled={disabled}
-        className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:shadow-outline"
-        rows="4"
-      />
-    ) : (
-      <input
-        id={name}
-        name={name}
-        type={type}
-        value={value}
-        onChange={onChange}
-        min={min}
-        max={max}
-        disabled={disabled}
-        className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:shadow-outline"
-      />
-    )}
-    {description && <p className="mt-1 text-sm text-gray-500">{description}</p>}
-  </div>
-)
+import { useNavigate, useLocation } from 'react-router-dom';
+import FormField from './FormField';
 
 const StudentEvaluation = ({ prefix, formData, handleChange }) => (
   <div className="mb-6 p-4 bg-gray-100 rounded-lg">
@@ -75,18 +44,22 @@ const StudentEvaluation = ({ prefix, formData, handleChange }) => (
       description="Creative approach, willingness to invest, pace of progress, meeting the time frame. (0-100)"
     />
   </div>
-)
+);
 
 export default function SupervisorForm({ onSubmit }) {
-  const { user } = useAuth()
-  const navigate = useNavigate()
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const projectId = new URLSearchParams(location.search).get('projectId');
 
   const [formData, setFormData] = useState({
+    projectId: projectId || '',
     projectName: '',
     lecturerName: '',
     analysisAndSolution: '',
     projectDeliverables: '',
     generalEvaluation: '',
+    overallScore: '', 
     student1Name: '',
     student1IndependentLearning: '',
     student1Teamwork: '',
@@ -95,37 +68,44 @@ export default function SupervisorForm({ onSubmit }) {
     student2IndependentLearning: '',
     student2Teamwork: '',
     student2Attitude: '',
-  })
+  });
 
   useEffect(() => {
     if (!user) {
-      navigate('/login')
-    } else if (user.role !== 'Supervisor') {
-      navigate('/')
+      navigate('/login');
+    } else if (user.role !== 'Supervisor' && user.role !== 'Admin') {
+      navigate('/');
     } else {
       setFormData(prevData => ({
         ...prevData,
-        lecturerName: user.fullName
-      }))
+        lecturerName: user.role === 'Supervisor' ? user.fullName : ''
+      }));
+      
+      if (projectId) {
+        // Fetch project data and update formData
+        console.log('Fetching data for project:', projectId);
+        // You would typically call your API here to get the project details
+        // For now, we'll just log the projectId
+      }
     }
-  }, [user, navigate])
+  }, [user, navigate, projectId]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormData(prevData => ({
       ...prevData,
       [name]: value
-    }))
-  }
+    }));
+  };
 
   const handleSubmit = (e) => {
-    e.preventDefault()
-    console.log('Form data:', formData)
-    onSubmit(formData)
-  }
+    e.preventDefault();
+    console.log('Form data:', formData);
+    onSubmit(formData);
+  };
 
-  if (!user || user.role !== 'Supervisor') {
-    return null
+  if (!user || (user.role !== 'Supervisor' && user.role !== 'Admin')) {
+    return null;
   }
 
   return (
@@ -145,7 +125,7 @@ export default function SupervisorForm({ onSubmit }) {
         name="lecturerName"
         value={formData.lecturerName}
         onChange={handleChange}
-        disabled={true}
+        disabled={user.role === 'Supervisor'}
       />
       <FormField
         label="Analysis and solution formation"
@@ -175,6 +155,16 @@ export default function SupervisorForm({ onSubmit }) {
         max={100}
         description="General impression, difficulty and scope of the project, use of a special approach. (0-100)"
       />
+      <FormField
+        label="Overall score"
+        type="number"
+        name="overallScore"
+        value={formData.overallScore}
+        onChange={handleChange}
+        min={0}
+        max={100}
+        description="Overall score (0-100)"
+      />
 
       <StudentEvaluation prefix="Student1" formData={formData} handleChange={handleChange} />
       <StudentEvaluation prefix="Student2" formData={formData} handleChange={handleChange} />
@@ -186,5 +176,6 @@ export default function SupervisorForm({ onSubmit }) {
         Submit Evaluation
       </button>
     </form>
-  )
+  );
 }
+
