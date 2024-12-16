@@ -41,6 +41,7 @@ const Navbar = () => {
     setSearchQuery('');
   };
 
+
   return (
     <nav className="w-full bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="flex items-center h-16 px-4 max-w-[1400px] mx-auto">
@@ -65,7 +66,7 @@ const Navbar = () => {
         <div className={`lg:flex flex-1 justify-center ${menuOpen ? 'block' : 'hidden'} absolute lg:static top-16 left-0 w-full lg:w-auto bg-white lg:bg-transparent`}>
           <ul className="flex flex-col lg:flex-row items-center gap-2 lg:gap-12 font-medium text-gray-800 text-sm">
             <NavLink to='/projectsSupervisors'>MY PROJECTS</NavLink>
-            <NavLink to='/supervisorsStatus'>PROJECTS FOR REVIEW</NavLink>
+            <NavLink to='/ProjectToReview'>PROJECTS TO REVIEW</NavLink>
             <NavLink to='/evaluation-forms'>GRADES</NavLink>
             <NavLink to='/contact'>CONTACT</NavLink>
           </ul>
