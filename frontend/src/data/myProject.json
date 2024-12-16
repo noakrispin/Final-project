@@ -1,0 +1,75 @@
+[
+  {
+    "id": 1,
+    "title": "AI-Powered Chatbot Development",
+    "description": "A project focused on building a customer support chatbot using machine learning and natural language processing.",
+    "projectCode": "AI-CHAT-2024",
+    "supervisor": "Dr. Emily Carter",
+    "students": ["Alice Johnson", "Bob Smith"],
+    "part": "A",
+    "deadline": "2024-11-15",
+    "specialNotes": "Requires access to large language model API",
+    "presentationAttendees": ["Dr. Emily Carter", "Prof. Charlie Davis", "Dr. Sarah Lee"]
+  },
+  {
+    "id": 2,
+    "title": "E-Commerce Platform for Local Businesses",
+    "description": "Developing a scalable e-commerce platform to support small local businesses with inventory management and online sales.",
+    "projectCode": "ECOM-LOCAL-2024",
+    "supervisor": "Prof. Charlie Davis",
+    "students": ["Charlie Brown", "Dana White"],
+    "part": "B",
+    "deadline": "2024-10-01",
+    "specialNotes": "Collaboration with local business association required",
+    "presentationAttendees": ["Prof. Charlie Davis", "Dr. Sarah Lee"]
+  },
+  {
+    "id": 3,
+    "title": "Blockchain-Based Voting System",
+    "description": "Creating a secure and transparent voting system using blockchain technology to ensure election integrity.",
+    "projectCode": "BLOCK-VOTE-2024",
+    "supervisor": "Prof. Charlie Davis",
+    "students": ["Eve Black", "Frank Green"],
+    "part": "A",
+    "deadline": "2024-11-01",
+    "specialNotes": "Requires thorough security testing",
+    "presentationAttendees": ["Dr. Sarah Lee", "Dr. Emily Carter"]
+  },
+  {
+    "id": 4,
+    "title": "Mobile App for Mental Health Monitoring",
+    "description": "A mobile application to help users track their mental health and receive insights based on their activity and mood.",
+    "projectCode": "MENTAL-HEALTH-APP-2024",
+    "supervisor": "Dr. Emily Carter",
+    "students": ["Grace Blue", "Henry Orange"],
+    "part": "B",
+    "deadline": "2024-10-30",
+    "specialNotes": "Collaboration with psychology department recommended",
+    "presentationAttendees": ["Dr. Emily Carter", "Prof. Michael Johnson"]
+  },
+  {
+    "id": 5,
+    "title": "Smart City Traffic Management System",
+    "description": "Developing an IoT-based traffic management system to optimize traffic flow and reduce congestion in urban areas.",
+    "projectCode": "SMART-TRAFFIC-2024",
+    "supervisor": "Prof. Charlie Davis",
+    "students": ["Ivy Green", "Jack Brown"],
+    "part": "A",
+    "deadline": "2024-12-15",
+    "specialNotes": "Requires coordination with local transportation department",
+    "presentationAttendees": ["Prof. Charlie Davis", "Dr. Emily Carter"]
+  },
+  {
+    "id": 6,
+    "title": "Augmented Reality Educational Platform",
+    "description": "Creating an AR platform to enhance learning experiences in STEM subjects for high school students.",
+    "projectCode": "AR-EDU-2024",
+    "supervisor": "Dr. Emily Carter",
+    "students": ["Kate White", "Liam Black"],
+    "part": "B",
+    "deadline": "2024-11-30",
+    "specialNotes": "Collaboration with local high schools for testing",
+    "presentationAttendees": ["Dr. Emily Carter", "Prof. Charlie Davis", "Dr. Sarah Lee"]
+  }
+]
+
