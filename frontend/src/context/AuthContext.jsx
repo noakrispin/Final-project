@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 
 const AuthContext = createContext(null);
 
-export const AuthProvider = ({ children }) => {
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -14,8 +14,12 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (userData) => {
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
+    const updatedUserData = {
+      ...userData,
+      isAdmin: userData.role === 'Admin' || userData.role === 'Supervisor'
+    };
+    setUser(updatedUserData);
+    localStorage.setItem('user', JSON.stringify(updatedUserData));
   };
 
   const logout = () => {
@@ -23,11 +27,20 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
   };
 
+  const switchToAdmin = () => {
+    if (user && user.role === 'Supervisor') {
+      const updatedUser = { ...user, isAdmin: true };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, switchToAdmin }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
 export const useAuth = () => useContext(AuthContext);
+
