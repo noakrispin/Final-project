@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const FormField = ({ label, type, name, value, onChange, min, max, description, required, disabled }) => (
   <div className="mb-4">
@@ -34,13 +34,16 @@ const FormField = ({ label, type, name, value, onChange, min, max, description, 
     )}
     {description && <p className="mt-1 text-sm text-gray-500">{description}</p>}
   </div>
-)
+);
 
 export default function BookReviewFormB({ onSubmit }) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const projectId = new URLSearchParams(location.search).get('projectId');
 
   const [formData, setFormData] = useState({
+    projectId: projectId || '',
     projectCode: '',
     evaluatorName: '',
     researchProcessScore: '',
@@ -55,18 +58,28 @@ export default function BookReviewFormB({ onSubmit }) {
     organizationComments: '',
     generalEvaluationScore: '',
     additionalComments: '',
+    overallScore: '',
   });
 
   useEffect(() => {
     if (!user) {
       navigate('/login');
+    } else if (user.role !== 'Supervisor' && user.role !== 'Admin') {
+      navigate('/');
     } else {
       setFormData(prevData => ({
         ...prevData,
         evaluatorName: user.fullName
       }));
+      
+      if (projectId) {
+        // Fetch project data and update formData
+        console.log('Fetching data for project:', projectId);
+        // You would typically call your API here to get the project details
+        // For now, we'll just log the projectId
+      }
     }
-  }, [user, navigate]);
+  }, [user, navigate, projectId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -82,13 +95,12 @@ export default function BookReviewFormB({ onSubmit }) {
     onSubmit(formData);
   };
 
-  if (!user) {
+  if (!user || (user.role !== 'Supervisor' && user.role !== 'Admin')) {
     return null;
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-
       <FormField
         label="Project code and student presentation"
         type="text"
@@ -213,6 +225,17 @@ export default function BookReviewFormB({ onSubmit }) {
         description="General impression, difficulty and scope of the project, use of a special approach. (Score 0-100)"
       />
       <FormField
+        label="Overall score"
+        type="number"
+        name="overallScore"
+        value={formData.overallScore}
+        onChange={handleChange}
+        min={0}
+        max={100}
+        required={true}
+        description="Overall score for the project book (Score 0-100)"
+      />
+      <FormField
         label="Additional comments"
         type="textarea"
         name="additionalComments"
@@ -229,4 +252,3 @@ export default function BookReviewFormB({ onSubmit }) {
     </form>
   );
 }
-

@@ -3,73 +3,117 @@
     "id": 1,
     "title": "AI-Powered Chatbot Development",
     "description": "A project focused on building a customer support chatbot using machine learning and natural language processing.",
-    "projectCode": "AI-CHAT-2024",
+    "projectCode": "24-2-D-5",
     "supervisor": "Dr. Emily Carter",
-    "students": ["Alice Johnson", "Bob Smith"],
+    "supervisorTopics": ["text classification", "generated adversarial networks (GAN)", "natural language processing (NLP)"],
+    "students": [
+      {
+        "name": "Alice Johnson",
+        "id": "203456789",
+        "email": "alice.johnson@e.braude.ac.il"
+      },
+      {
+        "name": "Bob Smith",
+        "id": "204567890",
+        "email": "bob.smith@e.braude.ac.il"
+      }
+    ],
     "part": "A",
-    "deadline": "2024-11-15",
-    "specialNotes": "Requires access to large language model API",
+    "specialNotes": "בוב סמית' במילואים-אין דחיית מועד כרגע",
     "presentationAttendees": ["Dr. Emily Carter", "Prof. Charlie Davis", "Dr. Sarah Lee"]
   },
   {
     "id": 2,
     "title": "E-Commerce Platform for Local Businesses",
     "description": "Developing a scalable e-commerce platform to support small local businesses with inventory management and online sales.",
-    "projectCode": "ECOM-LOCAL-2024",
+    "projectCode": "24-2-D-6",
     "supervisor": "Prof. Charlie Davis",
-    "students": ["Charlie Brown", "Dana White"],
+    "supervisorTopics": ["requirements engineering", "augmented reality", "gamification", "motivation", "engagement"],
+    "students": [
+      {
+        "name": "Charlie Brown",
+        "id": "205678901",
+        "email": "charlie.brown@e.braude.ac.il"
+      },
+      {
+        "name": "Dana White",
+        "id": "206789012",
+        "email": "dana.white@e.braude.ac.il"
+      }
+    ],
     "part": "B",
-    "deadline": "2024-10-01",
-    "specialNotes": "Collaboration with local business association required",
+    "deadline": "03/02/2025",
+    "specialNotes": "דנה ווייט בחופשת לידה- דחיית מועד ",
     "presentationAttendees": ["Prof. Charlie Davis", "Dr. Sarah Lee"]
   },
   {
     "id": 3,
     "title": "Blockchain-Based Voting System",
     "description": "Creating a secure and transparent voting system using blockchain technology to ensure election integrity.",
-    "projectCode": "BLOCK-VOTE-2024",
+    "projectCode": "24-2-D-7",
     "supervisor": "Prof. Charlie Davis",
-    "students": ["Eve Black", "Frank Green"],
+    "students": [
+      {
+        "name": "Eve Black",
+        "id": "207890123",
+        "email": "eve.black@e.braude.ac.il"
+      },
+      {
+        "name": "Frank Green",
+        "id": "208901234",
+        "email": "frank.green@e.braude.ac.il"
+      }
+    ],
     "part": "A",
-    "deadline": "2024-11-01",
-    "specialNotes": "Requires thorough security testing",
+    "deadline": "30/07/2024",
+    "specialNotes": "-",
     "presentationAttendees": ["Dr. Sarah Lee", "Dr. Emily Carter"]
   },
   {
     "id": 4,
     "title": "Mobile App for Mental Health Monitoring",
     "description": "A mobile application to help users track their mental health and receive insights based on their activity and mood.",
-    "projectCode": "MENTAL-HEALTH-APP-2024",
+    "projectCode": "24-2-D-8",
     "supervisor": "Dr. Emily Carter",
-    "students": ["Grace Blue", "Henry Orange"],
+    "students": [
+      {
+        "name": "Grace Blue",
+        "id": "209012345",
+        "email": "grace.blue@e.braude.ac.il"
+      },
+      {
+        "name": "Henry Orange",
+        "id": "210123456",
+        "email": "henry.orange@e.braude.ac.il"
+      }
+    ],
     "part": "B",
-    "deadline": "2024-10-30",
-    "specialNotes": "Collaboration with psychology department recommended",
-    "presentationAttendees": ["Dr. Emily Carter", "Prof. Michael Johnson"]
+    "deadline": "07/12/2024",
+    "specialNotes": "הנרי עבר ניתוח- ניתנה הארכה של שבוע",
+    "presentationAttendees": ["Dr. Emily Carter", "Prof. Charlie Davis"]
   },
   {
     "id": 5,
-    "title": "Smart City Traffic Management System",
-    "description": "Developing an IoT-based traffic management system to optimize traffic flow and reduce congestion in urban areas.",
-    "projectCode": "SMART-TRAFFIC-2024",
+    "title": "Research on Machine Learning Algorithms in Healthcare",
+    "description": "Conducting research on the effectiveness of various machine learning algorithms in predicting patient outcomes.",
+    "projectCode": "24-2-R-1",
     "supervisor": "Prof. Charlie Davis",
-    "students": ["Ivy Green", "Jack Brown"],
+    "students": [
+      {
+        "name": "Ian White",
+        "id": "215678901",
+        "email": "ian.white@e.braude.ac.il"
+      },
+      {
+        "name": "Jane Smith",
+        "id": "216789012",
+        "email": "jane.smith@e.braude.ac.il"
+      }
+    ],
     "part": "A",
-    "deadline": "2024-12-15",
-    "specialNotes": "Requires coordination with local transportation department",
+    "deadline": "30/12/2024",
+    "specialNotes": "-",
     "presentationAttendees": ["Prof. Charlie Davis", "Dr. Emily Carter"]
-  },
-  {
-    "id": 6,
-    "title": "Augmented Reality Educational Platform",
-    "description": "Creating an AR platform to enhance learning experiences in STEM subjects for high school students.",
-    "projectCode": "AR-EDU-2024",
-    "supervisor": "Dr. Emily Carter",
-    "students": ["Kate White", "Liam Black"],
-    "part": "B",
-    "deadline": "2024-11-30",
-    "specialNotes": "Collaboration with local high schools for testing",
-    "presentationAttendees": ["Dr. Emily Carter", "Prof. Charlie Davis", "Dr. Sarah Lee"]
   }
 ]
 
