@@ -17,7 +17,7 @@ import Navbar from './components/layout/Navbar'; // Navigation bar
 
 const App = () => {
   return (
-    <div className="mx-4 sm:mx-[10%]">
+    <div className="w-full">
       <Navbar />
       <Routes>
         {/* Basic Routes */}
@@ -38,3 +38,4 @@ const App = () => {
 };
 
 export default App;
+
