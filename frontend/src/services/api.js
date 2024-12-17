@@ -194,4 +194,3 @@ export const api = {
     return { success: true, message: 'Form submitted successfully' };
   }
 };
-
