@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { BlurElements } from '../components/shared/BlurElements';
@@ -7,7 +7,6 @@ import { Section } from '../components/sections/Section';
 import { Button } from '../components/ui/Button';
 import { Table } from '../components/ui/Table';
 import { ProgressBar } from '../components/ui/ProgressBar';
-
 
 const TABS = ['My Projects', 'Other Projects'];
 
@@ -19,13 +18,31 @@ const ProjectToReview = () => {
   const [error, setError] = useState(null);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const navigateToForm = useCallback((formType, projectCode, part) => {
+  // Add new state for tracking form submission
+  const [formSubmitted, setFormSubmitted] = useState(false);
+
+  const navigateToForm = useCallback((formType, project) => {
     const formPath = formType === 'presentation' 
-      ? `presentation-${part.toLowerCase()}` 
+      ? `presentation-${project.part.toLowerCase()}` 
       : formType;
-    navigate(`/evaluation-forms/${formPath}?projectCode=${projectCode}`);
+    const queryParams = new URLSearchParams({
+      projectCode: project.projectCode,
+      projectName: project.title,
+      students: JSON.stringify(project.students)
+    }).toString();
+    navigate(`/evaluation-forms/${formPath}?${queryParams}`);
   }, [navigate]);
+
+  useEffect(() => {
+    // Check if we just came back from form submission
+    if (location.state?.formSubmitted) {
+      setFormSubmitted(true);
+      // Clear the state
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location, navigate]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -44,11 +61,13 @@ const ProjectToReview = () => {
         setError('Failed to fetch data. Please try again later.');
       } finally {
         setIsLoading(false);
+        setFormSubmitted(false);
       }
     };
 
+    // Fetch data on mount and when form is submitted
     fetchData();
-  }, [user]);
+  }, [user, formSubmitted]);
 
   const isDeadlinePassed = (deadline) => {
     if (!deadline) return false;
@@ -83,7 +102,8 @@ const ProjectToReview = () => {
       case 'supervisor':
         return projectGrades.supervisorForm?.projectGrade || null;
       case 'book':
-        return projectGrades.bookReviewerFormA?.projectGrade || projectGrades.bookReviewerFormB?.projectGrade || null;
+        return (projectGrades.bookReviewerFormA?.projectGrade || 
+                projectGrades.bookReviewerFormB?.projectGrade || null);
       default:
         return null;
     }
@@ -117,14 +137,14 @@ const ProjectToReview = () => {
       className: 'text-lg',
       render: (_, project) => {
         const grade = getGrade(project.projectCode, 'presentation');
-        return grade ? (
+        return grade !== null ? (
           <span>{grade}</span>
         ) : (
           <Button
             variant="ghost"
             size="sm"
             className="p-0 h-auto font-normal text-left hover:underline hover:underline-offset-4 hover:decoration-purple-500 text-[#686b80] hover:text-purple-500 text-base"
-            onClick={() => navigateToForm('presentation', project.projectCode, project.part)}
+            onClick={() => navigateToForm('presentation', project)}
           >
             Presentation Grade
           </Button>
@@ -137,7 +157,18 @@ const ProjectToReview = () => {
       className: 'text-lg',
       render: (_, project) => {
         const grade = getGrade(project.projectCode, 'supervisor');
-        return grade || '-';
+        return grade !== null ? (
+          <span>{grade}</span>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="p-0 h-auto font-normal text-left hover:underline hover:underline-offset-4 hover:decoration-purple-500 text-[#686b80] hover:text-purple-500 text-base"
+            onClick={() => navigateToForm('supervisor', project)}
+          >
+            Supervisor Grade
+          </Button>
+        );
       }
     },
     { 
@@ -156,9 +187,9 @@ const ProjectToReview = () => {
           <Button
             variant="ghost"
             size="sm"
-            className="p-0 h-auto font-normal text-left hover:underline hover:underline-offset-4 hover:decoration-purple-500 text-[#686b80] hover:text-purple-500 text-base"
+            className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-t-md border-b-2 border-transparent hover:border-purple-500 transition-all"
             disabled={isDeadlinePassed(project.deadline)}
-            onClick={() => navigateToForm('supervisor', project.projectCode, project.part)}
+            onClick={() => navigateToForm('supervisor', project)}
           >
             {grade ? 'Edit Grade' : 'Grade Project'}
           </Button>
@@ -195,7 +226,18 @@ const ProjectToReview = () => {
       className: 'text-lg',
       render: (_, project) => {
         const grade = getGrade(project.projectCode, 'presentation');
-        return grade || '-';
+        return grade !== null ? (
+          <span>{grade}</span>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="p-0 h-auto font-normal text-left hover:underline hover:underline-offset-4 hover:decoration-purple-500 text-[#686b80] hover:text-purple-500 text-base"
+            onClick={() => navigateToForm('presentation', project)}
+          >
+            Presentation Grade
+          </Button>
+        );
       }
     },
     { 
@@ -225,7 +267,7 @@ const ProjectToReview = () => {
             size="sm"
             className="hover:bg-muted"
             disabled={isDeadlinePassed(project.deadline)}
-            onClick={() => navigateToForm('book', project.projectCode, project.part)}
+            onClick={() => navigateToForm('book', project)}
           >
             {grade ? 'Edit Grade' : 'Grade'}
           </Button>
