@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, Eye, EyeOff } from 'lucide-react';
+import { useForm, Controller } from 'react-hook-form';
 import { Button } from '../components/ui/Button';
 import ErrorMessage from '../components/shared/ErrorMessage';
 import toast, { Toaster } from 'react-hot-toast';
@@ -11,76 +12,31 @@ import usersData from '../data/mockUsers.json';
 function SignUp() {
   const navigate = useNavigate();
   const [users, setUsers] = useState(usersData); // Simulate user data
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    role: '',
-    password: ''
-  });
-  const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const { register, handleSubmit, control, formState: { errors } } = useForm();
 
-  // Handle input changes and clear errors dynamically
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: '' }));
-    }
-  };
-
-  // Validate form inputs
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.fullName.trim()) newErrors.fullName = 'Full name is required';
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
-    } else if (users.some((user) => user.email === formData.email)) {
-      newErrors.email = 'This email is already registered';
-    }
-
-    if (!formData.role) newErrors.role = 'Role selection is required';
-
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (
-      !/^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/.test(formData.password)
-    ) {
-      newErrors.password =
-        'Password must be at least 8 characters long, include an uppercase letter, a number, and a special character';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  // Simulate form submission
-  const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  if (validateForm()) {  // Ensure validation passes
+  const onSubmit = async (data) => {
     try {
-      const newUser = { id: users.length + 1, ...formData };
+      if (users.some((user) => user.email === data.email)) {
+        toast.error('This email is already registered', {
+          duration: 5000,
+          position: 'top-center',
+        });
+        return;
+      }
+
+      const newUser = { id: users.length + 1, ...data };
 
       // Simulate adding the user to the system
       setUsers((prevUsers) => [...prevUsers, newUser]);
       await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API response delay
 
-      // Show success toast only after user is added
       toast.success('Account created successfully!', {
         duration: 3000,
         position: 'top-center',
       });
 
-      // Clear form after success
-      setFormData({ fullName: '', email: '', role: '', password: '' });
-
-      // Navigate or provide additional feedback
       setTimeout(() => {
         navigate('/');
       }, 3000);
@@ -91,14 +47,7 @@ function SignUp() {
         position: 'top-center',
       });
     }
-  } else {
-    // Optionally, show a general error if the form validation fails
-    toast.error('Please correct the errors before submitting.', {
-      duration: 3000,
-      position: 'top-center',
-    });
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-white relative overflow-hidden flex justify-center items-center py-12">
@@ -109,37 +58,51 @@ function SignUp() {
         <h2 className="text-[26px] font-semibold text-gray-600 mb-2">Create Account</h2>
         <p className="text-lg text-gray-600 mb-6">Sign up to access the Final Project Portal.</p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {['fullName', 'email'].map((field) => (
-            <InputField
-              key={field}
-              label={field === 'fullName' ? 'Full Name' : 'Email'}
-              name={field}
-              type={field === 'email' ? 'email' : 'text'}
-              value={formData[field]}
-              onChange={handleInputChange}
-              error={errors[field]}
-            />
-          ))}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <InputField
+            label="Full Name"
+            name="fullName"
+            register={register}
+            required="Full name is required"
+            errors={errors}
+          />
 
-          <RoleDropdown
-            isOpen={isDropdownOpen}
-            onSelect={(role) => {
-              setFormData((prev) => ({ ...prev, role }));
-              setIsDropdownOpen(false);
-              if (errors.role) setErrors((prev) => ({ ...prev, role: '' }));
+          <InputField
+            label="Email"
+            name="email"
+            type="email"
+            register={register}
+            required="Email is required"
+            pattern={{
+              value: /\S+@\S+\.\S+/,
+              message: "Invalid email address"
             }}
-            toggle={() => setIsDropdownOpen(!isDropdownOpen)}
-            selectedRole={formData.role}
-            error={errors.role}
+            errors={errors}
+          />
+
+          <Controller
+            name="role"
+            control={control}
+            rules={{ required: 'Role selection is required' }}
+            render={({ field }) => (
+              <RoleDropdown
+                isOpen={isDropdownOpen}
+                onSelect={(role) => {
+                  field.onChange(role);
+                  setIsDropdownOpen(false);
+                }}
+                toggle={() => setIsDropdownOpen(!isDropdownOpen)}
+                selectedRole={field.value}
+                error={errors.role?.message}
+              />
+            )}
           />
 
           <PasswordInput
-            value={formData.password}
-            onChange={handleInputChange}
+            register={register}
             showPassword={showPassword}
             toggleShowPassword={() => setShowPassword(!showPassword)}
-            error={errors.password}
+            error={errors.password?.message}
           />
 
           <Button type="submit" className="w-full h-[55px] bg-[#5f6fff] hover:bg-[#4b5ccc] text-white text-lg font-medium rounded-md">
@@ -168,19 +131,17 @@ const BlurElements = () => (
 );
 
 // Reusable InputField Component
-const InputField = ({ label, name, type, value, onChange, error }) => (
+const InputField = ({ label, name, type = "text", register, required, pattern, errors }) => (
   <div>
     <label htmlFor={name} className="block text-gray-600 mb-1">{label}</label>
     <input
       id={name}
-      name={name}
       type={type}
-      value={value}
-      onChange={onChange}
+      {...register(name, { required, pattern })}
       className="w-full h-[50px] px-4 border border-[#dadada] rounded-md"
       placeholder={`Enter your ${label.toLowerCase()}`}
     />
-    <ErrorMessage message={error} />
+    <ErrorMessage message={errors?.[name]?.message} />
   </div>
 );
 
@@ -190,7 +151,7 @@ const RoleDropdown = ({ isOpen, onSelect, toggle, selectedRole, error }) => (
     <label htmlFor="role" className="block text-gray-600 mb-1">Role</label>
     <div className="relative">
       <button
-        id="role" // Add the id here
+        id="role"
         type="button"
         onClick={toggle}
         className="w-full h-[50px] px-4 flex items-center justify-between border border-[#dadada] rounded-md bg-white"
@@ -218,16 +179,20 @@ const RoleDropdown = ({ isOpen, onSelect, toggle, selectedRole, error }) => (
 );
 
 // Password Input Component
-const PasswordInput = ({ value, onChange, showPassword, toggleShowPassword, error }) => (
+const PasswordInput = ({ register, showPassword, toggleShowPassword, error }) => (
   <div>
     <label htmlFor="password" className="block text-gray-600 mb-1">Password</label>
     <div className="relative">
       <input
         id="password"
-        name="password"
         type={showPassword ? 'text' : 'password'}
-        value={value}
-        onChange={onChange}
+        {...register('password', {
+          required: 'Password is required',
+          pattern: {
+            value: /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/,
+            message: 'Password must be at least 8 characters long, include an uppercase letter, a number, and a special character'
+          }
+        })}
         className="w-full h-[50px] px-4 border border-[#dadada] rounded-md"
         placeholder="Enter your password"
       />
@@ -245,3 +210,4 @@ const PasswordInput = ({ value, onChange, showPassword, toggleShowPassword, erro
     </p>
   </div>
 );
+
