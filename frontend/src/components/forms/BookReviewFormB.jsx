@@ -1,50 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import FormField from './FormField';
+import { api } from '../../services/api';
+import { Button } from '../ui/Button';
 
-const FormField = ({ label, type, name, value, onChange, min, max, description, required, disabled }) => (
-  <div className="mb-4">
-    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor={name}>
-      {label} {required && <span className="text-red-500">*</span>}
-    </label>
-    {type === 'textarea' ? (
-      <textarea
-        id={name}
-        name={name}
-        value={value}
-        onChange={onChange}
-        required={required}
-        disabled={disabled}
-        className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:shadow-outline"
-        rows="4"
-      />
-    ) : (
-      <input
-        id={name}
-        name={name}
-        type={type}
-        value={value}
-        onChange={onChange}
-        min={min}
-        max={max}
-        required={required}
-        disabled={disabled}
-        className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:shadow-outline"
-      />
-    )}
-    {description && <p className="mt-1 text-sm text-gray-500">{description}</p>}
-  </div>
-);
-
-export default function BookReviewFormB({ onSubmit }) {
+export default function BookReviewFormB() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const projectId = new URLSearchParams(location.search).get('projectId');
+  const searchParams = new URLSearchParams(location.search);
+  const projectCode = searchParams.get('projectCode');
+  const projectName = searchParams.get('projectName');
 
   const [formData, setFormData] = useState({
-    projectId: projectId || '',
-    projectCode: '',
+    projectCodeAndName: `${projectCode || ''} - ${projectName || ''}`,
     evaluatorName: '',
     researchProcessScore: '',
     researchProcessComments: '',
@@ -71,15 +41,8 @@ export default function BookReviewFormB({ onSubmit }) {
         ...prevData,
         evaluatorName: user.fullName
       }));
-      
-      if (projectId) {
-        // Fetch project data and update formData
-        console.log('Fetching data for project:', projectId);
-        // You would typically call your API here to get the project details
-        // For now, we'll just log the projectId
-      }
     }
-  }, [user, navigate, projectId]);
+  }, [user, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -89,10 +52,19 @@ export default function BookReviewFormB({ onSubmit }) {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form data:', formData);
-    onSubmit(formData);
+    try {
+      const result = await api.submitForm('bookReviewFormB', formData);
+      if (result.success) {
+        console.log('Form submitted successfully');
+        navigate('/ProjectToReview');
+      } else {
+        console.error('Form submission failed');
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+    }
   };
 
   if (!user || (user.role !== 'Supervisor' && user.role !== 'Admin')) {
@@ -101,13 +73,20 @@ export default function BookReviewFormB({ onSubmit }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="mb-6">
+        <h2 className="text-xl font-bold mb-2">Book Review - Step B</h2>
+        <p className="text-gray-600">
+          This is an evaluation form for the final book review of the Part B project report. It assesses the complete project documentation, including research process, analysis, and software quality.
+        </p>
+      </div>
       <FormField
-        label="Project code and student presentation"
+        label="Project Code and Name"
         type="text"
-        name="projectCode"
-        value={formData.projectCode}
+        name="projectCodeAndName"
+        value={formData.projectCodeAndName}
         onChange={handleChange}
         required={true}
+        disabled={true}
       />
       <FormField
         label="Evaluator name"
@@ -225,7 +204,7 @@ export default function BookReviewFormB({ onSubmit }) {
         description="General impression, difficulty and scope of the project, use of a special approach. (Score 0-100)"
       />
       <FormField
-        label="Overall score"
+        label="Overall Grade"
         type="number"
         name="overallScore"
         value={formData.overallScore}
@@ -243,12 +222,10 @@ export default function BookReviewFormB({ onSubmit }) {
         onChange={handleChange}
       />
 
-      <button 
-        type="submit" 
-        className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-      >
+      <Button type="submit" className="w-full">
         Submit Evaluation
-      </button>
+      </Button>
     </form>
   );
 }
+
