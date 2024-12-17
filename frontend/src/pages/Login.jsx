@@ -1,9 +1,10 @@
-import React, { useState } from 'react'; 
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
+import { useForm } from 'react-hook-form';
 import { Button } from '../components/ui/Button';
 import ErrorMessage from '../components/shared/ErrorMessage';
-import toast, { Toaster } from 'react-hot-toast'; // Toaster import
+import toast, { Toaster } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
 // Import mock user data for testing
@@ -11,36 +12,53 @@ import usersData from '../data/mockUsers.json';
 
 function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth(); 
-  const [formData, setFormData] = useState({ email: '', password: '' });
-  const [errors, setErrors] = useState({});
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false); 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { register, handleSubmit, formState: { errors } } = useForm();
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: '' }));
-    }
-  };
+  const onSubmit = async (data) => {
+    setIsSubmitting(true);
+    try {
+      const user = usersData.find(
+        (u) => u.email === data.email && u.password === data.password
+      );
 
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      if (user) {
+        toast.success('Login successful! Connecting...', {
+          duration: 3000,
+          position: 'top-center',
+        });
+
+        setTimeout(() => {
+          toast.success(`Welcome back, ${user.fullName}!`, {
+            duration: 3000,
+            position: 'top-center',
+          });
+
+          login(user);
+          navigate('/');
+        }, 2000);
+      } else {
+        toast.error('Invalid email or password', {
+          duration: 5000,
+          position: 'top-center',
+        });
+      }
+    } catch (error) {
+      console.error('Error logging in:', error);
+      toast.error('An error occurred. Please try again.', {
+        duration: 5000,
+        position: 'top-center',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-    if (!formData.password.trim()) {
-      newErrors.password = 'Password is required';
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   const handleForgotPassword = () => {
-    const user = usersData.find((u) => u.email === formData.email);
+    const email = document.getElementById('email').value;
+    const user = usersData.find((u) => u.email === email);
 
     if (user) {
       toast.success('Password sent to your email!', {
@@ -55,50 +73,6 @@ function Login() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (validateForm()) {
-      setIsSubmitting(true);
-      try {
-        const user = usersData.find(
-          (u) => u.email === formData.email && u.password === formData.password
-        );
-
-        if (user) {
-          // Toast for successful login
-          toast.success('Login successful! Connecting...', {
-            duration: 3000,
-            position: 'top-center',
-          });
-
-          // Simulate a short delay for the connection process
-          setTimeout(() => {
-            toast.success(`Welcome back, ${user.fullName}!`, {
-              duration: 3000,
-              position: 'top-center',
-            });
-
-            login(user);
-            navigate('/');
-          }, 2000); // Simulate connection time
-        } else {
-          toast.error('Invalid email or password', {
-            duration: 5000,
-            position: 'top-center',
-          });
-        }
-      } catch (error) {
-        console.error('Error logging in:', error);
-        toast.error('An error occurred. Please try again.', {
-          duration: 5000,
-          position: 'top-center',
-        });
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
-  };
-
   return (
     <div className="min-h-screen bg-white relative overflow-hidden flex justify-center items-center py-12">
       {/* Background blur elements */}
@@ -110,19 +84,23 @@ function Login() {
         <h2 className="text-[26px] font-semibold text-gray-600 mb-2">Login</h2>
         <p className="text-lg text-gray-600 mb-6">Login to access the Final Project Portal</p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label htmlFor="email" className="block text-gray-600 mb-1">Email</label>
             <input
               id="email"
-              name="email"
               type="email"
-              value={formData.email}
-              onChange={handleInputChange}
+              {...register('email', { 
+                required: 'Email is required', 
+                pattern: {
+                  value: /\S+@\S+\.\S+/,
+                  message: 'Invalid email address',
+                }
+              })}
               className="w-full h-[55px] px-4 border border-[#dadada] rounded-md"
               placeholder="Enter your email"
             />
-            <ErrorMessage message={errors.email} />
+            <ErrorMessage message={errors.email?.message} />
           </div>
 
           <div>
@@ -130,10 +108,8 @@ function Login() {
             <div className="relative">
               <input
                 id="password"
-                name="password"
                 type={showPassword ? 'text' : 'password'}
-                value={formData.password}
-                onChange={handleInputChange}
+                {...register('password', { required: 'Password is required' })}
                 className="w-full h-[55px] px-4 border border-[#dadada] rounded-md"
                 placeholder="Enter your password"
               />
@@ -145,7 +121,7 @@ function Login() {
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-            <ErrorMessage message={errors.password} />
+            <ErrorMessage message={errors.password?.message} />
           </div>
 
           <Button
@@ -180,3 +156,4 @@ function Login() {
 }
 
 export default Login;
+
