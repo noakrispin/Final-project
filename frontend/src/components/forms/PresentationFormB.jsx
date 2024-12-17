@@ -1,67 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import RatingScale from './RatingScale';
-
-const FormField = ({ label, type, name, value, onChange, description, required, disabled }) => (
-  <div className="mb-4">
-    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor={name}>
-      {label} {required && <span className="text-red-500">*</span>}
-    </label>
-    {type === 'textarea' ? (
-      <textarea
-        id={name}
-        name={name}
-        value={value}
-        onChange={onChange}
-        required={required}
-        disabled={disabled}
-        className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:shadow-outline"
-        rows="4"
-      />
-    ) : type === 'rating' ? (
-      <RatingScale
-        name={name}
-        value={value}
-        onChange={onChange}
-        required={required}
-      />
-    ) : (
-      <input
-        id={name}
-        name={name}
-        type={type}
-        value={value}
-        onChange={onChange}
-        required={required}
-        disabled={disabled}
-        className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:shadow-outline"
-      />
-    )}
-    {description && <p className="mt-1 text-sm text-gray-500">{description}</p>}
-  </div>
-);
+import FormField from './FormField';
+import { api } from '../../services/api';
+import { Button } from '../ui/Button';
 
 const StudentEvaluation = ({ prefix, formData, handleChange }) => (
   <div className="mb-6 p-4 bg-gray-100 rounded-lg">
     <h3 className="text-lg font-semibold mb-4">{prefix}</h3>
     <FormField
       label="Level of knowledge and answering questions"
-      type="rating"
+      type="number"
       name={`${prefix.toLowerCase()}Knowledge`}
       value={formData[`${prefix.toLowerCase()}Knowledge`]}
       onChange={handleChange}
       required={true}
-      description="Mark from 1 to 10"
+      min={0}
+      max={100}
+      description="Mark from 0 to 100"
     />
     <FormField
       label="Presentation skills"
-      type="rating"
+      type="number"
       name={`${prefix.toLowerCase()}PresentationSkills`}
       value={formData[`${prefix.toLowerCase()}PresentationSkills`]}
       onChange={handleChange}
       required={true}
-      description="Mark from 1 to 10"
+      min={0}
+      max={100}
+      description="Mark from 0 to 100"
     />
     <FormField
       label={`Comments on ${prefix}`}
@@ -69,19 +36,22 @@ const StudentEvaluation = ({ prefix, formData, handleChange }) => (
       name={`${prefix.toLowerCase()}Comments`}
       value={formData[`${prefix.toLowerCase()}Comments`]}
       onChange={handleChange}
+      required={true}
     />
   </div>
 );
 
-export default function PresentationFormB({ onSubmit }) {
+export default function PresentationFormB() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const projectId = new URLSearchParams(location.search).get('projectId');
+  const searchParams = new URLSearchParams(location.search);
+  const projectCode = searchParams.get('projectCode');
+  const projectName = searchParams.get('projectName');
+  const students = JSON.parse(searchParams.get('students') || '[]');
 
   const [formData, setFormData] = useState({
-    projectId: projectId || '',
-    projectCode: '',
+    projectCodeAndName: `${projectCode || ''} - ${projectName || ''}`,
     evaluatorName: '',
     organizationScore: '',
     organizationComments: '',
@@ -93,9 +63,11 @@ export default function PresentationFormB({ onSubmit }) {
     visibilityComments: '',
     overallScore: '',
     additionalComments: '',
+    student1Name: students[0]?.name || '',
     student1Knowledge: '',
     student1PresentationSkills: '',
     student1Comments: '',
+    student2Name: students[1]?.name || '',
     student2Knowledge: '',
     student2PresentationSkills: '',
     student2Comments: '',
@@ -111,15 +83,8 @@ export default function PresentationFormB({ onSubmit }) {
         ...prevData,
         evaluatorName: user.fullName
       }));
-      
-      if (projectId) {
-        // Fetch project data and update formData
-        console.log('Fetching data for project:', projectId);
-        // You would typically call an API here to get the project details
-        // For now, we'll just log the projectId
-      }
     }
-  }, [user, navigate, projectId]);
+  }, [user, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -129,10 +94,47 @@ export default function PresentationFormB({ onSubmit }) {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const calculateAverageScore = (formData) => {
+    const scores = [
+      parseFloat(formData.organizationScore) || 0,
+      parseFloat(formData.systemPresentationScore) || 0,
+      parseFloat(formData.projectReviewScore) || 0,
+      parseFloat(formData.visibilityScore) || 0
+    ];
+    
+    const validScores = scores.filter(score => !isNaN(score));
+    if (validScores.length === 0) return 0;
+    
+    const average = validScores.reduce((a, b) => a + b, 0) / validScores.length;
+    return Math.round(average);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form data:', formData);
-    onSubmit(formData);
+    try {
+      // Calculate the overall score if not manually set
+      if (!formData.overallScore) {
+        const calculatedScore = calculateAverageScore(formData);
+        setFormData(prev => ({
+          ...prev,
+          overallScore: calculatedScore
+        }));
+      }
+
+      const result = await api.submitForm('presentationFormB', {
+        ...formData,
+        overallScore: formData.overallScore || calculateAverageScore(formData)
+      });
+
+      if (result.success) {
+        console.log('Form submitted successfully');
+        navigate('/ProjectToReview', { state: { formSubmitted: true } });
+      } else {
+        console.error('Form submission failed');
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+    }
   };
 
   if (!user || (user.role !== 'Supervisor' && user.role !== 'Admin')) {
@@ -141,13 +143,20 @@ export default function PresentationFormB({ onSubmit }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="mb-6">
+        <h2 className="text-xl font-bold mb-2">Presentation Evaluation - Step B</h2>
+        <p className="text-gray-600">
+          This is an evaluation form for the end of Part B project presentation. It assesses the organization, content, and visibility of the presentation, as well as individual student performance.
+        </p>
+      </div>
       <FormField
-        label="Project code and student presentation"
+        label="Project Code and Name"
         type="text"
-        name="projectCode"
-        value={formData.projectCode}
+        name="projectCodeAndName"
+        value={formData.projectCodeAndName}
         onChange={handleChange}
         required={true}
+        disabled={true}
       />
       <FormField
         label="Evaluator name"
@@ -160,12 +169,14 @@ export default function PresentationFormB({ onSubmit }) {
       />
       <FormField
         label="Organization of the presentation at a professional level"
-        type="rating"
+        type="number"
         name="organizationScore"
         value={formData.organizationScore}
         onChange={handleChange}
         required={true}
-        description="Understandable and clear order of presenting the topics, presenting the material clearly, adhering to the time frame. (Mark from 1 to 10)"
+        min={0}
+        max={100}
+        description="Understandable and clear order of presenting the topics, presenting the material clearly, adhering to the time frame. (Score 0-100)"
       />
       <FormField
         label="Comments on the organization of the presentation at a professional level"
@@ -177,12 +188,14 @@ export default function PresentationFormB({ onSubmit }) {
       />
       <FormField
         label="Quality of the presentation of the system"
-        type="rating"
+        type="number"
         name="systemPresentationScore"
         value={formData.systemPresentationScore}
         onChange={handleChange}
         required={true}
-        description="Description of the background, need and solution. Quality of the software demonstration (demo). (Rating from 1 to 10)"
+        min={0}
+        max={100}
+        description="Description of the background, need and solution. Quality of the software demonstration (demo). (Score 0-100)"
       />
       <FormField
         label="Comments on the quality of the system presentation"
@@ -194,12 +207,14 @@ export default function PresentationFormB({ onSubmit }) {
       />
       <FormField
         label="Quality of the project review"
-        type="rating"
+        type="number"
         name="projectReviewScore"
         value={formData.projectReviewScore}
         onChange={handleChange}
         required={true}
-        description="Project summary, review of challenges, presentation of insights. (Rating from 1 to 10)"
+        min={0}
+        max={100}
+        description="Project summary, review of challenges, presentation of insights. (Score 0-100)"
       />
       <FormField
         label="Comments on the quality of the project review"
@@ -211,12 +226,14 @@ export default function PresentationFormB({ onSubmit }) {
       />
       <FormField
         label="Quality of the presentation visibility"
-        type="rating"
+        type="number"
         name="visibilityScore"
         value={formData.visibilityScore}
         onChange={handleChange}
         required={true}
-        description="Slides are easily read (size, color and density), clarity of graphics presentation. (Rating from 1 to 10)"
+        min={0}
+        max={100}
+        description="Slides are easily read (size, color and density), clarity of graphics presentation. (Score 0-100)"
       />
       <FormField
         label="Comments on the quality of the presentation visibility"
@@ -227,14 +244,20 @@ export default function PresentationFormB({ onSubmit }) {
         required={true}
       />
       <FormField
-        label="Overall assessment"
-        type="rating"
+        label="Overall score"
+        type="number"
         name="overallScore"
         value={formData.overallScore}
         onChange={handleChange}
+        min={0}
+        max={100}
         required={true}
-        description="Difficulty and scope of the project, use of a special approach. (Rating from 1 to 10)"
+        description="Overall score for the project presentation (Score 0-100)"
       />
+
+      <StudentEvaluation prefix="Student1" formData={formData} handleChange={handleChange} />
+      <StudentEvaluation prefix="Student2" formData={formData} handleChange={handleChange} />
+
       <FormField
         label="Additional comments"
         type="textarea"
@@ -244,15 +267,12 @@ export default function PresentationFormB({ onSubmit }) {
         required={true}
       />
 
-      <StudentEvaluation prefix="Student1" formData={formData} handleChange={handleChange} />
-      <StudentEvaluation prefix="Student2" formData={formData} handleChange={handleChange} />
-
-      <button 
+      <Button 
         type="submit" 
-        className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+        className="w-full"
       >
         Submit Evaluation
-      </button>
+      </Button>
     </form>
   );
 }
