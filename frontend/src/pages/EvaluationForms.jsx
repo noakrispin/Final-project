@@ -1,5 +1,5 @@
-import React from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import SupervisorForm from '../components/forms/SupervisorForm';
@@ -17,19 +17,13 @@ const formConfigs = [
 ];
 
 const EvaluationForms = () => {
-  const [searchTerm, setSearchTerm] = React.useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
 
   const filteredForms = formConfigs.filter(config => 
     config.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const handleFormSubmit = (formData) => {
-    // Handle form submission here
-    console.log('Form submitted:', formData);
-    // You might want to send this data to an API or perform other actions
-  };
 
   return (
     <div className="relative bg-white min-h-screen overflow-hidden">
@@ -67,17 +61,15 @@ const EvaluationForms = () => {
             ))}
           </div>
 
-          {location.pathname !== '/evaluation-forms' && (
-            <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-              <Routes>
-                <Route path="supervisor" element={<SupervisorForm onSubmit={handleFormSubmit} />} />
-                <Route path="presentation-a" element={<PresentationFormA onSubmit={handleFormSubmit} />} />
-                <Route path="presentation-b" element={<PresentationFormB onSubmit={handleFormSubmit} />} />
-                <Route path="book-a" element={<BookReviewFormA onSubmit={handleFormSubmit} />} />
-                <Route path="book-b" element={<BookReviewFormB onSubmit={handleFormSubmit} />} />
-              </Routes>
-            </div>
-          )}
+          <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+            <Routes>
+              <Route path="supervisor" element={<SupervisorForm />} />
+              <Route path="presentation-a" element={<PresentationFormA />} />
+              <Route path="presentation-b" element={<PresentationFormB />} />
+              <Route path="book-a" element={<BookReviewFormA />} />
+              <Route path="book-b" element={<BookReviewFormB />} />
+            </Routes>
+          </div>
         </div>
       </div>
     </div>
