@@ -1,22 +1,22 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { RiMenu3Line } from "react-icons/ri";
-import { FiSearch } from "react-icons/fi";
 import { Button } from '../ui/Button';
 import { useAuth } from '../../context/AuthContext';
 import projectsData from '../../data/projects.json';
 import { assets } from '../../assets/assets';
 import UserMenu from './UserMenu';
+import SearchBar from '../shared/SearchBar';
+import MobileMenu from '../shared/MobileMenu';
+import { FiSearch } from 'react-icons/fi';
 
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [showResults, setShowResults] = useState(false);
-
-  const { user } = useAuth();
+  const [showResults, setShowResults] = useState(false); // Added state for showing search results
 
   const handleSearch = (e) => {
     const query = e.target.value;
@@ -28,19 +28,23 @@ const Navbar = () => {
     }
     const filteredResults = projectsData.filter(project =>
       project.title.toLowerCase().includes(query.toLowerCase()) ||
-      project.description.toLowerCase().includes(query.toLowerCase()) ||
-      project.supervisor.toLowerCase().includes(query.toLowerCase())
-    );
+      project.description?.toLowerCase().includes(query.toLowerCase()) ||
+      project.supervisor?.toLowerCase().includes(query.toLowerCase()) ||
+      project.projectCode?.toLowerCase().includes(query.toLowerCase())
+    ).slice(0, 5); // Limit to 5 results for better UX
     setSearchResults(filteredResults);
     setShowResults(true);
   };
 
-  const handleResultClick = (projectId) => {
-    navigate(`/project/${projectId}`);
-    setShowResults(false);
-    setSearchQuery('');
+  const handleResultClick = (resultId) => {
+    // Implement result click logic here, using resultId
+    console.log("Selected Result ID:", resultId);
+    //Example: Find the project by ID and navigate to its page.
+    const selectedProject = projectsData.find(project => project.id === resultId);
+    if(selectedProject){
+      navigate(`/project/${selectedProject.id}`);
+    }
   };
-
 
   return (
     <nav className="w-full bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -54,45 +58,37 @@ const Navbar = () => {
             />
           </Link>
         </div>
-        
-        <button
-          className="lg:hidden ml-auto flex items-center"
-          onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="Toggle menu"
-        >
-          <RiMenu3Line className="w-6 h-6 cursor-pointer" />
-        </button>
 
-        <div className={`lg:flex flex-1 justify-center ${menuOpen ? 'block' : 'hidden'} absolute lg:static top-16 left-0 w-full lg:w-auto bg-white lg:bg-transparent`}>
+        <MobileMenu isOpen={menuOpen} setIsOpen={setMenuOpen}>
           <ul className="flex flex-col lg:flex-row items-center gap-2 lg:gap-12 font-medium text-gray-800 text-sm">
             <NavLink to='/projectsSupervisors'>MY PROJECTS</NavLink>
             <NavLink to='/ProjectToReview'>PROJECTS TO REVIEW</NavLink>
             <NavLink to='/evaluation-forms'>GRADES</NavLink>
             <NavLink to='/contact'>CONTACT</NavLink>
           </ul>
-        </div>
+        </MobileMenu>
 
         <div className="flex items-center gap-4 ml-auto mr-4">
           <div className="relative hidden lg:block">
             <input
               type="text"
-              placeholder="Search"
+              placeholder="Search projects..."
               value={searchQuery}
               onChange={handleSearch}
-              className="pl-8 pr-3 py-1.5 w-48 bg-[#F4F4F8] rounded-md text-sm text-gray-600 placeholder:text-gray-500 border-none"
+              className="pl-8 pr-3 py-2 w-56 bg-[#F4F4F8] rounded-md text-sm text-gray-600 placeholder:text-gray-500 border-none focus:outline-none focus:ring-2 focus:ring-[#6366F1] transition-all"
               aria-label="Search projects"
             />
             <FiSearch className="absolute left-2 top-2.5 text-gray-500 w-4 h-4" aria-hidden="true" />
             {showResults && searchResults.length > 0 && (
-              <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+              <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-[300px] overflow-y-auto">
                 {searchResults.map(result => (
                   <div
                     key={result.id}
-                    className="p-2 hover:bg-gray-100 cursor-pointer"
+                    className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-none transition-colors"
                     onClick={() => handleResultClick(result.id)}
                   >
-                    <p className="font-medium">{result.title}</p>
-                    <p className="text-sm text-gray-600">{result.supervisor}</p>
+                    <p className="font-medium text-gray-900">{result.title}</p>
+                    <p className="text-sm text-gray-600 mt-0.5">{result.supervisor}</p>
                   </div>
                 ))}
               </div>
