@@ -19,6 +19,7 @@
       }
     ],
     "part": "A",
+    "deadline": "31/12/2024",
     "specialNotes": "בוב סמית' במילואים-אין דחיית מועד כרגע",
     "presentationAttendees": ["Dr. Emily Carter", "Prof. Charlie Davis", "Dr. Sarah Lee"]
   },
@@ -42,7 +43,7 @@
       }
     ],
     "part": "B",
-    "deadline": "03/02/2025",
+    "deadline": "31/12/2024",
     "specialNotes": "דנה ווייט בחופשת לידה- דחיית מועד ",
     "presentationAttendees": ["Prof. Charlie Davis", "Dr. Sarah Lee"]
   },
@@ -65,7 +66,7 @@
       }
     ],
     "part": "A",
-    "deadline": "30/07/2024",
+    "deadline": "31/12/2024",
     "specialNotes": "-",
     "presentationAttendees": ["Dr. Sarah Lee", "Dr. Emily Carter"]
   },
@@ -88,7 +89,7 @@
       }
     ],
     "part": "B",
-    "deadline": "07/12/2024",
+    "deadline": "31/12/2024",
     "specialNotes": "הנרי עבר ניתוח- ניתנה הארכה של שבוע",
     "presentationAttendees": ["Dr. Emily Carter", "Prof. Charlie Davis"]
   },
@@ -111,7 +112,7 @@
       }
     ],
     "part": "A",
-    "deadline": "30/12/2024",
+    "deadline": "31/12/2024",
     "specialNotes": "-",
     "presentationAttendees": ["Prof. Charlie Davis", "Dr. Emily Carter"]
   }
