@@ -64,7 +64,28 @@ export const api = {
         return null;
     }
   },
-
+  getFormData: async (projectCode, formType) => {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  
+    const projectGrades = grades.find((g) => g.projectCode === projectCode);
+    if (!projectGrades) return null;
+  
+    switch (formType) {
+      case 'presentationFormA':
+        return projectGrades.presentationReviewerFormA?.[0] || null;
+      case 'presentationFormB':
+        return projectGrades.presentationReviewerFormB?.[0] || null;
+      case 'supervisorForm':
+        return projectGrades.supervisorForm || null;
+      case 'bookReviewFormA':
+        return projectGrades.bookReviewerFormA || null;
+      case 'bookReviewFormB':
+        return projectGrades.bookReviewerFormB || null;
+      default:
+        throw new Error('Invalid form type');
+    }
+  },
+  
   submitForm: async (formType, formData) => {
     // Simulating API delay
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -165,6 +186,7 @@ export const api = {
     if (index !== -1) {
       updatedGrades[index] = gradeEntry;
     }
+    
 
     // In a real application, you would save the updated grades to the database here
     Object.assign(grades, updatedGrades);
