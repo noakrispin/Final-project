@@ -1,104 +1,116 @@
 [
-    {
-      "id": 1,
-      "projectCode": "24-2-D-5",
-      "part": "A",
-      "supervisorForm": {
-        "projectGrade": 90,
+  {
+    "id": 1,
+    "projectCode": "24-2-D-5",
+    "part": "A",
+    "supervisorForm": {
+      "projectGrade": 95,
+      "analysisAndSolution": 90,
+      "projectDeliverables": 92,
+      "generalEvaluation": 93,
+      "student1Grade": {
+        "name": "Alice Johnson",
+        "independentLearning": 85,
+        "teamwork": 90,
+        "attitude": 88
+      },
+      "student2Grade": {
+        "name": "Bob Smith",
+        "independentLearning": 90,
+        "teamwork": 95,
+        "attitude": 92
+      },
+      "comments": "Alice showed significant progress, while Bob demonstrated excellent teamwork and leadership.",
+      "submissionDate": "2024-02-10T12:30:00Z"
+    },
+    "presentationReviewerFormA": [
+      {
+        "projectGrade": 97,
+        "organizationScore": 95,
+        "organizationComments": "The presentation was well-organized and adhered to time limits.",
+        "systemPresentationScore": 96,
+        "systemPresentationComments": "The system demonstration was clear and effective.",
+        "projectReviewScore": 98,
+        "projectReviewComments": "The project summary and challenges were presented excellently.",
+        "visibilityScore": 94,
+        "visibilityComments": "The slides were clean, readable, and professional.",
         "student1Grade": {
           "name": "Alice Johnson",
-          "grade": 88
+          "Knowledge": 90,
+          "PresentationSkills": 88,
+          "Comments": "Alice answered questions confidently."
         },
         "student2Grade": {
           "name": "Bob Smith",
-          "grade": 92
+          "Knowledge": 95,
+          "PresentationSkills": 92,
+          "Comments": "Bob's presentation skills were excellent."
         },
-        "comments": "Excellent work overall. Alice could improve on independent learning, while Bob excelled in teamwork.",
-        "submissionDate": "2024-01-20T10:15:00Z"
+        "additionalComments": "An outstanding presentation overall.",
+        "submissionDate": "2024-02-12T15:00:00Z"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "projectCode": "24-2-D-6",
+    "part": "B",
+    "supervisorForm": {
+      "projectGrade": 88,
+      "student1Grade": {
+        "name": "Charlie Brown",
+        "grade": 90
       },
-      "bookReviewerFormA": {
-        "projectGrade": 85,
-        "comments": "Well-structured book with comprehensive coverage. Could improve on the analysis section.",
-        "submissionDate": "2024-01-25T14:30:00Z"
+      "student2Grade": {
+        "name": "Dana White",
+        "grade": 86
       },
-      "presentationReviewerFormA": [
-        {
-          "projectGrade": 88,
-          "student1Grade": {
-            "name": "Alice Johnson",
-            "grade": 90
-          },
-          "student2Grade": {
-            "name": "Bob Smith",
-            "grade": 86
-          },
-          "comments": "Good presentation overall. Alice showed strong knowledge, Bob could improve on presentation skills.",
-          "submissionDate": "2024-01-30T11:00:00Z"
-        }
-      ]
+      "comments": "Good progress in Part B. Charlie showed strong problem-solving skills, Dana could improve on project management.",
+      "submissionDate": "2024-02-05T09:45:00Z"
     },
-    {
-      "id": 2,
-      "projectCode": "24-2-D-6",
-      "part": "B",
-      "supervisorForm": {
-        "projectGrade": 88,
+    "bookReviewerFormB": null,
+    "presentationReviewerFormB": []
+  },
+  {
+    "id": 3,
+    "projectCode": "24-2-D-7",
+    "part": "A",
+    "supervisorForm": null,
+    "bookReviewerFormA": null,
+    "presentationReviewerFormA": []
+  },
+  {
+    "id": 4,
+    "projectCode": "24-2-D-8",
+    "part": "A",
+    "supervisorForm": null,
+    "bookReviewerFormB": {
+      "projectGrade": 86,
+      "comments": "Comprehensive final report. Could improve on the discussion of results and future work.",
+      "submissionDate": "2024-02-10T13:20:00Z"
+    },
+    "presentationReviewerFormB": [
+      {
+        "projectGrade": null,
         "student1Grade": {
-          "name": "Charlie Brown",
-          "grade": 90
+          "name": "Grace Blue",
+          "grade": null
         },
         "student2Grade": {
-          "name": "Dana White",
-          "grade": 86
+          "name": "Henry Orange",
+          "grade": null
         },
-        "comments": "Good progress in Part B. Charlie showed strong problem-solving skills, Dana could improve on project management.",
-        "submissionDate": "2024-02-05T09:45:00Z"
-      },
-      "bookReviewerFormB": null,
-      "presentationReviewerFormB": []
-    },
-    {
-      "id": 3,
-      "projectCode": "24-2-D-7",
-      "part": "A",
-      "supervisorForm": null,
-      "bookReviewerFormA": null,
-      "presentationReviewerFormA": []
-    },
-    {
-      "id": 4,
-      "projectCode": "24-2-D-8",
-      "part": "B",
-      "supervisorForm": null,
-      "bookReviewerFormB": {
-        "projectGrade": 86,
-        "comments": "Comprehensive final report. Could improve on the discussion of results and future work.",
-        "submissionDate": "2024-02-10T13:20:00Z"
-      },
-      "presentationReviewerFormB": [
-        {
-          "projectGrade": 90,
-          "student1Grade": {
-            "name": "Grace Blue",
-            "grade": 92
-          },
-          "student2Grade": {
-            "name": "Henry Orange",
-            "grade": 88
-          },
-          "comments": "Strong final presentation. Grace excelled in explaining technical details, Henry in project impact.",
-          "submissionDate": "2024-02-15T10:00:00Z"
-        }
-      ]
-    },
-    {
-      "id": 5,
-      "projectCode": "24-2-R-1",
-      "part": "A",
-      "supervisorForm": null,
-      "bookReviewerFormA": null,
-      "presentationReviewerFormA": []
-    }
-  ]
-  
-  
+        "comments": "Strong final presentation. Grace excelled in explaining technical details, Henry in project impact.",
+        "submissionDate": "2024-02-15T10:00:00Z"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "projectCode": "24-2-R-1",
+    "part": "A",
+    "supervisorForm": null,
+    "bookReviewerFormA": null,
+    "presentationReviewerFormA": []
+  }
+]
