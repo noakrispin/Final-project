@@ -17,7 +17,7 @@ export default function BookReviewFormA() {
       label: 'Project Code and Name', 
       type: 'text', 
       disabled: true, 
-      defaultValue: `${projectCode || ''} - ${projectName || ''}` 
+      defaultValue: `${projectCode || ''}   ${projectName || ''}` 
     },
     { 
       name: 'evaluatorName', 
