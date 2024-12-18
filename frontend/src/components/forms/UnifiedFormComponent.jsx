@@ -5,44 +5,66 @@ import FormField from './FormField';
 import { api } from '../../services/api';
 import { Button } from '../ui/Button';
 
-export default function UnifiedFormComponent({ formTitle, formDescription, formFields, submitEndpoint }) {
+export default function UnifiedFormComponent({
+  formTitle,
+  formDescription,
+  formFields,
+  submitEndpoint,
+  students = [],
+  studentQuestions = [],
+}) {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState(
-    formFields.reduce((acc, field) => {
+  const [formData, setFormData] = useState(() => {
+    const initialData = formFields.reduce((acc, field) => {
       acc[field.name] = field.defaultValue || '';
       return acc;
-    }, {})
-  );
+    }, {});
+
+    // Initialize student-specific fields
+    students.forEach((student, index) => {
+      studentQuestions.forEach((question) => {
+        const fieldName = `student${index + 1}_${question.name}`;
+        initialData[fieldName] = '';
+      });
+    });
+
+    return initialData;
+  });
 
   const [progress, setProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const [isMinimized, setIsMinimized] = useState(false);
 
-  // Protect route and auto-populate user-related fields
   useEffect(() => {
-    if (!user) {
-      navigate('/login');
-    } else if (user.role !== 'Supervisor' && user.role !== 'Admin') {
-      navigate('/');
-    }
+    if (!user) navigate('/login');
+    else if (user.role !== 'Supervisor' && user.role !== 'Admin') navigate('/');
   }, [user, navigate]);
 
-  // Calculate progress
+  // Calculate progress: General fields + Student fields
   useEffect(() => {
-    const totalFields = formFields.filter((field) => !field.disabled && field.required).length;
-    const completedFields = formFields.filter(
-      (field) => field.required && !field.disabled && formData[field.name]?.toString().trim() !== ''
-    ).length;
+    const generalFields = formFields.filter((f) => f.required && !f.disabled);
+    const studentFields = students.flatMap((_, index) =>
+      studentQuestions.map((q) => `student${index + 1}_${q.name}`)
+    );
 
-    setProgress(Math.round((completedFields / totalFields) * 100));
-  }, [formData, formFields]);
+    const totalFields = generalFields.length + studentFields.length;
+    const completedFields = [
+      ...generalFields.map((f) => formData[f.name]),
+      ...studentFields.map((field) => formData[field]),
+    ].filter((value) => value?.toString().trim() !== '').length;
+
+    setProgress(Math.round((completedFields / Math.max(totalFields, 1)) * 100));
+  }, [formData, formFields, students, studentQuestions]);
 
   const handleChange = (e) => {
     const { name, value, type } = e.target;
-    const updatedValue = type === 'number' ? (value === '' ? '' : Math.max(0, Math.min(100, Number(value)))) : value;
-    setFormData((prevData) => ({ ...prevData, [name]: updatedValue }));
+    const updatedValue = type === 'number'
+      ? value === '' ? '' : Math.max(0, Math.min(100, Number(value)))
+      : value;
+
+    setFormData((prev) => ({ ...prev, [name]: updatedValue }));
   };
 
   const handleSubmit = async (e) => {
@@ -60,8 +82,13 @@ export default function UnifiedFormComponent({ formTitle, formDescription, formF
     }
   };
 
-  const isFormValid = formFields.every(
-    (field) => !field.required || formData[field.name]?.toString().trim() !== ''
+  const isFormValid = formFields.every((f) => {
+    return !f.required || formData[f.name]?.toString().trim() !== '';
+  }) && students.every((_, index) =>
+    studentQuestions.every((q) => {
+      const fieldName = `student${index + 1}_${q.name}`;
+      return !q.required || formData[fieldName]?.toString().trim() !== '';
+    })
   );
 
   const getColor = (progress) => {
@@ -75,7 +102,6 @@ export default function UnifiedFormComponent({ formTitle, formDescription, formF
       {/* Interactive Progress Circle */}
       {isVisible && (
         <div className="fixed bottom-4 right-4 bg-white shadow-lg rounded-lg p-3 flex flex-col items-center">
-          {/* Buttons */}
           <div className="w-full flex justify-between mb-2">
             <button
               onClick={() => setIsMinimized((prev) => !prev)}
@@ -91,7 +117,6 @@ export default function UnifiedFormComponent({ formTitle, formDescription, formF
             </button>
           </div>
 
-          {/* Progress Circle */}
           {!isMinimized && (
             <svg width="80" height="80" className="transform -rotate-90">
               <circle cx="40" cy="40" r="35" stroke="#e0e0e0" strokeWidth="6" fill="none" />
@@ -114,29 +139,59 @@ export default function UnifiedFormComponent({ formTitle, formDescription, formF
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="p-6 bg-slate-200 border border-blue-100 rounded-lg shadow-sm mb-6" >
         <div className="mb-6 text-center">
-          <h2 className="text-2xl font-bold mb-2">{formTitle}</h2>
-          {formDescription && <p className="text-gray-600 mb-4">{formDescription}</p>}
+          <h2 className="text-2xl text-blue-900 font-bold mb-2">{formTitle}</h2>
+          {formDescription && (
+  <p className="text-gray-600 mb-4 max-w-3xl mx-auto break-words leading-relaxed text-center">
+    {formDescription}
+  </p>
+)}
+
         </div>
 
-        {/* Render Form Fields */}
+        {/* General Fields */}
+        
+        <h3 className="text-lg font-bold text-blue-900 mb-4">
+          {`Overall Project Evaluation `}
+        </h3>
         {formFields.map((field) => (
-          <div key={field.name}>
-            <FormField
-              label={field.label}
-              type={field.type}
-              name={field.name}
-              value={formData[field.name]}
-              onChange={handleChange}
-              required={field.required}
-              disabled={field.disabled}
-              description={field.description}
-              placeholder={field.placeholder}
-              min={field.type === 'number' ? 0 : undefined}
-              max={field.type === 'number' ? 100 : undefined}
-            />
-          </div>
-        ))}
+          <FormField
+            key={field.name}
+            {...field}
+            value={formData[field.name]}
+            onChange={handleChange}
+          />
+        ))}</div>
+
+        {/* Student Evaluation */}
+        {students.length > 0 ? (
+          students.map((student, index) => (
+            <div
+              key={`student-${index}`}
+              className="p-6 bg-slate-200 border border-blue-100 rounded-lg shadow-sm mb-6"
+            >
+              <h3 className="text-lg font-bold text-blue-900 mb-4">
+                {`Evaluation for ${student.name}`}
+              </h3>
+              {studentQuestions.map((question) => {
+                const fieldName = `student${index + 1}_${question.name}`;
+                return (
+                  <FormField
+                    key={fieldName}
+                    {...question}
+                    name={fieldName}
+                    value={formData[fieldName]}
+                    onChange={handleChange}
+                  />
+                );
+              })}
+            </div>
+          ))
+        ) : (
+          <p></p>
+        )}
+
 
         {/* Submit Button */}
         <div className="flex justify-center mt-6">

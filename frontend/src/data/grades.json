@@ -23,14 +23,14 @@
       },
       "presentationReviewerFormA": [
         {
-          "projectGrade": 88,
+          "projectGrade": null,
           "student1Grade": {
             "name": "Alice Johnson",
-            "grade": 90
+            "grade": null
           },
           "student2Grade": {
             "name": "Bob Smith",
-            "grade": 86
+            "grade": null
           },
           "comments": "Good presentation overall. Alice showed strong knowledge, Bob could improve on presentation skills.",
           "submissionDate": "2024-01-30T11:00:00Z"
@@ -68,7 +68,7 @@
     {
       "id": 4,
       "projectCode": "24-2-D-8",
-      "part": "B",
+      "part": "A",
       "supervisorForm": null,
       "bookReviewerFormB": {
         "projectGrade": 86,
@@ -77,14 +77,14 @@
       },
       "presentationReviewerFormB": [
         {
-          "projectGrade": 90,
+          "projectGrade": null,
           "student1Grade": {
             "name": "Grace Blue",
-            "grade": 92
+            "grade": null
           },
           "student2Grade": {
             "name": "Henry Orange",
-            "grade": 88
+            "grade": null
           },
           "comments": "Strong final presentation. Grace excelled in explaining technical details, Henry in project impact.",
           "submissionDate": "2024-02-15T10:00:00Z"
