@@ -1,7 +1,7 @@
 import React from 'react';
 import { Search } from 'lucide-react';
 
-export const SearchBar = React.memo(({ value, onChange, placeholder }) => (
+const SearchBar = ({ value, onChange, placeholder }) => (
   <div className="relative">
     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" />
     <input
@@ -12,4 +12,7 @@ export const SearchBar = React.memo(({ value, onChange, placeholder }) => (
       onChange={(e) => onChange(e.target.value)}
     />
   </div>
-));
+);
+
+export default SearchBar;
+
