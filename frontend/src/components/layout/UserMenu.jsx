@@ -4,9 +4,9 @@ import { FaCircleUser } from "react-icons/fa6";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import { useAuth } from '../../context/AuthContext';
 
-const UserMenu = () => {
+const UserMenu = ({ customActions = [] }) => {
   const navigate = useNavigate();
-  const { user, logout, switchToAdmin } = useAuth();
+  const { user, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const dropdownRef = React.useRef(null);
 
@@ -33,11 +33,26 @@ const UserMenu = () => {
       <RiArrowDropDownLine className="w-6 h-6" aria-hidden="true" />
       {dropdownOpen && (
         <div className='absolute top-full right-0 mt-2 text-sm font-medium text-gray-600 z-20 bg-white py-2 rounded-md shadow-md border border-gray-100 w-64'>
-          <button onClick={() => navigate('/profile')} className="hover:bg-gray-50 cursor-pointer px-4 py-2 w-full text-left">My Profile</button>
-          {user.role === 'Admin' && (
-            <button onClick={switchToAdmin} className="hover:bg-gray-50 cursor-pointer px-4 py-2 w-full text-left">Switch to Admin</button>
+          <button onClick={() => navigate('/profile')} className="hover:bg-gray-50 cursor-pointer px-4 py-2 w-full text-left">
+            My Profile
+          </button>
+          {user.role === 'Admin' && !customActions.length && (
+            <button onClick={() => navigate('/admin-dashboard')} className="hover:bg-gray-50 cursor-pointer px-4 py-2 w-full text-left">
+              Admin Dashboard
+            </button>
           )}
-          <button onClick={logout} className="hover:bg-gray-50 cursor-pointer px-4 py-2 w-full text-left">Logout</button>
+          {customActions.map((action, index) => (
+            <button
+              key={index}
+              onClick={action.onClick}
+              className="hover:bg-gray-50 cursor-pointer px-4 py-2 w-full text-left"
+            >
+              {action.label}
+            </button>
+          ))}
+          <button onClick={logout} className="hover:bg-gray-50 cursor-pointer px-4 py-2 w-full text-left">
+            Logout
+          </button>
         </div>
       )}
     </div>
@@ -45,3 +60,4 @@ const UserMenu = () => {
 };
 
 export default UserMenu;
+
