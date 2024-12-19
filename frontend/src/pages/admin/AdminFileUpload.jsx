@@ -1,69 +1,117 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ExcelUploader from '../../components/admin/ExcelUploader';
 import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Table } from '../../components/ui/Table';
 import { BlurElements } from '../../components/shared/BlurElements';
-
-const TABS = ['Part A', 'Part B'];
+import { processExcelFile } from '../../services/fileProcessingService';
+import { mockDatabaseService } from '../../services/mockDatabaseService';
 
 const AdminFileUpload = () => {
-  const [activeTab, setActiveTab] = useState(TABS[0]);
+  const navigate = useNavigate();
+  const [uploadedProjects, setUploadedProjects] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleFileSelect = (file) => {
-    console.log("Selected file:", file);
-    // We'll implement the file processing logic later
+  const projectColumns = [
+    { header: 'Project Code', accessor: 'projectCode' },
+    { header: 'Student 1 Name', accessor: row => row.student1?.name || '' },
+    { header: 'Student 1 ID', accessor: row => row.student1?.id || '' },
+    { header: 'Student 1 Email', accessor: row => row.student1?.email || '' },
+    { header: 'Student 2 Name', accessor: row => row.student2?.name || '' },
+    { header: 'Student 2 ID', accessor: row => row.student2?.id || '' },
+    { header: 'Student 2 Email', accessor: row => row.student2?.email || '' },
+    { header: 'Supervisor 1', accessor: 'supervisor1' },
+    { header: 'Supervisor 2', accessor: 'supervisor2' },
+    { header: 'Project Title', accessor: 'title' },
+    { header: 'Part', accessor: 'part' },
+    { header: 'Type', accessor: 'type' }
+  ];
+
+  const handleFileSelect = async (file) => {
+    setIsUploading(true);
+    setError(null);
+    setUploadSuccess(false);
+
+    try {
+      const processedData = await processExcelFile(file);
+      await mockDatabaseService.insertProjects(processedData);
+      setUploadedProjects(processedData);
+      setUploadSuccess(true);
+      console.log("Projects uploaded successfully:", processedData);
+    } catch (err) {
+      setError(err.message);
+      console.error("Error uploading file:", err);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
-    <div className="relative bg-white min-h-screen overflow-hidden">
-      <BlurElements />
-
-      <div className="relative z-10">
-        <div className="bg-white shadow">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-center py-4">
-              {TABS.map(tab => (
-                <button
-                  key={tab}
-                  className={`inline-flex items-center px-3 pt-2 pb-3 border-b-2 text-base font-medium ${
-                    activeTab === tab
-                      ? 'border-primary text-foreground'
-                      : 'border-transparent text-muted-foreground hover:border-purple-500 hover:text-foreground'
-                  }`}
-                  onClick={() => setActiveTab(tab)}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
+    <div className="min-h-screen p-6">
+      <div className="max-w-4xl mx-auto">
+        <div className="p-6 bg-slate-200 border border-blue-100 rounded-lg shadow-sm">
+          <div className="mb-6 text-center">
+            <h2 className="text-2xl text-blue-900 font-bold mb-2">Required File Format</h2>
+            <p className="text-gray-600 mb-4 max-w-3xl mx-auto break-words leading-relaxed text-center">
+              Please ensure your Excel file follows the format below before uploading.
+            </p>
           </div>
-        </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {activeTab === 'Part A' ? (
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-2">Upload Projects - Part A</h2>
-              <p className="text-gray-600 mb-6">
-                To load projects, please upload an Excel file (.xlsx) with the following format:
-              </p>
-              
-              <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                <h3 className="font-medium mb-2">Required Excel Format:</h3>
-                <ul className="list-disc list-inside space-y-1 text-gray-600">
-                  <li>Column 1: Student 1</li>
-                  <li>Column 2: Student 2</li>
-                  <li>Column 3: Supervisor 1</li>
-                  <li>Column 4: Supervisor 2 (Optional)</li>
+          <div className="space-y-6">
+            {/* File Format Requirements */}
+            <div className="space-y-4">
+              <div className="max-w-xl mx-auto">
+                <ul className="list-disc list-inside space-y-2 text-gray-600">
+                  <li>Column 1: Project Code (Required)</li>
+                  <li>Column 2: Student 1 Name (Required)</li>
+                  <li>Column 3: Student 1 ID (Required - 9 digits)</li>
+                  <li>Column 4: Student 1 Email (Required - @e.braude.ac.il)</li>
+                  <li>Column 5: Student 2 Name (Optional)</li>
+                  <li>Column 6: Student 2 ID (Optional - 9 digits)</li>
+                  <li>Column 7: Student 2 Email (Optional - @e.braude.ac.il)</li>
+                  <li>Column 8: Supervisor 1 (Required)</li>
+                  <li>Column 9: Supervisor 2 (Optional)</li>
+                  <li>Column 10: Project Title (Required)</li>
+                  <li>Column 11: Project Description (Optional)</li>
+                  <li>Column 12: Part (Required - A or B)</li>
+                  <li>Column 13: Type (Required - Development or Research)</li>
                 </ul>
               </div>
+            </div>
 
-              <ExcelUploader onFileSelect={handleFileSelect} />
-            </Card>
-          ) : (
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold">Part B Projects</h2>
-              <p className="text-gray-600">Part B content will be implemented in the next phase.</p>
-            </Card>
-          )}
+            {/* Upload Section */}
+            <div className="space-y-6">
+              <ExcelUploader 
+                onFileSelect={handleFileSelect}
+                isUploading={isUploading}
+                isSuccess={uploadSuccess}
+                error={error}
+              />
+
+              {uploadedProjects.length > 0 && (
+                <div className="mt-8 space-y-4">
+                  <h3 className="text-lg font-semibold text-blue-900">Uploaded Projects Preview</h3>
+                  <Table
+                    columns={projectColumns}
+                    data={uploadedProjects}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-center mt-6">
+              <Button 
+                onClick={() => navigate('/admin-projects')}
+                className="w-64 bg-blue-900 hover:bg-blue-800 text-white"
+              >
+                View Projects
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
