@@ -37,7 +37,7 @@ const UserMenu = ({ customActions = [] }) => {
             My Profile
           </button>
           {user.role === 'Admin' && !customActions.length && (
-            <button onClick={() => navigate('/admin-dashboard')} className="hover:bg-gray-50 cursor-pointer px-4 py-2 w-full text-left">
+            <button onClick={() => navigate('/admin-projects')} className="hover:bg-gray-50 cursor-pointer px-4 py-2 w-full text-left">
               Admin Dashboard
             </button>
           )}
