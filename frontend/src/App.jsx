@@ -14,8 +14,6 @@ import EvaluationForms from './pages/EvaluationForms';
 import NotFound from './pages/NotFound';
 import Unauthorized from './pages/Unauthorized';
 import AdminProjects from './pages/admin/AdminProjects';
-import AdminReminders from './pages/admin/AdminReminders';
-import AdminGrades from './pages/admin/AdminGrades';
 import AdminFileUpload from './pages/admin/AdminFileUpload';
 
 // Component imports
@@ -86,22 +84,6 @@ const AppContent = () => {
           element={
             <ProtectedRoute allowedRoles={["Admin"]}>
               <AdminProjects />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/admin-reminders" 
-          element={
-            <ProtectedRoute allowedRoles={["Admin"]}>
-              <AdminReminders />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/admin-grades" 
-          element={
-            <ProtectedRoute allowedRoles={["Admin"]}>
-              <AdminGrades />
             </ProtectedRoute>
           } 
         />
