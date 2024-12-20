@@ -9,7 +9,7 @@ import ProjectsTable from '../../components/admin/ProjectsTable';
 import ProjectStats from '../../components/admin/ProjectStats';
 import { useProjectModals } from '../../hooks/useProjectModals';
 import projectsAdminData from '../../data/projectsAdmin.json';
-
+import { MdOutlineFileUpload } from "react-icons/md";
 const TABS = ['All Projects', 'Part A', 'Part B'];
 
 const getTabDescription = (tab) => {
@@ -88,14 +88,14 @@ const AdminProjects = () => {
             <div className="flex justify-center py-4">
               {TABS.map(tab => (
                 <button
-                  key={tab}
-                  className={`inline-flex items-center px-6 py-2 border-b-2 text-sm font-medium transition-colors ${
-                    activeTab === tab
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                  onClick={() => setActiveTab(tab)}
-                >
+                key={tab}
+                className={`inline-flex items-center px-3 pt-2 pb-3 border-b-2 text-base font-medium ${
+                  activeTab === tab
+                    ? 'border-blue-900 text-blue-900'
+                    : 'border-transparent text-gray-500 hover:border-blue-900 hover:text-blue-900'
+                }`}
+                onClick={() => setActiveTab(tab)}
+              >
                   {tab}
                 </button>
               ))}
@@ -106,10 +106,10 @@ const AdminProjects = () => {
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header Section */}
-          <div className="mb-8">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="mb-8 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
               {/* Description */}
-              <div className="lg:col-span-8">
+              <div className="lg:col-span-2 ">
                 <div className="bg-white rounded-lg p-6 shadow-sm">
                   <p className="text-gray-600 text-lg leading-relaxed">
                     Here you can view and manage all projects, including both Part A and Part B projects. 
@@ -120,15 +120,17 @@ const AdminProjects = () => {
               </div>
 
               {/* Stats and Actions */}
-              <div className="lg:col-span-4 space-y-4">
+              <div className="space-y-4">
                 <ProjectStats 
                   projects={projects} 
                   activeTab={activeTab} 
                 />
                 <Button 
                   onClick={() => navigate('/admin-upload')}
-                  className="w-full bg-primary hover:bg-primary/90 text-white"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+
                 >
+                  <MdOutlineFileUpload />
                   Upload Excel File
                 </Button>
               </div>
