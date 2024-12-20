@@ -1,13 +1,28 @@
-import React from 'react'
+import React from 'react';
+import { AlertTriangle } from 'lucide-react';
+import { cn } from '../../lib/utils';
+import { errorMessagePropTypes } from '../../utils/prop-types';
 
-export function ErrorMessage({ message }) {
-  if (!message) return null
+const ErrorMessage = React.forwardRef(({ message, className }, ref) => {
+  if (!message) return null;
 
   return (
-    <p className="text-red-500 text-xs mt-1" role="alert">
-      {message}
-    </p>
-  )
-}
+    <div 
+      ref={ref}
+      className={cn(
+        "flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md",
+        className
+      )}
+      role="alert"
+    >
+      <AlertTriangle className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+      <span>{message}</span>
+    </div>
+  );
+});
+
+ErrorMessage.propTypes = errorMessagePropTypes;
+ErrorMessage.displayName = 'ErrorMessage';
 
 export default ErrorMessage;
+
