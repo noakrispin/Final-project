@@ -4,11 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { BlurElements } from '../components/shared/BlurElements';
 import { Section } from '../components/sections/Section';
-import { Actions } from '../components/actions/Actions';
-import { ProjectDetailsDialog } from '../components/shared/ProjectDetailsDialog';
 import { Button } from '../components/ui/Button';
+import ProjectDetailsPopup from '../components/shared/ProjectDetailsPopup';
 
-// Remove Project Code from filters
 const FILTERS = ['All', 'Part A', 'Part B'];
 
 const ProjectsSupervisors = () => {
@@ -18,19 +16,22 @@ const ProjectsSupervisors = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
+  const [personalNotes, setPersonalNotes] = useState('');
   const navigate = useNavigate();
   const { user } = useAuth();
 
   useEffect(() => {
     const fetchProjects = async () => {
       if (!user) return;
-      
+
       try {
         setIsLoading(true);
         const projectsData = await api.getProjects();
-        const filteredProjects = projectsData.filter(project => 
-          project.supervisor === user.fullName || 
-          (project.presentationAttendees && project.presentationAttendees.includes(user.fullName))
+        const filteredProjects = projectsData.filter(
+          (project) =>
+            project.supervisor === user.fullName ||
+            (project.presentationAttendees &&
+              project.presentationAttendees.includes(user.fullName))
         );
         setProjects(filteredProjects);
       } catch (err) {
@@ -45,88 +46,148 @@ const ProjectsSupervisors = () => {
   }, [user]);
 
   const filterData = useCallback((data, searchTerm, filterValue) => {
-    return data.filter(item => {
-      const matchesSearch = Object.values(item)
-        .some(val => typeof val === 'string' && val.toLowerCase().includes(searchTerm.toLowerCase()));
+    return data.filter((item) => {
+      const matchesSearch = Object.values(item).some(
+        (val) =>
+          typeof val === 'string' &&
+          val.toLowerCase().includes(searchTerm.toLowerCase())
+      );
 
       if (filterValue === 'All') return matchesSearch;
       return matchesSearch && item.part === filterValue.split(' ')[1];
     });
   }, []);
 
-  const filteredProjects = useMemo(() => 
-    filterData(projects, searchProjects, projectsFilter),
+  const filteredProjects = useMemo(
+    () => filterData(projects, searchProjects, projectsFilter),
     [projects, searchProjects, projectsFilter, filterData]
   );
 
-  const handleNavigateToEvaluationForms = useCallback((projectId) => {
-    navigate(`/evaluation-forms/${projectId}`);
-  }, [navigate]);
-
   const handleProjectClick = useCallback((project) => {
     setSelectedProject(project);
+    setPersonalNotes(project.personalNotes || '');
   }, []);
 
-  const handleCloseDialog = useCallback(() => {
+  const handleClosePopup = () => {
     setSelectedProject(null);
-  }, []);
+    setPersonalNotes('');
+  };
 
-  const projectColumns = useMemo(() => [
-    { 
-      key: 'id', 
-      header: '#', 
-      sortable: true,
-      className: 'text-base'
-    },
-    { 
-      key: 'title', 
-      header: 'Project Title', 
-      sortable: true,
-      render: (value, project) => (
-        <Button
-          variant="link"
-          className="p-0 h-auto font-normal text-left hover:underline text-[#686b80] text-base"
-          onClick={() => handleProjectClick(project)}
-        >
-          {value}
-        </Button>
-      )
-    },
-    { 
-      key: 'students', 
-      header: 'Students',
-      className: 'text-base',
-      render: (students) => (
-        <span className="text-base">
-          {students.map(student => student.name).join(', ')}
-        </span>
-      )
-    },
-    { 
-      key: 'projectCode', 
-      header: 'Project Code',
-      className: 'text-base',
-      sortable: true 
-    },
-    { 
-      key: 'specialNotes', 
-      header: 'Special Notes',
-      className: 'text-base'
-    },
-    { 
-      key: 'deadline', 
-      header: 'Deadline',
-      className: 'text-base',
-      sortable: true 
-    },
-  ], [handleProjectClick, handleNavigateToEvaluationForms]);
+  const handleSaveNotes = async () => {
+    if (!selectedProject) return;
+
+    try {
+      await api.updateProjectNotes(selectedProject.id, personalNotes);
+      
+      setProjects(prevProjects => 
+        prevProjects.map(project => 
+          project.id === selectedProject.id 
+            ? { ...project, personalNotes } 
+            : project
+        )
+      );
+
+      console.log('Notes saved successfully');
+    } catch (error) {
+      console.error('Error saving notes:', error);
+    }
+  };
+
+  const handleEmailStudents = () => {
+    if (!selectedProject) return;
+
+    const studentEmails = selectedProject.students.map(student => student.email).join(',');
+    const subject = encodeURIComponent(`Regarding Project: ${selectedProject.title}`);
+    const body = encodeURIComponent(`Dear students,\n\nI hope this email finds you well. I wanted to discuss your project "${selectedProject.title}".\n\nBest regards,\n${user.fullName}`);
+
+    window.location.href = `mailto:${studentEmails}?subject=${subject}&body=${body}`;
+  };
+
+  const projectColumns = useMemo(
+    () => [
+      {
+        key: 'id',
+        header: '#',
+        sortable: true,
+        className: 'text-base',
+      },
+      {
+        key: 'title',
+        header: 'Project Title',
+        sortable: true,
+        render: (value, project) => (
+          <Button
+            variant="link"
+            className="p-0 h-auto font-normal text-left hover:underline text-[#686b80] text-base"
+            onClick={() => handleProjectClick(project)}
+          >
+            {value}
+          </Button>
+        ),
+      },
+      {
+        key: 'students',
+        header: 'Students',
+        className: 'text-base',
+        render: (students) => (
+          <span className="text-base">
+            {students.map((student) => student.name).join(', ')}
+          </span>
+        ),
+      },
+      {
+        key: 'projectCode',
+        header: 'Project Code',
+        className: 'text-base',
+        sortable: true,
+      },
+      {
+        key: 'gitLink',
+        header: 'Git Link',
+        className: 'text-base',
+        render: (value) =>
+          value ? (
+            <a
+              href={value}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:underline"
+            >
+              View
+            </a>
+          ) : (
+            <span className="text-gray-500">Missing Link</span>
+          ),
+      },
+      {
+        key: 'specialNotes',
+        header: 'Special Notes',
+        className: 'text-base',
+      },
+      {
+        key: 'deadline',
+        header: 'Deadline',
+        className: 'text-base',
+        sortable: true,
+      },
+    ],
+    [handleProjectClick]
+  );
 
   if (isLoading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        Loading...
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="flex justify-center items-center h-screen text-red-500">{error}</div>;
+    return (
+      <div className="flex justify-center items-center h-screen text-red-500">
+        {error}
+      </div>
+    );
   }
 
   return (
@@ -143,15 +204,24 @@ const ProjectsSupervisors = () => {
           tableData={filteredProjects}
           tableColumns={projectColumns}
         />
-        
-        <ProjectDetailsDialog
-          isOpen={selectedProject !== null}
-          onClose={handleCloseDialog}
-          project={selectedProject}
-        />
+
+        {selectedProject && (
+          <div className="fixed inset-0 flex items-center justify-center z-50">
+            <ProjectDetailsPopup
+              project={selectedProject}
+              onClose={handleClosePopup}
+              personalNotes={personalNotes}
+              setPersonalNotes={setPersonalNotes}
+              handleSaveNotes={handleSaveNotes}
+              handleEmailStudents={handleEmailStudents}
+              userRole={user?.role}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
 export default ProjectsSupervisors;
+
