@@ -1,20 +1,14 @@
-import React from 'react';
+import { Card } from '../ui/Card';
 
-const statusColors = {
-  'Submitted': 'bg-green-100 text-green-800',
-  'Not Submitted': 'bg-red-100 text-red-800',
-  'Pending': 'bg-yellow-100 text-yellow-800',
-  'Overdue': 'bg-orange-100 text-orange-800',
-  'Completed': 'bg-blue-100 text-blue-800',
-};
-
-export const StatusBadge = ({ status }) => {
-  const colorClass = statusColors[status] || 'bg-gray-100 text-gray-800';
-
+export function ProjectStats({ totalProjects }) {
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClass}`}>
-      {status}
-    </span>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <Card>
+        <div className="p-4">
+          <h2 className="text-lg font-semibold">Total Projects</h2>
+          <p className="text-3xl font-bold text-blue-600">{totalProjects}</p>
+        </div>
+      </Card>
+    </div>
   );
-};
-
+}
