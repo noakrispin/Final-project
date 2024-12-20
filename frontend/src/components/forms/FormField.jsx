@@ -72,7 +72,7 @@ const FormField = ({
           max={type === 'number' ? max : undefined}
           required={required}
           disabled={disabled}
-          placeholder={placeholder || (type === 'text' ? 'Enter text here' : '')}
+          placeholder={placeholder || 'Score 0-100'}
           className={`px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:shadow-outline ${
             type === 'number' ? 'w-32' : 'w-full'
           }`}
