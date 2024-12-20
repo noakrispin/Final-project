@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Card } from '../ui/Card';
 
 const ProjectStats = ({ projects, activeTab }) => {
   const filteredCount = projects.filter(project => {
@@ -17,12 +16,16 @@ const ProjectStats = ({ projects, activeTab }) => {
   }).length;
 
   return (
-    <Card className="bg-white shadow-sm">
-      <div className="px-6 py-4">
-        <h2 className="text-lg font-semibold text-gray-900">Total Projects</h2>
-        <p className="text-3xl font-bold text-primary mt-1">{filteredCount}</p>
-      </div>
-    </Card>
+    <div className="bg-blue-50 rounded-lg p-8 text-center">
+      <span className="text-4xl font-bold text-blue-600 block mb-2">
+        {filteredCount}
+      </span>
+      <span className="text-gray-600 text-lg">
+        {activeTab === 'All Projects' 
+          ? 'Total Projects' 
+          : `Total Projects ${activeTab}`}
+      </span>
+    </div>
   );
 };
 
