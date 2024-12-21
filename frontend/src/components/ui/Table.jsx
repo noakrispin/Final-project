@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 
-export const Table = ({ data, columns, className = '' }) => {
+export const Table = ({ data, columns, className = '', onRowClick }) => {
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState('asc');
 
@@ -69,7 +69,8 @@ export const Table = ({ data, columns, className = '' }) => {
             {sortedData.map((row, rowIndex) => (
               <tr
                 key={rowIndex}
-                className="hover:bg-gray-50 transition-colors"
+                className="hover:bg-gray-50 transition-colors cursor-pointer"
+                onClick={() => onRowClick && onRowClick(row)} // Make row clickable
               >
                 {columns.map((column) => (
                   <td

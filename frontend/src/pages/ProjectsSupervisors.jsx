@@ -78,7 +78,7 @@ const ProjectsSupervisors = () => {
 
     try {
       await api.updateProjectNotes(selectedProject.id, personalNotes);
-      
+
       setProjects(prevProjects => 
         prevProjects.map(project => 
           project.id === selectedProject.id 
@@ -106,28 +106,21 @@ const ProjectsSupervisors = () => {
   const projectColumns = useMemo(
     () => [
       {
-        key: 'id',
-        header: '#',
-        sortable: true,
+        key: 'projectCode',
+        header: 'Project Code',
         className: 'text-base',
+        sortable: true,
       },
       {
         key: 'title',
         header: 'Project Title',
         sortable: true,
-        render: (value, project) => (
-          <Button
-            variant="link"
-            className="p-0 h-auto font-normal text-left hover:underline text-[#686b80] text-base"
-            onClick={() => handleProjectClick(project)}
-          >
-            {value}
-          </Button>
-        ),
+        className: 'text-base',
       },
       {
         key: 'students',
         header: 'Students',
+        sortable: true,
         className: 'text-base',
         render: (students) => (
           <span className="text-base">
@@ -136,14 +129,9 @@ const ProjectsSupervisors = () => {
         ),
       },
       {
-        key: 'projectCode',
-        header: 'Project Code',
-        className: 'text-base',
-        sortable: true,
-      },
-      {
         key: 'gitLink',
         header: 'Git Link',
+        sortable: true,
         className: 'text-base',
         render: (value) =>
           value ? (
@@ -152,6 +140,7 @@ const ProjectsSupervisors = () => {
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-500 hover:underline"
+              onClick={(e) => e.stopPropagation()}
             >
               View
             </a>
@@ -162,16 +151,17 @@ const ProjectsSupervisors = () => {
       {
         key: 'specialNotes',
         header: 'Special Notes',
+        sortable: true,
         className: 'text-base',
       },
       {
         key: 'deadline',
         header: 'Deadline',
-        className: 'text-base',
         sortable: true,
+        className: 'text-base',
       },
     ],
-    [handleProjectClick]
+    []
   );
 
   if (isLoading) {
@@ -203,20 +193,20 @@ const ProjectsSupervisors = () => {
           searchState={[searchProjects, setSearchProjects]}
           tableData={filteredProjects}
           tableColumns={projectColumns}
+          onRowClick={(row) => handleProjectClick(row)}
+          rowClassName="cursor-pointer hover:bg-gray-100 transition-colors duration-150"
         />
 
         {selectedProject && (
-          <div className="fixed inset-0 flex items-center justify-center z-50">
-            <ProjectDetailsPopup
-              project={selectedProject}
-              onClose={handleClosePopup}
-              personalNotes={personalNotes}
-              setPersonalNotes={setPersonalNotes}
-              handleSaveNotes={handleSaveNotes}
-              handleEmailStudents={handleEmailStudents}
-              userRole={user?.role}
-            />
-          </div>
+          <ProjectDetailsPopup
+            project={selectedProject}
+            onClose={handleClosePopup}
+            personalNotes={personalNotes}
+            setPersonalNotes={setPersonalNotes}
+            handleSaveNotes={handleSaveNotes}
+            handleEmailStudents={handleEmailStudents}
+            userRole={user?.role}
+          />
         )}
       </div>
     </div>
@@ -224,4 +214,3 @@ const ProjectsSupervisors = () => {
 };
 
 export default ProjectsSupervisors;
-
