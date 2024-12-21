@@ -109,7 +109,7 @@
     "title": "Research on Machine Learning Algorithms in Healthcare",
     "description": "Conducting research on the effectiveness of various machine learning algorithms in predicting patient outcomes.",
     "projectCode": "24-2-R-1",
-    "supervisor": "Prof. Charlie Davis",
+    "supervisor": ["Prof. Charlie Davis","Dr. Emily Carter"],
     "personalNotes": "",
     "gitLink":"",
     "students": [
@@ -126,7 +126,7 @@
     ],
     "part": "A",
     "deadline": "31/12/2024",
-    "specialNotes": "-",
+    "specialNotes": "Allowed students to connect throw WhatsApp",
     "presentationAttendees": ["Prof. Charlie Davis", "Dr. Emily Carter"]
   }
 ]

@@ -79,10 +79,10 @@ const ProjectsSupervisors = () => {
     try {
       await api.updateProjectNotes(selectedProject.id, personalNotes);
 
-      setProjects(prevProjects => 
-        prevProjects.map(project => 
-          project.id === selectedProject.id 
-            ? { ...project, personalNotes } 
+      setProjects(prevProjects =>
+        prevProjects.map(project =>
+          project.id === selectedProject.id
+            ? { ...project, personalNotes }
             : project
         )
       );
@@ -124,9 +124,14 @@ const ProjectsSupervisors = () => {
         className: 'text-base',
         render: (students) => (
           <span className="text-base">
-            {students.map((student) => student.name).join(', ')}
+            {students.map((student) => student.name).join(' & ')}
           </span>
         ),
+        sortFunction: (a, b) => {
+          const aNames = a.students.map((s) => s.name).join(', ');
+          const bNames = b.students.map((s) => s.name).join(', ');
+          return aNames.localeCompare(bNames);
+        },
       },
       {
         key: 'gitLink',
@@ -153,6 +158,11 @@ const ProjectsSupervisors = () => {
         header: 'Special Notes',
         sortable: true,
         className: 'text-base',
+        sortFunction: (a, b) => {
+          const aNote = a.specialNotes || '';
+          const bNote = b.specialNotes || '';
+          return aNote.localeCompare(bNote, 'he', { sensitivity: 'base' });
+        },
       },
       {
         key: 'deadline',
@@ -163,6 +173,7 @@ const ProjectsSupervisors = () => {
     ],
     []
   );
+  
 
   if (isLoading) {
     return (
