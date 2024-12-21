@@ -79,8 +79,8 @@ const ProjectsSupervisors = () => {
     try {
       await api.updateProjectNotes(selectedProject.id, personalNotes);
 
-      setProjects(prevProjects =>
-        prevProjects.map(project =>
+      setProjects((prevProjects) =>
+        prevProjects.map((project) =>
           project.id === selectedProject.id
             ? { ...project, personalNotes }
             : project
@@ -96,9 +96,13 @@ const ProjectsSupervisors = () => {
   const handleEmailStudents = () => {
     if (!selectedProject) return;
 
-    const studentEmails = selectedProject.students.map(student => student.email).join(',');
+    const studentEmails = selectedProject.students
+      .map((student) => student.email)
+      .join(',');
     const subject = encodeURIComponent(`Regarding Project: ${selectedProject.title}`);
-    const body = encodeURIComponent(`Dear students,\n\nI hope this email finds you well. I wanted to discuss your project "${selectedProject.title}".\n\nBest regards,\n${user.fullName}`);
+    const body = encodeURIComponent(
+      `Dear students,\n\nI hope this email finds you well. I wanted to discuss your project "${selectedProject.title}".\n\nBest regards,\n${user.fullName}`
+    );
 
     window.location.href = `mailto:${studentEmails}?subject=${subject}&body=${body}`;
   };
@@ -124,14 +128,9 @@ const ProjectsSupervisors = () => {
         className: 'text-base',
         render: (students) => (
           <span className="text-base">
-            {students.map((student) => student.name).join(' & ')}
+            {students.map((student) => student.name).join(', ')}
           </span>
         ),
-        sortFunction: (a, b) => {
-          const aNames = a.students.map((s) => s.name).join(', ');
-          const bNames = b.students.map((s) => s.name).join(', ');
-          return aNames.localeCompare(bNames);
-        },
       },
       {
         key: 'gitLink',
@@ -158,11 +157,6 @@ const ProjectsSupervisors = () => {
         header: 'Special Notes',
         sortable: true,
         className: 'text-base',
-        sortFunction: (a, b) => {
-          const aNote = a.specialNotes || '';
-          const bNote = b.specialNotes || '';
-          return aNote.localeCompare(bNote, 'he', { sensitivity: 'base' });
-        },
       },
       {
         key: 'deadline',
@@ -173,7 +167,6 @@ const ProjectsSupervisors = () => {
     ],
     []
   );
-  
 
   if (isLoading) {
     return (
@@ -198,7 +191,11 @@ const ProjectsSupervisors = () => {
       <div className="relative z-10 p-4 md:p-6">
         <Section
           title={`My Projects- ${user?.fullName}`}
-          description={<span className="text-lg">{"Here are all the projects currently under your supervision, categorized for easy tracking and management."}</span>}
+          description={
+            <span className="text-lg">
+              Here are all the projects currently under your supervision, categorized for easy tracking and management.
+            </span>
+          }
           filters={FILTERS}
           filterState={[projectsFilter, setProjectsFilter]}
           searchState={[searchProjects, setSearchProjects]}

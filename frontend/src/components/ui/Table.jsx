@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 
 export const Table = ({ data, columns, className = '', onRowClick }) => {
@@ -14,7 +14,7 @@ export const Table = ({ data, columns, className = '', onRowClick }) => {
     }
   };
 
-  const sortedData = React.useMemo(() => {
+  const sortedData = useMemo(() => {
     if (sortColumn) {
       const column = columns.find((col) => col.key === sortColumn);
       const sortFn = column?.sortFunction;
@@ -31,7 +31,7 @@ export const Table = ({ data, columns, className = '', onRowClick }) => {
   }, [data, sortColumn, sortDirection, columns]);
 
   return (
-    <div className="w-full overflow-auto rounded-lg border border-[#e5e7eb] bg-white">
+    <div className={`w-full overflow-auto rounded-lg border border-[#e5e7eb] bg-white ${className}`}>
       <div className="min-w-full align-middle">
         <table className="min-w-full divide-y divide-[#e5e7eb]">
           <thead>
@@ -75,7 +75,7 @@ export const Table = ({ data, columns, className = '', onRowClick }) => {
               <tr
                 key={rowIndex}
                 className="hover:bg-gray-50 transition-colors cursor-pointer"
-                onClick={() => onRowClick && onRowClick(row)}
+                onClick={() => onRowClick && onRowClick(row)} // Make row clickable
               >
                 {columns.map((column) => (
                   <td
