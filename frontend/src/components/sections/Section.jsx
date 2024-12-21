@@ -14,9 +14,11 @@ export const Section = ({
   progressBar,
   tableData,
   tableColumns,
+  onRowClick, // Accept onRowClick as a prop
+  rowClassName, // Accept rowClassName as a prop
   isLoading = false,
   error = null,
-  className
+  className,
 }) => {
   const activeFilter = filterState ? filterState[0] : null;
   const setActiveFilter = filterState ? filterState[1] : null;
@@ -50,11 +52,9 @@ export const Section = ({
           </p>
         )}
         
-        {/* Progress Bar */}
         {progressBar}
 
         <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          {/* Filters */}
           {filters && setActiveFilter && (
             <div 
               className="flex flex-wrap gap-2"
@@ -83,7 +83,6 @@ export const Section = ({
             </div>
           )}
 
-          {/* Search */}
           {setSearchTerm && (
             <div className="w-full sm:w-64">
               <Input
@@ -120,6 +119,8 @@ export const Section = ({
           <Table 
             columns={tableColumns} 
             data={tableData}
+            onRowClick={onRowClick} // Pass onRowClick to Table
+            rowClassName={rowClassName} // Pass rowClassName to Table
             aria-label={`${title} table`}
           />
         </div>
