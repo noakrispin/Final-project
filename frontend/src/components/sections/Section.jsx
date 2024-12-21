@@ -11,8 +11,9 @@ export const Section = ({
   progressBar,
   tableData,
   tableColumns,
+  onRowClick, // Accept onRowClick as a prop
+  rowClassName, // Accept rowClassName as a prop
 }) => {
-  // Remove destructuring of filterState and searchState
   const activeFilter = filterState ? filterState[0] : null;
   const setActiveFilter = filterState ? filterState[1] : null;
   const searchTerm = searchState ? searchState[0] : '';
@@ -24,11 +25,9 @@ export const Section = ({
         <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
         <p className="mt-1 text-sm text-gray-500">{description}</p>
         
-        {/* Progress Bar */}
         {progressBar}
 
         <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          {/* Filters */}
           {filters && setActiveFilter && (
             <div className="flex flex-wrap gap-2">
               {filters.map((filter) => (
@@ -47,7 +46,6 @@ export const Section = ({
             </div>
           )}
 
-          {/* Search */}
           {setSearchTerm && (
             <div className="w-full sm:w-64">
               <Input
@@ -62,11 +60,14 @@ export const Section = ({
         </div>
       </div>
 
-      {/* Table */}
       <div className="mt-4">
-        <Table columns={tableColumns} data={tableData} />
+        <Table
+          columns={tableColumns}
+          data={tableData}
+          onRowClick={onRowClick} // Pass onRowClick to Table
+          rowClassName={rowClassName} // Pass rowClassName to Table
+        />
       </div>
     </div>
   );
 };
-
