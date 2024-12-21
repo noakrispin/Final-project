@@ -197,8 +197,8 @@ const ProjectsSupervisors = () => {
 
       <div className="relative z-10 p-4 md:p-6">
         <Section
-          title={`My Projects - ${user?.fullName}`}
-          description="Here are all the projects currently under your supervision, categorized for easy tracking and management."
+          title={`My Projects- ${user?.fullName}`}
+          description={<span className="text-lg">{"Here are all the projects currently under your supervision, categorized for easy tracking and management."}</span>}
           filters={FILTERS}
           filterState={[projectsFilter, setProjectsFilter]}
           searchState={[searchProjects, setSearchProjects]}
