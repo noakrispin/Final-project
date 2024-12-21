@@ -16,14 +16,19 @@ export const Table = ({ data, columns, className = '', onRowClick }) => {
 
   const sortedData = React.useMemo(() => {
     if (sortColumn) {
+      const column = columns.find((col) => col.key === sortColumn);
+      const sortFn = column?.sortFunction;
       return [...data].sort((a, b) => {
+        if (sortFn) {
+          return sortDirection === 'asc' ? sortFn(a, b) : -sortFn(a, b);
+        }
         if (a[sortColumn] < b[sortColumn]) return sortDirection === 'asc' ? -1 : 1;
         if (a[sortColumn] > b[sortColumn]) return sortDirection === 'asc' ? 1 : -1;
         return 0;
       });
     }
     return data;
-  }, [data, sortColumn, sortDirection]);
+  }, [data, sortColumn, sortDirection, columns]);
 
   return (
     <div className="w-full overflow-auto rounded-lg border border-[#e5e7eb] bg-white">
@@ -37,7 +42,7 @@ export const Table = ({ data, columns, className = '', onRowClick }) => {
                   scope="col"
                   className={`px-6 py-4 text-left text-base font-medium text-[#313131] ${
                     column.sortable ? 'cursor-pointer select-none' : ''
-                  } ${column.key === 'gradeStatus' || column.key === 'feedbackStatus' ? 'whitespace-nowrap min-w-[140px]' : ''}`}
+                  }`}
                   onClick={() => column.sortable && handleSort(column.key)}
                 >
                   <div className="flex items-center gap-2">
@@ -70,14 +75,12 @@ export const Table = ({ data, columns, className = '', onRowClick }) => {
               <tr
                 key={rowIndex}
                 className="hover:bg-gray-50 transition-colors cursor-pointer"
-                onClick={() => onRowClick && onRowClick(row)} // Make row clickable
+                onClick={() => onRowClick && onRowClick(row)}
               >
                 {columns.map((column) => (
                   <td
                     key={column.key}
-                    className={`px-6 py-4 text-base text-[#686b80] ${
-                      column.key === 'gradeStatus' || column.key === 'feedbackStatus' ? 'whitespace-nowrap' : ''
-                    }`}
+                    className="px-6 py-4 text-base text-[#686b80]"
                   >
                     {column.render ? column.render(row[column.key], row) : row[column.key]}
                   </td>
@@ -90,9 +93,3 @@ export const Table = ({ data, columns, className = '', onRowClick }) => {
     </div>
   );
 };
-
-export const TableHeader = ({ children }) => <thead>{children}</thead>;
-export const TableBody = ({ children }) => <tbody>{children}</tbody>;
-export const TableRow = ({ children, ...props }) => <tr {...props}>{children}</tr>;
-export const TableHead = ({ children }) => <th>{children}</th>;
-export const TableCell = ({ children }) => <td>{children}</td>;
