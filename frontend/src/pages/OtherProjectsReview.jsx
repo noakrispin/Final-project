@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { api } from '../services/api';
-import { BlurElements } from '../components/shared/BlurElements';
-import { Section } from '../components/sections/Section';
-import ProjectDetailsPopup from '../components/shared/ProjectDetailsPopup';
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { api } from "../services/api";
+import { BlurElements } from "../components/shared/BlurElements";
+import ProjectDetailsPopup from "../components/shared/ProjectDetailsPopup";
+import { Table } from "../components/ui/Table";
 
-const TABS = ['My Projects', 'Other Projects'];
+const TABS = ["My Projects", "Other Projects"];
+const FILTERS = ["All", "Part A", "Part B"];
 
 const OtherProjectsReview = () => {
   const [activeTab, setActiveTab] = useState(TABS[1]);
@@ -22,23 +23,23 @@ const OtherProjectsReview = () => {
 
   const navigateToForm = useCallback((formType, project) => {
     if (!project.part) {
-      console.error('Project part is missing:', project);
+      console.error("Project part is missing:", project);
       return;
     }
-    const formPath = formType === 'presentation'
-      ? `presentation-${project.part.toLowerCase()}`
-      : formType === 'book'
-      ? `book-${project.part.toLowerCase()}`
-      : formType;
+    const formPath =
+      formType === "presentation"
+        ? `presentation-${project.part.toLowerCase()}`
+        : formType === "book"
+        ? `book-${project.part.toLowerCase()}`
+        : formType;
     const queryParams = new URLSearchParams({
       projectCode: project.projectCode,
       projectName: project.title,
       students: JSON.stringify(project.students),
     }).toString();
-    
+
     navigate(`/evaluation-forms/${formPath}?${queryParams}`);
   }, [navigate]);
-  
 
   useEffect(() => {
     if (location.state?.formSubmitted) {
@@ -59,7 +60,7 @@ const OtherProjectsReview = () => {
         setProjects(projectsData.filter(p => p.presentationAttendees?.includes(user?.fullName)));
         setGrades(gradesData);
       } catch (err) {
-        setError('Failed to fetch data. Please try again later.');
+        setError("Failed to fetch data. Please try again later.");
       } finally {
         setIsLoading(false);
         setFormSubmitted(false);
@@ -70,7 +71,7 @@ const OtherProjectsReview = () => {
 
   const isDeadlinePassed = (deadline) => {
     if (!deadline) return false;
-    const [day, month, year] = deadline.split('/');
+    const [day, month, year] = deadline.split("/");
     return new Date(`${year}-${month}-${day}`) < new Date();
   };
 
@@ -79,10 +80,10 @@ const OtherProjectsReview = () => {
     if (!projectGrades) return null;
 
     switch (gradeType) {
-      case 'presentation':
+      case "presentation":
         const presentationGrades = projectGrades.presentationReviewerFormA || projectGrades.presentationReviewerFormB;
         return presentationGrades?.[0]?.projectGrade || null;
-      case 'book':
+      case "book":
         const bookGrades = projectGrades.bookReviewFormA || projectGrades.bookReviewFormB;
         return bookGrades?.[0]?.projectGrade || null;
       default:
@@ -93,8 +94,8 @@ const OtherProjectsReview = () => {
   const progressStats = useMemo(() => {
     const total = projects.length;
     const graded = projects.filter((project) => {
-      const bookGrade = getGrade(project.projectCode, 'book');
-      const presentationGrade = getGrade(project.projectCode, 'presentation');
+      const bookGrade = getGrade(project.projectCode, "book");
+      const presentationGrade = getGrade(project.projectCode, "presentation");
       return bookGrade !== null && presentationGrade !== null;
     }).length;
 
@@ -102,9 +103,9 @@ const OtherProjectsReview = () => {
   }, [projects, grades]);
 
   const getProgressBarColor = (progress) => {
-    if (progress === 100) return 'bg-green-500';
-    if (progress > 0) return 'bg-blue-500';
-    return 'bg-red-500';
+    if (progress === 100) return "bg-green-500";
+    if (progress > 0) return "bg-blue-500";
+    return "bg-red-500";
   };
 
   const handleProjectClick = (project) => {
@@ -120,7 +121,7 @@ const OtherProjectsReview = () => {
 
     const studentEmails = selectedProject.students
       .map((student) => student.email)
-      .join(',');
+      .join(",");
     const subject = encodeURIComponent(`Regarding Project: ${selectedProject.title}`);
     const body = encodeURIComponent(
       `Dear students,\n\nI hope this email finds you well. I wanted to discuss your project "${selectedProject.title}".\n\nBest regards,\n${user.fullName}`
@@ -138,7 +139,7 @@ const OtherProjectsReview = () => {
         )
       );
     } catch (error) {
-      console.error('Error saving Git link:', error);
+      console.error("Error saving Git link:", error);
     }
   };
 
@@ -151,24 +152,24 @@ const OtherProjectsReview = () => {
         )
       );
     } catch (error) {
-      console.error('Error saving notes:', error);
+      console.error("Error saving notes:", error);
     }
   };
 
   const otherProjectColumns = useMemo(() => [
-    { key: 'projectCode', header: 'Project Code', className: 'text-lg text-center', sortable: true },
+    { key: "projectCode", header: "Project Code", className: "text-lg text-center", sortable: true },
     {
-      key: 'students',
-      header: 'Students',
-      className: 'text-lg text-center',
-      render: (students) => <span>{students.map((s) => s.name).join(', ')}</span>,
+      key: "students",
+      header: "Students",
+      className: "text-lg text-center",
+      render: (students) => <span>{students.map((s) => s.name).join(", ")}</span>,
       sortable: true,
     },
-    { key: 'supervisor', header: 'Supervisor', className: 'text-lg text-center', sortable: true },
+    { key: "supervisor", header: "Supervisor", className: "text-lg text-center", sortable: true },
     {
-      key: 'gitLink',
-      header: 'Git Link',
-      className: 'text-lg text-center',
+      key: "gitLink",
+      header: "Git Link",
+      className: "text-lg text-center",
       render: (value, project) =>
         value ? (
           <a
@@ -186,26 +187,26 @@ const OtherProjectsReview = () => {
       sortable: true,
     },
     {
-      key: 'presentationGrade',
-      header: 'Presentation Grade',
-      className: 'text-lg text-center',
+      key: "presentationGrade",
+      header: "Presentation Grade",
+      className: "text-lg text-center",
       render: (_, project) => {
-        const grade = getGrade(project.projectCode, 'presentation');
+        const grade = getGrade(project.projectCode, "presentation");
         return (
           <div className="flex justify-center">
             {isDeadlinePassed(project.deadline) ? (
-              <span>{grade || '-'}</span>
+              <span>{grade || "-"}</span>
             ) : grade !== null ? (
               <span
                 className="text-blue-900 hover:underline cursor-pointer"
-                onClick={() => navigateToForm('presentation', project)}
+                onClick={() => navigateToForm("presentation", project)}
               >
                 {grade}
               </span>
             ) : (
               <button
                 className="text-blue-900 hover:underline cursor-pointer"
-                onClick={() => navigateToForm('presentation', project)}
+                onClick={() => navigateToForm("presentation", project)}
               >
                 Grade Presentation
               </button>
@@ -216,26 +217,26 @@ const OtherProjectsReview = () => {
       sortable: true,
     },
     {
-      key: 'bookGrade',
-      header: 'Book Grade',
-      className: 'text-lg text-center',
+      key: "bookGrade",
+      header: "Book Grade",
+      className: "text-lg text-center",
       render: (_, project) => {
-        const grade = getGrade(project.projectCode, 'book');
+        const grade = getGrade(project.projectCode, "book");
         return (
           <div className="flex justify-center">
             {isDeadlinePassed(project.deadline) ? (
-              <span>{grade || '-'}</span>
+              <span>{grade || "-"}</span>
             ) : grade !== null ? (
               <span
                 className="text-blue-900 hover:underline cursor-pointer"
-                onClick={() => navigateToForm('book', project)}
+                onClick={() => navigateToForm("book", project)}
               >
                 {grade}
               </span>
             ) : (
               <button
                 className="text-blue-900 hover:underline cursor-pointer"
-                onClick={() => navigateToForm('book', project)}
+                onClick={() => navigateToForm("book", project)}
               >
                 Grade Book
               </button>
@@ -245,7 +246,7 @@ const OtherProjectsReview = () => {
       },
       sortable: true,
     },
-    { key: 'deadline', header: 'Deadline', className: 'text-lg text-center', sortable: true },
+    { key: "deadline", header: "Deadline", className: "text-lg text-center", sortable: true },
   ], [navigateToForm, grades, isDeadlinePassed]);
 
   if (isLoading) return <div className="text-center mt-10">Loading...</div>;
@@ -254,6 +255,7 @@ const OtherProjectsReview = () => {
   return (
     <div className="relative bg-white min-h-screen overflow-hidden">
       <BlurElements />
+
       <div className="relative z-10">
         <div className="bg-white shadow">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -263,10 +265,12 @@ const OtherProjectsReview = () => {
                   key={tab}
                   className={`inline-flex items-center px-3 pt-2 pb-3 border-b-2 text-base font-medium ${
                     activeTab === tab
-                      ? 'border-blue-900 text-blue-900'
-                      : 'border-transparent text-gray-500 hover:border-blue-900 hover:text-blue-900'
+                      ? "border-blue-900 text-blue-900"
+                      : "border-transparent text-gray-500 hover:border-blue-900 hover:text-blue-900"
                   }`}
-                  onClick={() => tab === 'My Projects' ? navigate('/MyProjectsReview') : setActiveTab(tab)}
+                  onClick={() =>
+                    tab === "My Projects" ? navigate("/MyProjectsReview") : setActiveTab(tab)
+                  }
                 >
                   {tab}
                 </button>
@@ -276,26 +280,30 @@ const OtherProjectsReview = () => {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Section
-            title="Other Projects"
-            description="Projects you need to grade as a committee member"
-            progressBar={
-              <div className="mt-4 mb-6">
-                <div className="relative w-full bg-gray-200 rounded-full h-4 overflow-hidden">
-                  <div
-                    className={`h-full transition-all duration-500 ${getProgressBarColor(
-                      (progressStats.graded / progressStats.total) * 100
-                    )}`}
-                    style={{ width: `${(progressStats.graded / progressStats.total) * 100}%` }}
-                  ></div>
-                </div>
-                <p className="text-sm text-gray-600 mt-2 text-center">
-                  {`${progressStats.graded}/${progressStats.total} Final Grades Submitted`}
-                </p>
+          <div className="ml-2 mb-11">
+            <h1 className="text-2xl font-bold">Other Projects To Review</h1>
+            <p className="text-gray-600 text-lg mt-2">
+              Projects you need to grade as a committee member
+            </p>
+            <div className="mt-4 mb-6">
+              <div className="relative w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-500 ${getProgressBarColor(
+                    (progressStats.graded / progressStats.total) * 100
+                  )}`}
+                  style={{ width: `${(progressStats.graded / progressStats.total) * 100}%` }}
+                ></div>
               </div>
-            }
-            tableData={projects}
-            tableColumns={otherProjectColumns}
+              <p className="text-base text-gray-600 mt-2 text-center">
+                {`${progressStats.graded}/${progressStats.total} Final Grades Submitted`}
+              </p>
+            </div>
+          </div>
+
+          <Table
+            data={projects}
+            columns={otherProjectColumns}
+            filters={FILTERS}
             onRowClick={handleProjectClick}
           />
         </div>
