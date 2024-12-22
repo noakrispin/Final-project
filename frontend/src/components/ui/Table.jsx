@@ -3,10 +3,15 @@ import { ChevronUp, ChevronDown, Settings2 } from 'lucide-react';
 import { Button } from "./Button";
 import { ColumnManagementDialog } from './ColumnManagementDialog';
 import { sortData } from "../../utils/sortData";
+import SearchBar from "../shared/SearchBar"; 
+
+const FILTERS = ['All', 'Part A', 'Part B'];
 
 export const Table = ({ data, columns, className = '', onRowClick }) => {
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState('asc');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState('All');
   const [columnWidths, setColumnWidths] = useState({});
   const [isResizing, setIsResizing] = useState(false);
   const [isColumnManagementOpen, setIsColumnManagementOpen] = useState(false);
@@ -21,9 +26,22 @@ export const Table = ({ data, columns, className = '', onRowClick }) => {
     }
   };
 
+  const filteredData = useMemo(() => {
+    return data.filter((item) => {
+      const matchesSearch = Object.values(item).some(
+        (val) =>
+          typeof val === 'string' &&
+          val.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+
+      if (selectedFilter === 'All') return matchesSearch;
+      return matchesSearch && item.part === selectedFilter.split(' ')[1];
+    });
+  }, [data, searchTerm, selectedFilter]);
+
   const sortedData = useMemo(() => {
-    return sortData(data, columns, sortColumn, sortDirection);
-  }, [data, sortColumn, sortDirection, columns]);
+    return sortData(filteredData, columns, sortColumn, sortDirection);
+  }, [filteredData, sortColumn, sortDirection, columns]);
 
   const visibleColumnsList = columns.filter(col => visibleColumns.includes(col.key));
 
@@ -33,6 +51,36 @@ export const Table = ({ data, columns, className = '', onRowClick }) => {
 
   return (
     <div className="space-y-4">
+      {/* Filters and Search Bar */}
+      <div className="flex items-center justify-between mb-4 px-6">
+        {/* Filter Buttons */}
+        <div className="flex space-x-2 ">
+          {FILTERS.map((filter) => (
+            <button
+              key={filter}
+              onClick={() => setSelectedFilter(filter)}
+              className={`px-4 py-2 rounded-full text-base font-medium ${
+                selectedFilter === filter
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+              }`}
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
+
+        {/* SearchBar */}
+        <div >
+          <SearchBar
+            value={searchTerm}
+            onChange={setSearchTerm}
+            placeholder="Search projects..."
+          />
+        </div>
+      </div>
+
+      {/* Table */}
       <div className={`w-full overflow-auto rounded-lg border border-[#e5e7eb] bg-white ${className}`}>
         <div className="min-w-full align-middle">
           <table className="min-w-full divide-y divide-[#e5e7eb]">
