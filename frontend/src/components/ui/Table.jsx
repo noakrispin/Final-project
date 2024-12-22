@@ -4,7 +4,6 @@ import { Button } from "./Button";
 import { ColumnManagementDialog } from './ColumnManagementDialog';
 import { sortData } from "../../utils/sortData";
 
-
 export const Table = ({ data, columns, className = '', onRowClick }) => {
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState('asc');
