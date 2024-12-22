@@ -62,7 +62,7 @@ const Navbar = () => {
         <MobileMenu isOpen={menuOpen} setIsOpen={setMenuOpen}>
           <ul className="flex flex-col lg:flex-row items-center gap-2 lg:gap-12 font-medium text-gray-800 text-sm">
             <NavLink to='/projectsSupervisors'>MY PROJECTS</NavLink>
-            <NavLink to='/ProjectToReview'>PROJECTS TO REVIEW</NavLink>
+            <NavLink to='/MyProjectsReview'>PROJECTS TO REVIEW</NavLink>
             <NavLink to='/evaluation-forms'>GRADES</NavLink>
             <NavLink to='/contact'>CONTACT</NavLink>
           </ul>
