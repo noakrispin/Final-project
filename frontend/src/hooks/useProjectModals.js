@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { api } from '../services/api';
 
 export const useProjectModals = (projects, setProjects) => {
   const [notesModal, setNotesModal] = useState({ isOpen: false, project: null });
@@ -20,21 +21,32 @@ export const useProjectModals = (projects, setProjects) => {
   const handleSaveNote = useCallback(async (note) => {
     if (!notesModal.project) return;
 
+    const previousProjects = [...projects];
+    const projectId = notesModal.project.id;
+
     try {
-      // This would be your API call
-      // await api.updateProjectNotes(notesModal.project.id, note);
-      
+      // Optimistic update
       setProjects(currentProjects =>
         currentProjects.map(project =>
-          project.id === notesModal.project.id
+          project.id === projectId
             ? { ...project, specialNotes: note }
             : project
         )
       );
+
+      // Update in the backend
+      const result = await api.updateProjectNote(projectId, note);
+
+      if (!result.success) {
+        throw new Error('Failed to update note');
+      }
+
     } catch (error) {
       console.error('Error updating note:', error);
+      // Rollback on failure
+      setProjects(previousProjects);
     }
-  }, [notesModal.project, setProjects]);
+  }, [notesModal.project, projects, setProjects]);
 
   const handleStudentClick = useCallback((student) => {
     setStudentModal({ isOpen: true, student });
@@ -55,10 +67,11 @@ export const useProjectModals = (projects, setProjects) => {
   const handleSaveField = useCallback(async (newValue) => {
     const { field, projectId } = editModal;
     
+    // Store the previous state for rollback
+    const previousProjects = [...projects];
+
     try {
-      // This would be your API call
-      // await api.updateProjectField(projectId, field, newValue);
-      
+      // Optimistic update
       setProjects(currentProjects =>
         currentProjects.map(project =>
           project.id === projectId
@@ -66,10 +79,20 @@ export const useProjectModals = (projects, setProjects) => {
             : project
         )
       );
+
+      // In the future, this will be an actual API call
+      // const result = await ProjectService.updateProjectField(projectId, field, newValue);
+      
+      // For now, simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+
     } catch (error) {
       console.error('Error updating field:', error);
+      // Rollback on failure
+      setProjects(previousProjects);
+      // You might want to show an error notification here
     }
-  }, [editModal, setProjects]);
+  }, [editModal, projects, setProjects]);
 
   return {
     notesModal,
