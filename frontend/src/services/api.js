@@ -85,6 +85,23 @@ export const api = {
         throw new Error('Invalid form type');
     }
   },
+  updateProjectNote: async (projectId, note) => {
+    // Simulating API delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // In a real implementation, this would be a DB call
+    const project = myProject.find(p => p.id === projectId);
+    if (!project) {
+      throw new Error('Project not found');
+    }
+
+    project.specialNotes = note;
+    
+    return {
+      success: true,
+      data: { id: projectId, specialNotes: note }
+    };
+  },
   
   submitForm: async (formType, formData) => {
     // Simulating API delay
@@ -193,4 +210,6 @@ export const api = {
 
     return { success: true, message: 'Form submitted successfully' };
   }
+
+  
 };
