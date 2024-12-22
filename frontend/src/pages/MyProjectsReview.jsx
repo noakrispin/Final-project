@@ -158,6 +158,26 @@ const MyProjectsReview = () => {
     },
     { key: 'supervisor', header: 'Supervisor', className: 'text-lg text-center', sortable: true },
     {
+      key: 'gitLink',
+      header: 'Git Link',
+      className: 'text-lg text-center',
+      render: (value, project) =>
+        value ? (
+          <a
+            href={value}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            View
+          </a>
+        ) : (
+          <span className="text-gray-500">Missing Link</span>
+        ),
+      sortable: true,
+    },
+    {
       key: 'presentationGrade',
       header: 'Presentation Grade',
       className: 'text-lg text-center',
@@ -219,6 +239,7 @@ const MyProjectsReview = () => {
     },
     { key: 'deadline', header: 'Deadline', className: 'text-lg text-center', sortable: true },
   ], [navigateToForm, grades, isDeadlinePassed, getGrade]);
+  
 
   if (isLoading) return <div className="text-center mt-10">Loading...</div>;
   if (error) return <div className="text-center text-red-500 mt-10">{error}</div>;
