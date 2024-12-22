@@ -4,7 +4,8 @@ import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-route
 // Page imports
 import Home from './pages/Home';
 import ProjectsSupervisors from './pages/ProjectsSupervisors';
-import ProjectToReview from './pages/ProjectToReview';
+import MyProjectsReview from './pages/MyProjectsReview';
+import OtherProjectsReview from './pages/OtherProjectsReview';
 import MyProfile from './pages/MyProfile';
 import Supervisors from './pages/SupervisorsStatus';
 import Login from './pages/Login';
@@ -46,10 +47,18 @@ const AppContent = () => {
           } 
         />
         <Route 
-          path="/ProjectToReview" 
+          path="/MyProjectsReview" 
           element={
             <ProtectedRoute allowedRoles={["Supervisor", "Admin"]}>
-              <ProjectToReview />
+              <MyProjectsReview />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/OtherProjectsReview" 
+          element={
+            <ProtectedRoute allowedRoles={["Supervisor", "Admin"]}>
+              <OtherProjectsReview />
             </ProtectedRoute>
           } 
         />
