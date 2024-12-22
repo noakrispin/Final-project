@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { ChevronUp, ChevronDown, Settings2 } from 'lucide-react';
 import { Button } from "./Button";
 import { ColumnManagementDialog } from './ColumnManagementDialog';
+import { sortData } from "../../utils/sortData";
 
 export const Table = ({ data, columns, className = '', onRowClick }) => {
   const [sortColumn, setSortColumn] = useState(null);
@@ -21,19 +22,7 @@ export const Table = ({ data, columns, className = '', onRowClick }) => {
   };
 
   const sortedData = useMemo(() => {
-    if (sortColumn) {
-      const column = columns.find((col) => col.key === sortColumn);
-      const sortFn = column?.sortFunction;
-      return [...data].sort((a, b) => {
-        if (sortFn) {
-          return sortDirection === 'asc' ? sortFn(a, b) : -sortFn(a, b);
-        }
-        if (a[sortColumn] < b[sortColumn]) return sortDirection === 'asc' ? -1 : 1;
-        if (a[sortColumn] > b[sortColumn]) return sortDirection === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
-    return data;
+    return sortData(data, columns, sortColumn, sortDirection);
   }, [data, sortColumn, sortDirection, columns]);
 
   const visibleColumnsList = columns.filter(col => visibleColumns.includes(col.key));
@@ -166,4 +155,3 @@ export const Table = ({ data, columns, className = '', onRowClick }) => {
     </div>
   );
 };
-
