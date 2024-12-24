@@ -179,6 +179,13 @@ const MyProjectsReview = () => {
         sortable: true,
       },
       {
+        key: "title",
+        header: "Project Title",
+        className: "text-lg text-center",
+        render: (title) => <span>{title}</span>,
+        sortable: true,
+      },
+      {
         key: "students",
         header: "Students",
         className: "text-lg text-center",
@@ -188,83 +195,58 @@ const MyProjectsReview = () => {
         sortable: true,
       },
       {
+        key: "gitLink",
+        header: "Git Link",
+        className: "text-lg text-center",
+        render: (value, project) =>
+          value ? (
+            <a
+              href={value}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              View
+            </a>
+          ) : (
+            <span className="text-gray-500">Missing Link</span>
+          ),
+        sortable: true,
+      },
+      {
         key: "presentationGrade",
         header: "Presentation Grade",
         className: "text-lg text-center",
         render: (_, project) => {
-          if (selectedTableOption === "option1") {
-            return (
-              <div className="flex justify-center">
-                {project.students.map((student) => {
-                  const grade = getGrade(
-                    grades,
-                    project.projectCode,
-                    "presentation",
-                    student.name
-                  );
-                  return (
-                    <div key={student.name} className="mx-1">
-                      {grade !== null ? (
-                        <span>{grade}</span>
-                      ) : (
-                        <button
-                          className="text-blue-900 hover:underline cursor-pointer"
-                          onClick={() =>
-                            navigateToForm(
-                              "presentation",
-                              project,
-                              student.name
-                            )
-                          }
-                        >
-                          Grade
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          } else {
-            const totalGrade = getGrade(
+          return project.students.map((student) => {
+            const grade = getGrade(
               grades,
               project.projectCode,
-              "presentation"
+              "presentation",
+              student.name
             );
-            const tooltipContent = project.students
-              .map(
-                (student) =>
-                  `${student.name}: ${
-                    getGrade(
-                      grades,
-                      project.projectCode,
-                      "presentation",
-                      student.name
-                    ) || "-"
-                  }`
-              )
-              .join(", ");
             return (
-              <div className="flex justify-center">
-                <span
-                  data-tooltip-id={`presentation-${project.projectCode}`}
-                  data-tooltip-content={tooltipContent}
-                >
-                  {totalGrade !== null ? (
-                    totalGrade
+              <span key={student.name} className="mx-1">
+                {grade !== null ? (
+                  isDeadlinePassed(project.deadline) ? (
+                    <span>{grade}</span>
                   ) : (
                     <button
                       className="text-blue-900 hover:underline cursor-pointer"
-                      onClick={() => navigateToForm("presentation", project)}
+                      onClick={() =>
+                        navigateToForm("presentation", project, student.name)
+                      }
                     >
-                      Grade Presentation
+                      {grade || "Grade"}
                     </button>
-                  )}
-                </span>
-                <Tooltip id={`presentation-${project.projectCode}`} />
-              </div>
+                  )
+                ) : (
+                  "Pending"
+                )}
+              </span>
             );
-          }
+          });
         },
         sortable: true,
       },
@@ -273,75 +255,34 @@ const MyProjectsReview = () => {
         header: "Supervisor Grade",
         className: "text-lg text-center",
         render: (_, project) => {
-          if (selectedTableOption === "option1") {
-            return (
-              <div className="flex justify-center">
-                {project.students.map((student) => {
-                  const grade = getGrade(
-                    grades,
-                    project.projectCode,
-                    "supervisor",
-                    student.name
-                  );
-                  return (
-                    <div key={student.name} className="mx-1">
-                      {grade !== null ? (
-                        <span>{grade}</span>
-                      ) : (
-                        <button
-                          className="text-blue-900 hover:underline cursor-pointer"
-                          onClick={() =>
-                            navigateToForm("supervisor", project, student.name)
-                          }
-                        >
-                          Grade
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          } else {
-            const totalGrade = getGrade(
+          return project.students.map((student) => {
+            const grade = getGrade(
               grades,
               project.projectCode,
-              "supervisor"
+              "supervisor",
+              student.name
             );
-            const tooltipContent = project.students
-              .map(
-                (student) =>
-                  `${student.name}: ${
-                    getGrade(
-                      grades,
-                      project.projectCode,
-                      "supervisor",
-                      student.name
-                    ) || "-"
-                  }`
-              )
-              .join(", ");
             return (
-              <div className="flex justify-center">
-                <span
-                  data-tooltip-id={`supervisor-${project.projectCode}`}
-                  data-tooltip-content={tooltipContent}
-                >
-                  {totalGrade !== null ? (
-                    totalGrade
+              <span key={student.name} className="mx-1">
+                {grade !== null ? (
+                  isDeadlinePassed(project.deadline) ? (
+                    <span>{grade}</span>
                   ) : (
                     <button
                       className="text-blue-900 hover:underline cursor-pointer"
-                      onClick={() => navigateToForm("supervisor", project)}
+                      onClick={() =>
+                        navigateToForm("supervisor", project, student.name)
+                      }
                     >
-                      Grade Supervisor
+                      {grade || "Grade"}
                     </button>
-                  )}
-                </span>
-                <Tooltip id={`supervisor-${project.projectCode}`} />
-              </div>
+                  )
+                ) : (
+                  "Pending"
+                )}
+              </span>
             );
-          }
+          });
         },
         sortable: true,
       },
@@ -349,10 +290,11 @@ const MyProjectsReview = () => {
         key: "deadline",
         header: "Deadline",
         className: "text-lg text-center",
+        render: (deadline) => (isDeadlinePassed(deadline) ? "Passed" : deadline),
         sortable: true,
       },
     ],
-    [selectedTableOption, navigateToForm, grades]
+    [grades]
   );
 
   if (isLoading) return <div className="text-center mt-10">Loading...</div>;

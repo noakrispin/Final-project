@@ -23,6 +23,7 @@ export const TableOption1 = ({ data, columns, onRowClick, grades, navigateToForm
         "supervisor",
         student.name
       ),
+      bookGrade: getGrade(grades, project.projectCode, "book"),
     }))
   );
 
@@ -35,14 +36,17 @@ export const TableOption1 = ({ data, columns, onRowClick, grades, navigateToForm
         render: (value) => value,
       };
     }
-    if (["presentationGrade", "supervisorGrade"].includes(column.key)) {
+    if (["presentationGrade", "supervisorGrade", "bookGrade"].includes(column.key)) {
       return {
         ...column,
         render: (value, row) => {
           const caption =
             column.key === "presentationGrade"
               ? "Grade Presentation"
-              : "Grade Supervisor";
+              : column.key === "supervisorGrade"
+              ? "Grade Supervisor"
+              : "Grade Book";
+
           return value !== null ? (
             value
           ) : (
@@ -53,8 +57,10 @@ export const TableOption1 = ({ data, columns, onRowClick, grades, navigateToForm
                 const formType =
                   column.key === "presentationGrade"
                     ? "presentation"
-                    : "supervisor";
-                navigateToForm(formType, row, row.student); // Pass `navigateToForm` to handle navigation
+                    : column.key === "supervisorGrade"
+                    ? "supervisor"
+                    : "book";
+                navigateToForm(formType, row, row.student);
               }}
             >
               {caption}
@@ -74,7 +80,7 @@ export const TableOption1 = ({ data, columns, onRowClick, grades, navigateToForm
  */
 export const TableOption2 = ({ data, columns, onRowClick, grades, navigateToForm }) => {
   const updatedColumns = columns.map((column) => {
-    if (["presentationGrade", "supervisorGrade"].includes(column.key)) {
+    if (["presentationGrade", "supervisorGrade", "bookGrade"].includes(column.key)) {
       return {
         ...column,
         render: (_, project) => {
@@ -86,7 +92,9 @@ export const TableOption2 = ({ data, columns, onRowClick, grades, navigateToForm
                   project.projectCode,
                   column.key === "presentationGrade"
                     ? "presentation"
-                    : "supervisor",
+                    : column.key === "supervisorGrade"
+                    ? "supervisor"
+                    : "book",
                   student.name
                 ) || "-"}`
             )
@@ -95,12 +103,16 @@ export const TableOption2 = ({ data, columns, onRowClick, grades, navigateToForm
           const grade =
             column.key === "presentationGrade"
               ? getGrade(grades, project.projectCode, "presentation")
-              : getGrade(grades, project.projectCode, "supervisor");
+              : column.key === "supervisorGrade"
+              ? getGrade(grades, project.projectCode, "supervisor")
+              : getGrade(grades, project.projectCode, "book");
 
           const caption =
             column.key === "presentationGrade"
               ? "Grade Presentation"
-              : "Grade Supervisor";
+              : column.key === "supervisorGrade"
+              ? "Grade Supervisor"
+              : "Grade Book";
 
           return (
             <div className="flex justify-center">
@@ -119,8 +131,10 @@ export const TableOption2 = ({ data, columns, onRowClick, grades, navigateToForm
                     const formType =
                       column.key === "presentationGrade"
                         ? "presentation"
-                        : "supervisor";
-                    navigateToForm(formType, project); // Pass `navigateToForm` to handle navigation
+                        : column.key === "supervisorGrade"
+                        ? "supervisor"
+                        : "book";
+                    navigateToForm(formType, project);
                   }}
                 >
                   {caption}
