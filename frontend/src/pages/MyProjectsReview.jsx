@@ -4,7 +4,10 @@ import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api";
 import { BlurElements } from "../components/shared/BlurElements";
 import ProjectDetailsPopup from "../components/shared/ProjectDetailsPopup";
-import { Table } from "../components/ui/Table";
+import { TableOption1, TableOption2 } from "../components/ui/TableOptions";
+import { Button } from "../components/ui/Button";
+import { getGrade } from "../utils/getGrade";
+import { Tooltip } from "react-tooltip";
 
 const TABS = ["My Projects", "Other Projects"];
 const FILTERS = ["All", "Part A", "Part B"];
@@ -18,6 +21,7 @@ const MyProjectsReview = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
+  const [selectedTableOption, setSelectedTableOption] = useState("option1");
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -25,7 +29,7 @@ const MyProjectsReview = () => {
   const [formSubmitted, setFormSubmitted] = useState(false);
 
   const navigateToForm = useCallback(
-    (formType, project) => {
+    (formType, project, studentName = null) => {
       const formPath =
         formType === "presentation"
           ? `presentation-${project.part.toLowerCase()}`
@@ -34,6 +38,7 @@ const MyProjectsReview = () => {
         projectCode: project.projectCode,
         projectName: project.title,
         students: JSON.stringify(project.students),
+        studentName: studentName || "",
       }).toString();
       navigate(`/evaluation-forms/${formPath}?${queryParams}`);
     },
@@ -58,7 +63,6 @@ const MyProjectsReview = () => {
           api.getGrades(),
         ]);
 
-        // Filter projects for the user
         const filteredProjects = projectsData.filter(
           (project) => project.supervisor === user.fullName
         );
@@ -83,28 +87,19 @@ const MyProjectsReview = () => {
     return new Date(`${year}-${month}-${day}`) < new Date();
   };
 
-  const getGrade = (projectCode, gradeType) => {
-    const projectGrades = grades.find((g) => g.projectCode === projectCode);
-    if (!projectGrades) return null;
-
-    switch (gradeType) {
-      case "presentation":
-        const presentationGrades =
-          projectGrades.presentationReviewerFormA ||
-          projectGrades.presentationReviewerFormB;
-        return presentationGrades?.[0]?.projectGrade || null;
-      case "supervisor":
-        return projectGrades.supervisorForm?.projectGrade || null;
-      default:
-        return null;
-    }
-  };
-
   const progressStats = useMemo(() => {
     const total = projects.length;
     const graded = projects.filter((project) => {
-      const supervisorGrade = getGrade(project.projectCode, "supervisor");
-      const presentationGrade = getGrade(project.projectCode, "presentation");
+      const supervisorGrade = getGrade(
+        grades,
+        project.projectCode,
+        "supervisor"
+      );
+      const presentationGrade = getGrade(
+        grades,
+        project.projectCode,
+        "presentation"
+      );
       return supervisorGrade !== null && presentationGrade !== null;
     }).length;
 
@@ -159,12 +154,20 @@ const MyProjectsReview = () => {
       await api.updateProjectNotes(projectId, notes);
       setProjects((prevProjects) =>
         prevProjects.map((project) =>
-          project.id === projectId ? { ...project, personalNotes: notes } : project
+          project.id === projectId
+            ? { ...project, personalNotes: notes }
+            : project
         )
       );
     } catch (error) {
       console.error("Error saving notes:", error);
     }
+  };
+
+  const toggleTableOption = () => {
+    setSelectedTableOption((prev) =>
+      prev === "option1" ? "option2" : "option1"
+    );
   };
 
   const myProjectColumns = useMemo(
@@ -176,18 +179,19 @@ const MyProjectsReview = () => {
         sortable: true,
       },
       {
+        key: "title",
+        header: "Project Title",
+        className: "text-lg text-center",
+        render: (title) => <span>{title}</span>,
+        sortable: true,
+      },
+      {
         key: "students",
         header: "Students",
         className: "text-lg text-center",
         render: (students) => (
           <span>{students.map((s) => s.name).join(", ")}</span>
         ),
-        sortable: true,
-      },
-      {
-        key: "supervisor",
-        header: "Supervisor",
-        className: "text-lg text-center",
         sortable: true,
       },
       {
@@ -215,28 +219,34 @@ const MyProjectsReview = () => {
         header: "Presentation Grade",
         className: "text-lg text-center",
         render: (_, project) => {
-          const grade = getGrade(project.projectCode, "presentation");
-          return (
-            <div className="flex justify-center">
-              {isDeadlinePassed(project.deadline) ? (
-                <span>{grade || "-"}</span>
-              ) : grade !== null ? (
-                <span
-                  className="text-blue-900 hover:underline cursor-pointer"
-                  onClick={() => navigateToForm("presentation", project)}
-                >
-                  {grade}
-                </span>
-              ) : (
-                <button
-                  className="text-blue-900 hover:underline cursor-pointer"
-                  onClick={() => navigateToForm("presentation", project)}
-                >
-                  Grade Presentation
-                </button>
-              )}
-            </div>
-          );
+          return project.students.map((student) => {
+            const grade = getGrade(
+              grades,
+              project.projectCode,
+              "presentation",
+              student.name
+            );
+            return (
+              <span key={student.name} className="mx-1">
+                {grade !== null ? (
+                  isDeadlinePassed(project.deadline) ? (
+                    <span>{grade}</span>
+                  ) : (
+                    <button
+                      className="text-blue-900 hover:underline cursor-pointer"
+                      onClick={() =>
+                        navigateToForm("presentation", project, student.name)
+                      }
+                    >
+                      {grade || "Grade"}
+                    </button>
+                  )
+                ) : (
+                  "Pending"
+                )}
+              </span>
+            );
+          });
         },
         sortable: true,
       },
@@ -245,28 +255,34 @@ const MyProjectsReview = () => {
         header: "Supervisor Grade",
         className: "text-lg text-center",
         render: (_, project) => {
-          const grade = getGrade(project.projectCode, "supervisor");
-          return (
-            <div className="flex justify-center">
-              {isDeadlinePassed(project.deadline) ? (
-                <span>{grade || "-"}</span>
-              ) : grade !== null ? (
-                <span
-                  className="text-blue-900 hover:underline cursor-pointer"
-                  onClick={() => navigateToForm("supervisor", project)}
-                >
-                  {grade}
-                </span>
-              ) : (
-                <button
-                  className="text-blue-900 hover:underline cursor-pointer"
-                  onClick={() => navigateToForm("supervisor", project)}
-                >
-                  Grade Supervisor
-                </button>
-              )}
-            </div>
-          );
+          return project.students.map((student) => {
+            const grade = getGrade(
+              grades,
+              project.projectCode,
+              "supervisor",
+              student.name
+            );
+            return (
+              <span key={student.name} className="mx-1">
+                {grade !== null ? (
+                  isDeadlinePassed(project.deadline) ? (
+                    <span>{grade}</span>
+                  ) : (
+                    <button
+                      className="text-blue-900 hover:underline cursor-pointer"
+                      onClick={() =>
+                        navigateToForm("supervisor", project, student.name)
+                      }
+                    >
+                      {grade || "Grade"}
+                    </button>
+                  )
+                ) : (
+                  "Pending"
+                )}
+              </span>
+            );
+          });
         },
         sortable: true,
       },
@@ -274,10 +290,11 @@ const MyProjectsReview = () => {
         key: "deadline",
         header: "Deadline",
         className: "text-lg text-center",
+        render: (deadline) => (isDeadlinePassed(deadline) ? "Passed" : deadline),
         sortable: true,
       },
     ],
-    [navigateToForm, grades, isDeadlinePassed, getGrade]
+    [grades]
   );
 
   if (isLoading) return <div className="text-center mt-10">Loading...</div>;
@@ -326,7 +343,9 @@ const MyProjectsReview = () => {
                     (progressStats.graded / progressStats.total) * 100
                   )}`}
                   style={{
-                    width: `${(progressStats.graded / progressStats.total) * 100}%`,
+                    width: `${
+                      (progressStats.graded / progressStats.total) * 100
+                    }%`,
                   }}
                 ></div>
               </div>
@@ -336,12 +355,32 @@ const MyProjectsReview = () => {
             </div>
           </div>
 
-          <Table
-            data={projects}
-            columns={myProjectColumns}
-            filters={FILTERS}
-            onRowClick={handleProjectClick}
-          />
+          <Button
+            onClick={toggleTableOption}
+            variant="outline"
+            size="sm"
+            className="mb-4"
+          >
+            Toggle Table View
+          </Button>
+
+          {selectedTableOption === "option1" ? (
+            <TableOption1
+              data={projects}
+              columns={myProjectColumns}
+              onRowClick={handleProjectClick}
+              grades={grades}
+              navigateToForm={navigateToForm} // Pass the navigation function
+            />
+          ) : (
+            <TableOption2
+              data={projects}
+              columns={myProjectColumns}
+              onRowClick={handleProjectClick}
+              grades={grades}
+              navigateToForm={navigateToForm} // Pass the navigation function
+            />
+          )}
         </div>
       </div>
 
