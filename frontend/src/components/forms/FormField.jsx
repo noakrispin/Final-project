@@ -12,6 +12,8 @@ const FormField = ({
   required,
   disabled,
   placeholder,
+  evaluate,
+  
 }) => {
   const [error, setError] = useState('');
 
@@ -47,7 +49,7 @@ const FormField = ({
 
       {/* Description */}
       {description && <p className="text-gray-600 text-sm mb-1">{description}</p>}
-
+      
       {/* Input Field */}
       {type === 'textarea' ? (
         <textarea
