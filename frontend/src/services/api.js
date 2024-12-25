@@ -123,6 +123,20 @@ export const api = {
     // In a real implementation, you would save the updated questions to the database here
     Object.assign(questions, updatedQuestions);
     return { success: true };
+  },
+
+  getAdminQuestions: async () => {
+    // Simulating API delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return questions; // Replace with actual data fetching logic
+  },
+
+  updateAdminQuestions: async (updatedQuestions) => {
+    // Simulating API delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    // In a real implementation, you would save the updated questions to the database here
+    Object.assign(questions, updatedQuestions);
+    return { success: true };
   }
   
 };
