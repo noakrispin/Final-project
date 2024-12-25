@@ -16,6 +16,7 @@ import NotFound from './pages/NotFound';
 import Unauthorized from './pages/Unauthorized';
 import AdminProjects from './pages/admin/AdminProjects';
 import AdminFileUpload from './pages/admin/AdminFileUpload';
+import AdminForms from './pages/admin/AdminForms';
 
 // Component imports
 import Navbar from './components/layout/Navbar';
@@ -104,6 +105,14 @@ const AppContent = () => {
             </ProtectedRoute>
           } 
         />
+        <Route 
+          path="/admin/forms" 
+          element={
+            <ProtectedRoute allowedRoles={["Admin"]}>
+              <AdminForms />
+            </ProtectedRoute>
+          } 
+        />
 
         {/* 404 Page */}
         <Route path="*" element={<NotFound />} />
@@ -121,4 +130,3 @@ const App = () => {
 };
 
 export default App;
-
