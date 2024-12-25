@@ -53,16 +53,60 @@ export default function AdminForms() {
     { key: "weight", header: "Weight", sortable: true },
   ];
 
-  // Define all database fields to include in the modal
+  // Define all database fields and their configurations for the modal
   const dbFields = [
-    { key: "name", header: "Question Name" },
-    { key: "label", header: "Label" },
-    { key: "type", header: "Type" },
-    { key: "required", header: "Required" },
-    { key: "description", header: "Description" },
-    { key: "form", header: "Form" },
-    { key: "weight", header: "Weight" },
-    { key: "evaluates", header: "Evaluates" },
+    { key: "name", header: "Question Name", type: "text" },
+    {
+      key: "weight",
+      header: "Weight",
+      type: "number",
+      validation: (value) =>
+        value < 0 || value > 1 ? "Weight must be between 0 and 1." : undefined,
+      props: { min: 0, max: 1, step: 0.01 },
+    },
+    
+    { key: "label", header: "Label", type: "text" },
+    {
+      key: "required",
+      header: "Required",
+      type: "select",
+      options: [
+        { label: "Yes", value: true },
+        { label: "No", value: false },
+      ],
+    },{
+      key: "type",
+      header: "Answer Type",
+      type: "select",
+      options: [
+        { label: "Text", value: "text" },
+        { label: "Number", value: "number" },
+      ],
+    },
+    {
+      key: "form",
+      header: "Form",
+      type: "select",
+      options: [
+        { label: "Book Reviewer Form A", value: "bookReviewerFormA" },
+        { label: "Book Reviewer Form B", value: "bookReviewerFormB" },
+        { label: "Presentation Form A", value: "PresentationFormA" },
+        { label: "Presentation Form B", value: "PresentationFormB" },
+        { label: "Supervisor Form", value: "SupervisorForm" },
+      ],
+    },{
+      key: "description",header: "Description",type: "textarea",props: { rows: 4 }, 
+    },
+    
+    {
+      key: "evaluates",
+      header: "Evaluates",
+      type: "select",
+      options: [
+        { label: "Student", value: "student" },
+        { label: "All Project", value: null },
+      ],
+    },
   ];
 
   const filteredQuestions = questions.filter((question) => {
@@ -106,7 +150,7 @@ export default function AdminForms() {
           onClose={() => setEditingRow(null)}
           onSave={handleSaveEdit}
           rowData={editingRow}
-          dbFields={dbFields} // Pass all database fields to the modal
+          dbFields={dbFields} // Pass all database fields and their configurations to the modal
         />
       )}
     </div>
