@@ -1,0 +1,545 @@
+[
+    {
+        "name": "introductionScore",
+        "label": "Description of needs and project goals",
+        "type": "number",
+        "required": true,
+        "description": "Quality of the introduction: Description and analysis of the current situation, review of challenges. Description and definition of the problem and the proposed solution.",
+        "form": "bookReviewerFormA",
+        "weight": 0.1
+    },
+    {
+        "name": "introductionComments",
+        "label": "Comments on the quality of the introduction",
+        "type": "textarea",
+        "required": true,
+        "form": "bookReviewerFormA",
+        "weight": 0
+    },
+    {
+        "name": "analysisScore",
+        "label": "Analysis and solution formation",
+        "type": "number",
+        "required": true,
+        "description": "Analysis of the problem and description and the proposed solution. Use of quality sources.",
+        "form": "bookReviewerFormA",
+        "weight": 0.15
+    },
+    {
+        "name": "analysisComments",
+        "label": "Comments on the analysis of the problem",
+        "type": "textarea",
+        "required": true,
+        "form": "bookReviewerFormA",
+        "weight": 0
+    },
+    {
+        "name": "processScore",
+        "label": "Research / Engineering Process",
+        "type": "number",
+        "required": true,
+        "description": "Challenges in research / development. Description of the process stages, constraints, and solutions.",
+        "form": "bookReviewerFormA",
+        "weight": 0.25
+    },
+    {
+        "name": "processComments",
+        "label": "Comments on the description of the work process",
+        "type": "textarea",
+        "required": true,
+        "form": "bookReviewerFormA",
+        "weight": 0
+    },
+    {
+        "name": "artifactsScore",
+        "label": "Work Artifacts",
+        "type": "number",
+        "required": true,
+        "description": "Description of work products: algorithms, software system, user interface, testing plan.",
+        "form": "bookReviewerFormA",
+        "weight": 0.25
+    },
+    {
+        "name": "artifactsComments",
+        "label": "Comments on the work products",
+        "type": "textarea",
+        "required": true,
+        "form": "bookReviewerFormA",
+        "weight": 0
+    },
+    {
+        "name": "organizationScore",
+        "label": "Organization and clarity",
+        "type": "number",
+        "required": true,
+        "description": "Organization and clarity of the document, structure, logical flow, and diagrams.",
+        "form": "bookReviewerFormA",
+        "weight": 0.15
+    },
+    {
+        "name": "organizationComments",
+        "label": "Comments on the organization of the document",
+        "type": "textarea",
+        "required": true,
+        "form": "bookReviewerFormA",
+        "weight": 0
+    },
+    {
+        "name": "languageComments",
+        "label": "Comments on the language (syntax, spelling, writing style, etc.)",
+        "type": "textarea",
+        "required": true,
+        "form": "bookReviewerFormA",
+        "weight": 0
+    },
+    {
+        "name": "generalEvaluationScore",
+        "label": "General Evaluation",
+        "type": "number",
+        "required": true,
+        "description": "General impression, difficulty, and scope of the project.",
+        "form": "bookReviewerFormA",
+        "weight": 0.1
+    },
+    {
+        "name": "additionalComments",
+        "label": "Additional comments",
+        "type": "textarea",
+        "required": false,
+        "form": "bookReviewerFormA",
+        "weight": 0
+    },
+
+
+
+
+
+
+    {
+        "name": "researchProcessScore",
+        "label": "Research / Engineering Process",
+        "type": "number",
+        "required": true,
+        "description": "Description of the research / engineering development process that was carried out, the various work stages, various constraints, description of the tests.",
+        "form": "bookReviewerFormB",
+        "weight": 0.15
+    },
+    {
+        "name": "researchProcessComments",
+        "label": "Comments on the research process",
+        "type": "textarea",
+        "required": true,
+        "form": "bookReviewerFormB",
+        "weight": 0
+    },
+    {
+        "name": "workAnalysisScore",
+        "label": "Work analysis and conclusion",
+        "type": "number",
+        "required": true,
+        "description": "Analysis of the project progress, description of challenges and decisions. Summary, conclusions and insights.",
+        "form": "bookReviewerFormB",
+        "weight": 0.15
+    },
+    {
+        "name": "workAnalysisComments",
+        "label": "Comments on the analysis of the process",
+        "type": "textarea",
+        "required": true,
+        "form": "bookReviewerFormB",
+        "weight": 0
+    },
+    {
+        "name": "softwareQualityScore",
+        "label": "Quality of the software/research",
+        "type": "number",
+        "required": true,
+        "description": "The quality of writing, documentation, and operation of a system and algorithms or the quality of research (the quality of answering an article question).",
+        "form": "bookReviewerFormB",
+        "weight": 0.25
+    },
+    {
+        "name": "softwareQualityComments",
+        "label": "Comments on the quality of writing",
+        "type": "textarea",
+        "required": true,
+        "form": "bookReviewerFormB",
+        "weight": 0
+    },
+    {
+        "name": "userGuidesScore",
+        "label": "User and application guides",
+        "type": "number",
+        "required": true,
+        "description": "Quality of information in user manuals and maintenance files. Description of the software structure, flow and interfaces.",
+        "form": "bookReviewerFormB",
+        "weight": 0.25
+    },
+    {
+        "name": "userGuidesComments",
+        "label": "Comments on the maintenance file",
+        "type": "textarea",
+        "required": true,
+        "form": "bookReviewerFormB",
+        "weight": 0
+    },
+    {
+        "name": "organizationScore",
+        "label": "Organization and clarity",
+        "type": "number",
+        "required": true,
+        "description": "Organization of the document: structure, logical flow, linking components and clarity. Use of diagrams and accurate wording.",
+        "form": "bookReviewerFormB",
+        "weight": 0.10
+    },
+    {
+        "name": "organizationComments",
+        "label": "Comments on the organization of the document",
+        "type": "textarea",
+        "required": true,
+        "form": "bookReviewerFormB",
+        "weight": 0
+    },
+    {
+        "name": "generalEvaluationScore",
+        "label": "General evaluation",
+        "type": "number",
+        "required": true,
+        "description": "General impression, difficulty, and scope of the project, with a unique approach.",
+        "form": "bookReviewerFormB",
+        "weight": 0.10
+    },
+    {
+        "name": "additionalComments",
+        "label": "Additional comments",
+        "type": "textarea",
+        "required": false,
+        "form": "bookReviewerFormB",
+        "weight": 0
+    },
+    
+
+
+
+
+
+    {
+        "name": "organizationScore",
+        "label": "Organization of the presentation",
+        "type": "number",
+        "required": true,
+        "description": "Understandable and clear order of presenting the topics, presenting the material clearly, adhering to the time frame.",
+        "form": "PresentationFormA",
+        "weight": 0.15
+    },
+    {
+        "name": "organizationComments",
+        "label": "Comments on organization",
+        "type": "textarea",
+        "required": true,
+        "form": "PresentationFormA",
+        "weight": 0
+    },
+    {
+        "name": "systemPresentationScore",
+        "label": "Quality of the presentation of the system",
+        "type": "number",
+        "required": true,
+        "description": "Description of the background, need and solution. Quality of the software demonstration.",
+        "form": "PresentationFormA",
+        "weight": 0.3
+    },
+    {
+        "name": "systemPresentationComments",
+        "label": "Comments on system presentation",
+        "type": "textarea",
+        "required": true,
+        "form": "PresentationFormA",
+        "weight": 0
+    },
+    {
+        "name": "projectReviewScore",
+        "label": "Quality of the project review",
+        "type": "number",
+        "required": true,
+        "description": "Project summary, review of challenges, presentation of insights.",
+        "form": "PresentationFormA",
+        "weight": 0.1
+    },
+    {
+        "name": "projectReviewComments",
+        "label": "Comments on project review",
+        "type": "textarea",
+        "required": true,
+        "form": "PresentationFormA",
+        "weight": 0
+    },
+    {
+        "name": "visibilityScore",
+        "label": "Quality of the presentation visibility",
+        "type": "number",
+        "required": true,
+        "description": "Slides are easily read (size, color, and density), clarity of graphics presentation.",
+        "form": "PresentationFormA",
+        "weight": 0.20
+    },
+    {
+        "name": "visibilityComments",
+        "label": "Comments on presentation visibility",
+        "type": "textarea",
+        "required": true,
+        "form": "PresentationFormA",
+        "weight": 0
+    },
+    {
+        "name": "overallScore",
+        "label": "Overall Score--------------------is this the general part?  ",
+        "type": "number",
+        "required": true,
+        "description": "Overall score for the project presentation",
+        "form": "PresentationFormA",
+        "weight": 0.10
+    },
+    {
+        "name": "additionalComments",
+        "label": "Additional Comments",
+        "type": "textarea",
+        "required": false,
+        "form": "PresentationFormA",
+        "weight": 0
+    },
+    {
+        "name": "Knowledge",
+        "label": "Level of knowledge and answering questions",
+        "type": "number",
+        "required": true,
+        "description": "Level of knowledge demonstrated and clarity in answering questions.",
+        "form": "PresentationFormA",
+        "weight": 0.10,
+        "evaluates": "student"
+    },
+    {
+        "name": "PresentationSkills",
+        "label": "Presentation skills",
+        "type": "number",
+        "required": true,
+        "description": "Clarity, confidence, and delivery of the presentation.",
+        "form": "PresentationFormA",
+        "weight": 0.15,
+        "evaluates": "student"
+    },
+    {
+        "name": "Comments",
+        "label": "Comments on the student performance",
+        "type": "textarea",
+        "required": true,
+        "form": "PresentationFormA",
+        "weight": 0,
+        "evaluates": "student"
+    },
+    
+
+
+
+
+
+    {
+        "name": "organizationScore",
+        "label": "Organization of the presentation",
+        "type": "number",
+        "required": true,
+        "description": "Understandable and clear order of presenting the topics, presenting the material clearly, adhering to the time frame.",
+        "form": "PresentationFormB",
+        "weight": 0.15
+    },
+    {
+        "name": "organizationComments",
+        "label": "Comments on organization",
+        "type": "textarea",
+        "required": true,
+        "form": "PresentationFormB",
+        "weight": 0
+    },
+    {
+        "name": "systemPresentationScore",
+        "label": "Solution presentation",
+        "type": "number",
+        "required": true,
+        "description": "Description of the background, need and solution. Quality of the software demonstration.",
+        "form": "PresentationFormB",
+        "weight": 0.2
+    },
+    {
+        "name": "systemPresentationComments",
+        "label": "Comments on system presentation",
+        "type": "textarea",
+        "required": true,
+        "form": "PresentationFormB",
+        "weight": 0
+    },
+    {
+        "name": "projectReviewScore",
+        "label": "Quality of the project review",
+        "type": "number",
+        "required": true,
+        "description": "Project summary, review of challenges, presentation of insights.",
+        "form": "PresentationFormB",
+        "weight": 0.15
+    },
+    {
+        "name": "projectReviewComments",
+        "label": "Comments on project review",
+        "type": "textarea",
+        "required": true,
+        "form": "PresentationFormB",
+        "weight": 0
+    },
+    {
+        "name": "visibilityScore",
+        "label": "Quality of the presentation visibility",
+        "type": "number",
+        "required": true,
+        "description": "Slides are easily read (size, color, and density), clarity of graphics presentation.",
+        "form": "PresentationFormB",
+        "weight": 0.10
+    },
+    {
+        "name": "visibilityComments",
+        "label": "Comments on presentation visibility",
+        "type": "textarea",
+        "required": true,
+        "form": "PresentationFormB",
+        "weight": 0
+    },
+    {
+        "name": "overallScore",
+        "label": "Overall Score--------------------is this the general part?  ",
+        "type": "number",
+        "required": true,
+        "description": "Overall score for the project presentation.",
+        "form": "PresentationFormB",
+        "weight": 0.10
+    },
+    {
+        "name": "additionalComments",
+        "label": "Additional Comments",
+        "type": "textarea",
+        "required": false,
+        "form": "PresentationFormB",
+        "weight": 0
+    },
+    {
+        "name": "Knowledge",
+        "label": "Level of knowledge and answering questions",
+        "type": "number",
+        "required": true,
+        "description": "Level of knowledge demonstrated and clarity in answering questions.",
+        "form": "PresentationFormB",
+        "weight": 0.15,
+        "evaluates": "student"
+    },
+    {
+        "name": "PresentationSkills",
+        "label": "Presentation skills",
+        "type": "number",
+        "required": true,
+        "description": "Clarity, confidence, and delivery of the presentation.",
+        "form": "PresentationFormB",
+        "weight": 0.15,
+        "evaluates": "student"
+    },
+    {
+        "name": "Comments",
+        "label": "Comments on the student performance",
+        "type": "textarea",
+        "required": true,
+        "form": "PresentationFormB",
+        "weight": 0,
+        "evaluates": "student"
+    },
+    
+
+
+
+
+
+
+
+
+
+    {
+        "name": "analysisAndSolution",
+        "label": "Analysis and solution formation",
+        "type": "number",
+        "required": true,
+        "description": "Quality of the work process, use of original ideas, level of questions raised during the work.",
+        "form": "SupervisorForm",
+        "weight": 0.1667
+    },
+    {
+        "name": "projectDeliverables",
+        "label": "Quality of the project deliverables",
+        "type": "number",
+        "required": true,
+        "description": "Quality of the book and project presentation: Description and analysis of the existing situation, review of challenges. Description of the problem and proposed solution, testing plan. Organization of information at a professional level - structure and order, proper focus and summaries, use of charts and graphics, headings and numbering.",
+        "form": "SupervisorForm",
+        "weight": 0.1667
+    },
+    {
+        "name": "generalEvaluation",
+        "label": "General Evaluation",
+        "type": "number",
+        "required": true,
+        "description": "General impression, difficulty and scope of the project, use of a special approach.",
+        "form": "SupervisorForm",
+        "weight": 0.1667
+    },
+    {
+        "name": "overallScore",
+        "label": "Overall Grade",
+        "type": "number",
+        "required": true,
+        "description": "Overall grade for the project.",
+        "form": "SupervisorForm",
+        "weight": 0.1667
+    },
+    {
+        "name": "additionalComments",
+        "label": "Additional Comments",
+        "type": "textarea",
+        "required": true,
+        "form": "SupervisorForm",
+        "weight": 0
+    },
+    {
+        "name": "IndependentLearning",
+        "label": "Capability of independent learning",
+        "type": "number",
+        "required": true,
+        "description": "Ability to learn independently, degree of independent progress.",
+        "form": "SupervisorForm",
+        "weight": 0.1667,
+        "evaluates": "student"
+    },
+    {
+        "name": "Teamwork",
+        "label": "Teamwork",
+        "type": "number",
+        "required": true,
+        "description": "Collaboration, division of labor, dealing with difficulties.",
+        "form": "SupervisorForm",
+        "weight": 0.1667,
+        "evaluates": "student"
+    },
+    {
+        "name": "Attitude",
+        "label": "Overall attitude towards the project",
+        "type": "number",
+        "required": true,
+        "description": "Creative approach, willingness to invest, pace of progress, meeting the time frame.",
+        "form": "SupervisorForm",
+        "weight": 0.1667,
+        "evaluates": "student"
+    }
+    
+]
