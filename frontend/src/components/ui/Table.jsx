@@ -75,7 +75,7 @@ export const Table = ({ data, columns, className = '', onRowClick }) => {
           <SearchBar
             value={searchTerm}
             onChange={setSearchTerm}
-            placeholder="Search projects..."
+            placeholder="Search"
           />
         </div>
       </div>
