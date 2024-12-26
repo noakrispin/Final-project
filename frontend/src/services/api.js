@@ -124,6 +124,14 @@ export const api = {
     Object.assign(questions, updatedQuestions);
     return { success: true };
   },
+  getProjectAnswers: async () => {
+    // Simulate an API call delay
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    // Fetch answers from the JSON
+    const answers = await import("../data/projectAnswers.json");
+    return answers.default;
+  },
+  
 
   getAdminQuestions: async () => {
     // Simulating API delay

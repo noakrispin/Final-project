@@ -7,7 +7,7 @@ import { assets } from '../../assets/assets';
 import UserMenu from './UserMenu';
 import SearchBar from '../shared/SearchBar';
 import MobileMenu from '../shared/MobileMenu';
-import { FiSearch } from 'react-icons/fi';
+
 
 const Navbar = () => {
   const location = useLocation();
@@ -60,7 +60,7 @@ const Navbar = () => {
           <ul className="flex flex-col lg:flex-row items-center gap-2 lg:gap-12 font-medium text-gray-800 text-sm">
             <NavLink to='/projectsSupervisors'>MY PROJECTS</NavLink>
             <NavLink to='/MyProjectsReview'>PROJECTS TO REVIEW</NavLink>
-            <NavLink to='/evaluation-forms'>GRADES</NavLink>
+            <NavLink to='/SupervisorGradesFeedback'>GRADES</NavLink>
             <NavLink to='/contact'>CONTACT</NavLink>
           </ul>
         </MobileMenu>

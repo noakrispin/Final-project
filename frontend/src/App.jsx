@@ -22,7 +22,9 @@ import Unauthorized from "./pages/Unauthorized";
 import AdminProjects from "./pages/admin/AdminProjects";
 import AdminFileUpload from "./pages/admin/AdminFileUpload";
 import AdminForms from "./pages/admin/AdminForms";
+import AdminGrades from "./pages/admin/AdminGrades";
 import ProjectDetailsPage from "./pages/ProjectDetailsPage";
+import SupervisorGradesFeedback from "./pages/SupervisorGradesFeedback";
 
 // Component imports
 import Navbar from "./components/layout/Navbar";
@@ -104,6 +106,14 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/SupervisorGradesFeedback"
+          element={
+            <ProtectedRoute allowedRoles={["Supervisor", "Admin"]}>
+              <SupervisorGradesFeedback />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Admin Routes */}
         <Route
@@ -127,6 +137,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute allowedRoles={["Admin"]}>
               <AdminForms />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin-grades"
+          element={
+            <ProtectedRoute allowedRoles={["Admin"]}>
+              <AdminGrades />
             </ProtectedRoute>
           }
         />
