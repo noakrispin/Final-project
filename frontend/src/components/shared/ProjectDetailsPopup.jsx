@@ -201,7 +201,7 @@ const ProjectDetailsPopup = ({
               {/* Supervisor Section */}
               <div className="bg-yellow-50 rounded-md p-6 shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-700 mb-3">
-                  Supervisor
+                  Supervisors
                 </h3>
                 <p className="font-medium text-gray-800 mb-3">
                   {project.supervisor}

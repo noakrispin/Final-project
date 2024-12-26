@@ -1,5 +1,8 @@
 import ExcelJS from 'exceljs';
 
+/**
+ * Reads and processes an uploaded Excel file.
+ */
 export const processExcelFile = async (file) => {
   try {
     const data = await readExcelFile(file);
@@ -14,11 +17,13 @@ export const processExcelFile = async (file) => {
         id: row.student1Id,
         email: row.student1Email
       },
-      student2: row.student2Name ? {
-        name: row.student2Name,
-        id: row.student2Id,
-        email: row.student2Email
-      } : null,
+      student2: row.student2Name
+        ? {
+            name: row.student2Name,
+            id: row.student2Id,
+            email: row.student2Email
+          }
+        : null,
       supervisor1: row.supervisor1,
       supervisor2: row.supervisor2 || '',
       part: row.part,
@@ -31,6 +36,43 @@ export const processExcelFile = async (file) => {
   }
 };
 
+/**
+ * Exports data to an Excel file for download.
+ */
+export const exportToExcelFile = async (data, filename = 'Exported_Data.xlsx') => {
+  try {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Grades');
+
+    // Add headers
+    worksheet.columns = Object.keys(data[0]).map((key) => ({
+      header: key,
+      key: key,
+      width: 20,
+    }));
+
+    // Add data rows
+    data.forEach((row) => {
+      worksheet.addRow(row);
+    });
+
+    // Generate and download the Excel file
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+    // Trigger download
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+  } catch (error) {
+    console.error('Error exporting to Excel:', error);
+  }
+};
+
+/**
+ * Reads an uploaded Excel file.
+ */
 const readExcelFile = async (file) => {
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(await file.arrayBuffer());
@@ -42,7 +84,8 @@ const readExcelFile = async (file) => {
 
   const data = [];
   worksheet.eachRow((row, rowNumber) => {
-    if (rowNumber > 1) { // Skip header row
+    if (rowNumber > 1) {
+      // Skip header row
       const rowData = {
         projectCode: row.getCell(1).text || '',
         student1Name: row.getCell(2).text || '',
@@ -65,16 +108,25 @@ const readExcelFile = async (file) => {
   return data;
 };
 
+/**
+ * Validates Excel data for correctness.
+ */
 const validateData = (data) => {
   if (!Array.isArray(data) || data.length === 0) {
     throw new Error('No valid data found in file');
   }
 
   return data.map((row, index) => {
-    // Required fields validation
-    if (!row.projectCode || !row.student1Name || !row.student1Id || 
-        !row.student1Email || !row.supervisor1 || !row.title || 
-        !row.part || !row.type) {
+    if (
+      !row.projectCode ||
+      !row.student1Name ||
+      !row.student1Id ||
+      !row.student1Email ||
+      !row.supervisor1 ||
+      !row.title ||
+      !row.part ||
+      !row.type
+    ) {
       throw new Error(`Missing required data in row ${index + 1}`);
     }
 
@@ -99,4 +151,3 @@ const validateData = (data) => {
     return row;
   });
 };
-
