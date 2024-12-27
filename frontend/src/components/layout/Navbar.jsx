@@ -7,7 +7,7 @@ import { assets } from '../../assets/assets';
 import UserMenu from './UserMenu';
 import SearchBar from '../shared/SearchBar';
 import MobileMenu from '../shared/MobileMenu';
-import { FiSearch } from 'react-icons/fi';
+
 
 const Navbar = () => {
   const location = useLocation();
@@ -16,10 +16,9 @@ const Navbar = () => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [showResults, setShowResults] = useState(false); // Added state for showing search results
+  const [showResults, setShowResults] = useState(false);
 
-  const handleSearch = (e) => {
-    const query = e.target.value;
+  const handleSearch = (query) => {
     setSearchQuery(query);
     if (query.trim() === '') {
       setSearchResults([]);
@@ -37,12 +36,10 @@ const Navbar = () => {
   };
 
   const handleResultClick = (resultId) => {
-    // Implement result click logic here, using resultId
-    console.log("Selected Result ID:", resultId);
-    //Example: Find the project by ID and navigate to its page.
     const selectedProject = projectsData.find(project => project.id === resultId);
-    if(selectedProject){
+    if (selectedProject) {
       navigate(`/project/${selectedProject.id}`);
+      setShowResults(false); // Close the results window
     }
   };
 
@@ -63,22 +60,19 @@ const Navbar = () => {
           <ul className="flex flex-col lg:flex-row items-center gap-2 lg:gap-12 font-medium text-gray-800 text-sm">
             <NavLink to='/projectsSupervisors'>MY PROJECTS</NavLink>
             <NavLink to='/MyProjectsReview'>PROJECTS TO REVIEW</NavLink>
-            <NavLink to='/evaluation-forms'>GRADES</NavLink>
+            <NavLink to='/SupervisorGradesFeedback'>GRADES</NavLink>
             <NavLink to='/contact'>CONTACT</NavLink>
           </ul>
         </MobileMenu>
 
         <div className="flex items-center gap-4 ml-auto mr-4">
           <div className="relative hidden lg:block">
-            <input
-              type="text"
-              placeholder="Search projects..."
+            <SearchBar
               value={searchQuery}
               onChange={handleSearch}
-              className="pl-8 pr-3 py-2 w-56 bg-[#F4F4F8] rounded-md text-sm text-gray-600 placeholder:text-gray-500 border-none focus:outline-none focus:ring-2 focus:ring-[#6366F1] transition-all"
-              aria-label="Search projects"
+              placeholder="Search"
             />
-            <FiSearch className="absolute left-2 top-2.5 text-gray-500 w-4 h-4" aria-hidden="true" />
+            
             {showResults && searchResults.length > 0 && (
               <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-[300px] overflow-y-auto">
                 {searchResults.map(result => (
@@ -124,4 +118,3 @@ const NavLink = ({ to, children }) => {
 };
 
 export default Navbar;
-
