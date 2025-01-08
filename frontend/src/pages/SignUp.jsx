@@ -6,45 +6,56 @@ import { Button } from '../components/ui/Button';
 import ErrorMessage from '../components/shared/ErrorMessage';
 import toast, { Toaster } from 'react-hot-toast';
 
-// Import the mock JSON data
-import usersData from '../data/mockUsers.json';
 
 function SignUp() {
   const navigate = useNavigate();
-  const [users, setUsers] = useState(usersData); // Simulate user data
   const [showPassword, setShowPassword] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const validateIdCard = (value) => {
+    if (!value) return "ID card is required";
+    const cleanValue = value.toString().replace(/\D/g, ''); // Remove non-numeric characters
+    if (cleanValue.length !== 9) return "ID card must be exactly 9 digits";
+    if (!/^\d{9}$/.test(cleanValue)) return "ID card must contain only numbers";
+    return true;
+  };
+  
+  const validateEmail = (email) => {
+    if (!email) return "Email is required";
+    if (!email.endsWith("@e.braude.ac.il")) return "Email must end with @e.braude.ac.il";
+    return true;
+  };
   const { register, handleSubmit, control, formState: { errors } } = useForm();
 
   const onSubmit = async (data) => {
     try {
-      if (users.some((user) => user.email === data.email)) {
-        toast.error('This email is already registered', {
-          duration: 5000,
-          position: 'top-center',
-        });
-        return;
-      }
-
-      const newUser = { id: users.length + 1, ...data };
-
-      // Simulate adding the user to the system
-      setUsers((prevUsers) => [...prevUsers, newUser]);
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API response delay
-
-      toast.success('Account created successfully!', {
-        duration: 3000,
-        position: 'top-center',
+      const response = await fetch("http://localhost:3001/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data), // `data` includes `id` entered by the user
       });
-
-      setTimeout(() => {
-        navigate('/');
-      }, 3000);
+  
+      const result = await response.json();
+      if (response.ok) {
+        toast.success("Account created successfully!", {
+          duration: 3000,
+          position: "top-center",
+        });
+  
+        setTimeout(() => {
+          navigate("/login");
+        }, 3000);
+      } else {
+        toast.error(result.message, {
+          duration: 5000,
+          position: "top-center",
+        });
+      }
     } catch (error) {
-      console.error('Error creating account:', error);
-      toast.error('An error occurred. Please try again.', {
+      console.error("Error creating account:", error);
+      toast.error("An error occurred. Please try again.", {
         duration: 5000,
-        position: 'top-center',
+        position: "top-center",
       });
     }
   };
@@ -60,6 +71,17 @@ function SignUp() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <InputField
+            label="ID"
+            name="id"
+            type="number"
+            register={register}
+            required="ID is required"
+            pattern={{
+              validate: validateIdCard
+            }}
+            errors={errors}
+          />
+          <InputField
             label="Full Name"
             name="fullName"
             register={register}
@@ -74,8 +96,8 @@ function SignUp() {
             register={register}
             required="Email is required"
             pattern={{
-              value: /\S+@\S+\.\S+/,
-              message: "Invalid email address"
+              value: /^[a-zA-Z0-9._%+-]+@e\.braude\.ac\.il$/,
+              message: "Email must end with @e.braude.ac.il"
             }}
             errors={errors}
           />

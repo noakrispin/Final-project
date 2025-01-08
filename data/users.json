@@ -1,0 +1,21 @@
+[
+    {
+      "id": 1,
+      "fullName": "Alice Johnson",
+      "email": "alice.johnson@example.com",
+      "role": "Student"
+    },
+    {
+      "id": 2,
+      "fullName": "Dr. Emily Carter",
+      "email": "emily.carter@example.com",
+      "role": "Supervisor"
+    },
+    {
+      "id": 3,
+      "fullName": "Prof. Charlie Davis",
+      "email": "charlie.davis@example.com",
+      "role": "Admin"
+    }
+  ]
+  

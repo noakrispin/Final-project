@@ -20,36 +20,39 @@ function Login() {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      const user = usersData.find(
-        (u) => u.email === data.email && u.password === data.password
-      );
-
-      if (user) {
-        toast.success('Login successful! Connecting...', {
+      const response = await fetch("http://localhost:3001/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+  
+      const result = await response.json();
+      if (response.ok) {
+        toast.success("Login successful! Connecting...", {
           duration: 3000,
-          position: 'top-center',
+          position: "top-center",
         });
-
+  
         setTimeout(() => {
-          toast.success(`Welcome back, ${user.fullName}!`, {
+          toast.success(`Welcome back, ${result.user.fullName}!`, {
             duration: 3000,
-            position: 'top-center',
+            position: "top-center",
           });
-
-          login(user);
-          navigate('/');
+  
+          login(result.user);
+          navigate("/");
         }, 2000);
       } else {
-        toast.error('Invalid email or password', {
+        toast.error(result.message, {
           duration: 5000,
-          position: 'top-center',
+          position: "top-center",
         });
       }
     } catch (error) {
-      console.error('Error logging in:', error);
-      toast.error('An error occurred. Please try again.', {
+      console.error("Error logging in:", error);
+      toast.error("An error occurred. Please try again.", {
         duration: 5000,
-        position: 'top-center',
+        position: "top-center",
       });
     } finally {
       setIsSubmitting(false);
@@ -93,8 +96,8 @@ function Login() {
               {...register('email', { 
                 required: 'Email is required', 
                 pattern: {
-                  value: /\S+@\S+\.\S+/,
-                  message: 'Invalid email address',
+                  value: /^[a-zA-Z0-9._%+-]+@e\.braude\.ac\.il$/,
+                  message: "Email must end with @e.braude.ac.il"
                 }
               })}
               className="w-full h-[55px] px-4 border border-[#dadada] rounded-md"
