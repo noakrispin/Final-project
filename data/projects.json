@@ -1,0 +1,21 @@
+[
+    {
+      "id": 1,
+      "title": "AI Chatbot",
+      "description": "AI-powered chatbot",
+      "students": ["Alice Johnson"],
+      "supervisor": "Dr. Emily Carter",
+      "part": "A",
+      "status": "Completed"
+    },
+    {
+      "id": 2,
+      "title": "E-Commerce Platform",
+      "description": "Platform for local businesses",
+      "students": ["Charlie Brown", "Dana White"],
+      "supervisor": "Prof. Charlie Davis",
+      "part": "B",
+      "status": "Pending"
+    }
+  ]
+  
