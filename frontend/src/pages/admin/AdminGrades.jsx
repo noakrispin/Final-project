@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Table } from "../../components/ui/Table";
-import { api } from "../../services/api";
+import { mockApi } from "../../services/mockApi";
 import { exportToExcelFile } from "../../services/fileProcessingService";
 import ProjectDetailsPopup from "../../components/shared/ProjectDetailsPopup";
 import ProjectAssessmentPopup from "../../components/ui/ProjectAssessmentPopup";
@@ -16,7 +16,7 @@ const AdminGradesPage = () => {
     const fetchProjects = async () => {
       try {
         setIsLoading(true);
-        const projectsData = await api.getProjects();
+        const projectsData = await mockApi.getProjects();
         const preprocessedProjects = preprocessProjects(projectsData);
         setProjects(preprocessedProjects);
       } catch (err) {

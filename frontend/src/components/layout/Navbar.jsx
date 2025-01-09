@@ -13,10 +13,12 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
+
+  console.log("Navbar received user:", user); // Debugging log
 
   const handleSearch = (query) => {
     setSearchQuery(query);
@@ -43,6 +45,8 @@ const Navbar = () => {
     }
   };
 
+  console.log("Navbar received user:", user); // Add this to confirm reactivity
+  
   return (
     <nav className="w-full bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="flex items-center h-16 px-4 max-w-[1400px] mx-auto">
@@ -89,8 +93,8 @@ const Navbar = () => {
             )}
           </div>
           {user ? (
-            <UserMenu />
-          ) : (
+            <UserMenu user={user} logout={logout} />
+            ) : (
             <Button
               onClick={() => navigate('/signUp')}
               className="bg-[#6366F1] hover:bg-[#5558E1] text-white px-6 py-2 rounded-md text-sm font-medium transition-colors"

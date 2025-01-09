@@ -3,7 +3,7 @@ import { Table } from '../components/ui/Table';
 import { Button } from '../components/ui/Button';
 import { Check, X, Search, Bell, MessageSquare } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { api } from '../services/api';
+import { mockApi } from '../services/mockApi';
 import { Calendar } from '../components/ui/Calendar';
 import { TaskList } from '../components/data-display/TaskList';
 import { ProgressBar } from '../components/ui/ProgressBar';

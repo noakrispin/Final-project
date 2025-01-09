@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { api } from '../services/api';
+import { mockApi } from '../services/mockApi';
 
 export const useProjectModals = (projects, setProjects) => {
   const [notesModal, setNotesModal] = useState({ isOpen: false, project: null });
@@ -35,7 +35,7 @@ export const useProjectModals = (projects, setProjects) => {
       );
 
       // Update in the backend
-      const result = await api.updateProjectNote(projectId, note);
+      const result = await mockApi.updateProjectNote(projectId, note);
 
       if (!result.success) {
         throw new Error('Failed to update note');

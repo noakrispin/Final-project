@@ -1,21 +1,68 @@
 [
-    {
-      "id": 1,
-      "fullName": "Alice Johnson",
-      "email": "alice.johnson@example.com",
-      "role": "Student"
-    },
-    {
-      "id": 2,
-      "fullName": "Dr. Emily Carter",
-      "email": "emily.carter@example.com",
-      "role": "Supervisor"
-    },
-    {
-      "id": 3,
-      "fullName": "Prof. Charlie Davis",
-      "email": "charlie.davis@example.com",
-      "role": "Admin"
-    }
+  {
+    "id": "123456789",
+    "fullName": "Alice Doe",
+    "email": "alice.doe@ebraude.ac.il",
+    "role": "Supervisor",
+    "password": "password123",
+    "supervisorTopics": [
+      "requirements engineering",
+      "augmented reality",
+      "internet of things - IoT",
+      "gamification",
+      "motivation",
+      "engagement"
+    ]
+  },
+  {
+    "id": "987654321",
+    "fullName": "Bob Admin",
+    "email": "bob.admin@braude.ac.il",
+    "role": "Admin",
+    "password": "adminPass123",
+    "supervisorTopics": [
+      "search engine",
+      "data classification"
+    ],
+    "permissions": [
+      "manageUsers",
+      "assignRoles",
+      "viewReports"
+    ]
+  },
+  {
+    "id": "029087641",
+    "fullName": "Prof. Charlie Davis",
+    "email": "charlie.davis@e.braude.ac.il",
+    "role": "Admin",
+    "password": "Charlie@789",
+    "supervisorTopics": [
+      "machine learning",
+      "medical tools"
+    ],
+    "permissions": [
+      "manageUsers",
+      "assignRoles",
+      "viewReports"
+    ]
+},
+
+{
+  "id": "319746850",
+  "fullName": "Prof. Naomi Lavi",
+  "email": "Naomi.lavi@e.braude.ac.il",
+  "role": "Admin",
+  "password": "Naomi@789",
+  "supervisorTopics": [
+    "data analysis",
+    "data modeling",
+    "personal medicine",
+    "medical diagnosis"
+  ],
+  "permissions": [
+    "manageUsers",
+    "assignRoles",
+    "viewReports"
   ]
-  
+}
+]

@@ -7,6 +7,7 @@ import ErrorMessage from '../components/shared/ErrorMessage';
 import toast, { Toaster } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
+
 // Import mock user data for testing
 import usersData from '../data/mockUsers.json';
 
@@ -20,40 +21,16 @@ function Login() {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      const response = await fetch("http://localhost:3001/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-  
-      const result = await response.json();
-      if (response.ok) {
-        toast.success("Login successful! Connecting...", {
-          duration: 3000,
-          position: "top-center",
-        });
-  
-        setTimeout(() => {
-          toast.success(`Welcome back, ${result.user.fullName}!`, {
-            duration: 3000,
-            position: "top-center",
-          });
-  
-          login(result.user);
-          navigate("/");
-        }, 2000);
+      const result = await login(data.email, data.password); // Use AuthContext login
+      if (result.success) {
+        toast.success("Welcome back!");
+        navigate("/"); // Navigate to homepage on success
       } else {
-        toast.error(result.message, {
-          duration: 5000,
-          position: "top-center",
-        });
+        toast.error("Login failed: " + result.message);
       }
     } catch (error) {
       console.error("Error logging in:", error);
-      toast.error("An error occurred. Please try again.", {
-        duration: 5000,
-        position: "top-center",
-      });
+      toast.error("An error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

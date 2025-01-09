@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { api } from '../services/api';
+import { mockApi } from '../services/mockApi';
 
 export const useTasks = () => {
   const [tasks, setTasks] = useState([]);
@@ -10,7 +10,7 @@ export const useTasks = () => {
     const fetchTasks = async () => {
       try {
         setIsLoading(true);
-        const tasksData = await api.getTasks();
+        const tasksData = await mockApi.getTasks();
         setTasks(tasksData);
       } catch (err) {
         console.error('Error fetching tasks:', err);
@@ -25,7 +25,7 @@ export const useTasks = () => {
 
   const addTask = async (newTask) => {
     try {
-      const addedTask = await api.addTask(newTask);
+      const addedTask = await mockApi.addTask(newTask);
       setTasks(prevTasks => [...prevTasks, addedTask]);
     } catch (err) {
       console.error('Error adding task:', err);

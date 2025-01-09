@@ -1,68 +1,97 @@
 const bcrypt = require("bcrypt");
-const nodemailer = require("nodemailer");
+const jwt = require("jsonwebtoken");
 const db = require("../config/firebaseAdmin");
-require("dotenv").config();
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
-const login = async (req, res) => {
-  const { email, password } = req.body;
+// Helper function to get role-specific details
+const getRoleSpecificDetails = async (role, userId) => {
   try {
-    const usersSnapshot = await db.collection("users").where("email", "==", email).get();
-    if (usersSnapshot.empty) {
+    if (role === "supervisor") {
+      const supervisorDoc = await db
+        .collection("users")
+        .doc(userId)
+        .collection("supervisorDetails")
+        .doc("details")
+        .get();
+
+      return supervisorDoc.exists ? supervisorDoc.data() : null;
+    } else if (role === "admin") {
+      const adminDoc = await db
+        .collection("users")
+        .doc(userId)
+        .collection("adminDetails")
+        .doc("details")
+        .get();
+
+      return adminDoc.exists ? adminDoc.data() : null;
+    }
+    return null;
+  } catch (error) {
+    console.error("Error fetching role-specific details:", error.message);
+    throw new Error("Failed to fetch role-specific details.");
+  }
+};
+
+// Login function
+exports.login = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    // Query Firestore for user by email
+    const userDoc = await db
+      .collection("users")
+      .where("email", "==", email)
+      .limit(1)
+      .get();
+
+    if (userDoc.empty) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    const userDoc = usersSnapshot.docs[0];
-    const userData = userDoc.data();
+    const user = userDoc.docs[0].data();
+    const userId = userDoc.docs[0].id;
 
-    const isPasswordValid = await bcrypt.compare(password, userData.password);
+    // Validate password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({ success: false, message: "Invalid password" });
     }
 
-    const role = userData.role;
+    // Fetch role-specific details
+    const roleDetails = await getRoleSpecificDetails(user.role, userId);
 
-    res.json({
+    // Generate JWT token
+    const token = jwt.sign({ id: userId, role: user.role }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    // Remove sensitive fields before sending response
+    const { password: _, ...userWithoutPassword } = user;
+
+    // Send response
+    res.status(200).json({
       success: true,
-      message: "Login successful",
-      user: { id: userData.id, fullName: userData.fullName, email: userData.email, role },
+      token,
+      user: {
+        id: userId,
+        ...userWithoutPassword,
+        ...(roleDetails ? { roleDetails } : {}),
+      },
     });
   } catch (error) {
-    console.error("Error during login:", error);
-    res.status(500).json({ success: false, error: "An error occurred while processing the login request." });
+    console.error("Error during login:", error.message);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
-const register = async (req, res) => {
-  const { id, fullName, email, role, password } = req.body;
+// Register function
+exports.register = async (req, res) => {
+  const { id, fullName, email, password, role, supervisorTopics, permissions } = req.body;
+
   try {
-    if (!id || id.length !== 9 || !/^\d{9}$/.test(id)) {
-      return res.status(400).json({ success: false, message: "Invalid ID format" });
-    }
-
-    if (!email || !/^[a-zA-Z0-9._%+-]+@e\.braude\.ac\.il$/.test(email)) {
-      return res.status(400).json({ success: false, message: "Invalid email format" });
-    }
-
-    const usersSnapshot = await db.collection("users").where("email", "==", email).get();
-    if (!usersSnapshot.empty) {
-      return res.status(400).json({ success: false, message: "Email already registered" });
-    }
-
-    const idDoc = await db.collection("users").doc(id).get();
-    if (idDoc.exists) {
-      return res.status(400).json({ success: false, message: "ID already registered" });
-    }
-
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Add user to Firestore
     await db.collection("users").doc(id).set({
       id,
       fullName,
@@ -71,31 +100,63 @@ const register = async (req, res) => {
       password: hashedPassword,
     });
 
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "Registration Successful",
-      html: `
-        <h1>Welcome to the Final Project Portal, ${fullName}!</h1>
-        <p>Your registration was successful.</p>
-        <p><strong>ID:</strong> ${id}</p>
-        <p>Feel free to log in and start exploring.</p>
-        <p>Best regards,<br>The Team</p>
-      `,
-    };
-
-    try {
-      await transporter.sendMail(mailOptions);
-      console.log("Email sent successfully to " + email);
-    } catch (error) {
-      console.error("Error sending email:", error.message);
+    // Add role-specific details
+    if (role === "supervisor") {
+      await db
+        .collection("users")
+        .doc(id)
+        .collection("supervisorDetails")
+        .doc("details")
+        .set({
+          supervisorTopics: supervisorTopics || [],
+        });
+    } else if (role === "admin") {
+      await db
+        .collection("users")
+        .doc(id)
+        .collection("adminDetails")
+        .doc("details")
+        .set({
+          permissions: permissions || [],
+          supervisorTopics: supervisorTopics || [],
+          personalNotes: "",
+        });
     }
 
-    res.json({ success: true, message: "User registered successfully", id });
+    res.status(201).json({ success: true, message: "User registered successfully" });
   } catch (error) {
-    console.error("Error during registration:", error);
-    res.status(500).json({ success: false, message: "An error occurred while processing the registration request." });
+    console.error("Error during registration:", error.message);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
-module.exports = { login, register };
+// Get Profile function
+exports.getProfile = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const userDoc = await db.collection("users").doc(userId).get();
+
+    if (!userDoc.exists) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const user = userDoc.data();
+
+    // Fetch role-specific details
+    const roleDetails = await getRoleSpecificDetails(user.role, userId);
+
+    const { password: _, ...userWithoutPassword } = user;
+
+    res.status(200).json({
+      success: true,
+      user: {
+        ...userWithoutPassword,
+        ...(roleDetails ? { roleDetails } : {}),
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching user profile:", error.message);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};

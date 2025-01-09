@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { api } from '../services/api';
+import { mockApi } from '../services/mockApi';
 
 export const useProjects = () => {
   const [projects, setProjects] = useState([]);
@@ -12,8 +12,8 @@ export const useProjects = () => {
       try {
         setIsLoading(true);
         const [projectsData, requestsData] = await Promise.all([
-          api.getProjects(),
-          api.getProjectRequests()
+          mockApi.getProjects(),
+          mockApi.getProjectRequests()
         ]);
         setProjects(projectsData || []);
         setProjectRequests(requestsData || []);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Table } from "../components/ui/Table";
-import { api } from "../services/api";
+import { mockApi } from "../services/mockApi";
 import { useAuth } from "../context/AuthContext";
 import ProjectAssessmentPopup from "../components/ui/ProjectAssessmentPopup";
 
@@ -20,8 +20,8 @@ const SupervisorGradesFeedback = () => {
       try {
         setIsLoading(true);
         const [projectsData, projectAnswers] = await Promise.all([
-          api.getProjects(),
-          api.getProjectAnswers(),
+          mockApi.getProjects(),
+          mockApi.getProjectAnswers(),
         ]);
 
         const filteredProjects = projectsData.filter(
