@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { api } from "../services/api";
+import { mockApi } from "../services/mockApi";
 import { ChevronDown, ChevronUp, ExternalLink, Users, Calendar, FileText, User, Code } from 'lucide-react';
 
 const ProjectDetailsPage = () => {
@@ -13,7 +13,7 @@ const ProjectDetailsPage = () => {
   useEffect(() => {
     const fetchProject = async () => {
       try {
-        const projects = await api.getProjects();
+        const projects = await mockApi.getProjects();
         const foundProject = projects.find(
           (p) => p.id === parseInt(projectId, 10)
         );

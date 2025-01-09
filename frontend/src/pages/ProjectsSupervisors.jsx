@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
-import { api } from "../services/api";
+import { mockApi } from "../services/mockApi";
 import { BlurElements } from "../components/shared/BlurElements";
 import ProjectDetailsPopup from "../components/shared/ProjectDetailsPopup";
 import { Table } from "../components/ui/Table";
@@ -23,7 +23,7 @@ const ProjectsSupervisors = () => {
 
       try {
         setIsLoading(true);
-        const projectsData = await api.getProjects();
+        const projectsData = await mockApi.getProjects();
         const filteredProjects = projectsData.filter(
           (project) => project.supervisor === user.fullName
         );
@@ -53,7 +53,7 @@ const ProjectsSupervisors = () => {
     if (!selectedProject) return;
 
     try {
-      await api.updateProjectNotes(selectedProject.id, personalNotes);
+      await mockApi.updateProjectNotes(selectedProject.id, personalNotes);
 
       setProjects((prevProjects) =>
         prevProjects.map((project) =>

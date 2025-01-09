@@ -20,5 +20,25 @@ const getDocument = async (collection, docId) => {
     return { success: false, error: error.message };
   }
 };
+const addSubcollection = async (collection, docId, subcollection, data) => {
+  try {
+    await db.collection(collection).doc(docId).collection(subcollection).doc("details").set(data);
+    return { success: true };
+  } catch (error) {
+    console.error("Error adding subcollection:", error.message);
+    return { success: false, error: error.message };
+  }
+};
 
-module.exports = { addDocument, getDocument };
+const getSubcollection = async (collection, docId, subcollection) => {
+  try {
+    const doc = await db.collection(collection).doc(docId).collection(subcollection).doc("details").get();
+    if (!doc.exists) return { success: false, message: "Subcollection not found" };
+    return { success: true, data: doc.data() };
+  } catch (error) {
+    console.error("Error fetching subcollection:", error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+module.exports = { addDocument, getDocument, addSubcollection, getSubcollection};

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import FormField from "./FormField";
-import { api } from "../../services/api";
+import { mockApi } from "../../services/mockApi";
 import { Button } from "../ui/Button";
 
 export default function UnifiedFormComponent({
@@ -47,7 +47,7 @@ export default function UnifiedFormComponent({
 
   // Fetch required questions for the specific form type
   const fetchRequiredQuestions = async (formType) => {
-    const questions = await api.getQuestions(formType);
+    const questions = await mockApi.getQuestions(formType);
     return questions.filter((q) => q.required && !q.disabled);
   };
 
@@ -150,7 +150,7 @@ export default function UnifiedFormComponent({
     e.preventDefault();
     const weightedScore = calculateWeightedScore(formData, formFields);
     try {
-      const result = await api.submitForm(submitEndpoint, {
+      const result = await mockApi.submitForm(submitEndpoint, {
         ...formData,
         weightedScore,
       });

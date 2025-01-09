@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { api } from "../services/api";
+import { mockApi } from "../services/mockApi";
 import { BlurElements } from "../components/shared/BlurElements";
 import ProjectDetailsPopup from "../components/shared/ProjectDetailsPopup";
 import { TableOption1, TableOption2 } from "../components/ui/TableOptions";
@@ -58,8 +58,8 @@ const OtherProjectsReview = () => {
       try {
         setIsLoading(true);
         const [projectsData, gradesData] = await Promise.all([
-          api.getProjects(),
-          api.getGrades(),
+          mockApi.getProjects(),
+          mockApi.getGrades(),
         ]);
 
         setProjects(
@@ -279,7 +279,7 @@ const OtherProjectsReview = () => {
           }}
           saveGitLinkToBackend={async (projectId, gitLink) => {
             try {
-              await api.updateProjectGitLink(projectId, gitLink);
+              await mockApi.updateProjectGitLink(projectId, gitLink);
               setProjects((prevProjects) =>
                 prevProjects.map((project) =>
                   project.id === projectId ? { ...project, gitLink } : project
@@ -291,7 +291,7 @@ const OtherProjectsReview = () => {
           }}
           saveNotesToBackend={async (projectId, notes) => {
             try {
-              await api.updateProjectNotes(projectId, notes);
+              await mockApi.updateProjectNotes(projectId, notes);
               setProjects((prevProjects) =>
                 prevProjects.map((project) =>
                   project.id === projectId

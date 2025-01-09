@@ -7,18 +7,17 @@ export default function MyProfile() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    // Simulate fetching user data dynamically based on authUser
     if (authUser) {
-      setUser({
-        fullName: authUser.fullName || 'Dr. Unknown',
-        email: authUser.email || 'unknown@example.com',
-        role: authUser.role || 'lecturer',
-        projects: authUser.projects || 0, // Total projects being supervised
-        pendingReviews: authUser.pendingReviews || 0, // Total reviews pending
-      });
+      fetch(`/api/users/${authUser.id}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            setUser(data.data);
+          }
+        });
     }
   }, [authUser]);
-
+  
   if (!user) return <div>Loading...</div>;
 
   return (

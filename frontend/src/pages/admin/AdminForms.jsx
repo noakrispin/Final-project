@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Table } from "../../components/ui/Table";
-import { api } from "../../services/api";
+import { mockApi } from "../../services/mockApi";
 import DynamicEditModal from "../../components/admin/DynamicEditModal";
 
 export default function AdminForms() {
@@ -19,7 +19,7 @@ export default function AdminForms() {
     } else if (user.role !== "Admin") {
       navigate("/");
     } else {
-      api.getAdminQuestions().then((data) => {
+      mockApi.getAdminQuestions().then((data) => {
         setQuestions(data);
         setLoading(false);
       });
@@ -28,7 +28,7 @@ export default function AdminForms() {
 
   const handleSave = async (updatedQuestions) => {
     setLoading(true);
-    await api.updateAdminQuestions(updatedQuestions);
+    await mockApi.updateAdminQuestions(updatedQuestions);
     setQuestions(updatedQuestions);
     setLoading(false);
   };
