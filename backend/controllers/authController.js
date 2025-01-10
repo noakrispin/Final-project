@@ -1,11 +1,12 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const db = require("../config/firebaseAdmin");
+const { sendEmail } = require("../utils/emailService");
 
 // Helper function to get role-specific details
 const getRoleSpecificDetails = async (role, userId) => {
   try {
-    if (role === "supervisor") {
+    if (role === "Supervisor") {
       const supervisorDoc = await db
         .collection("users")
         .doc(userId)
@@ -14,7 +15,7 @@ const getRoleSpecificDetails = async (role, userId) => {
         .get();
 
       return supervisorDoc.exists ? supervisorDoc.data() : null;
-    } else if (role === "admin") {
+    } else if (role === "Admin") {
       const adminDoc = await db
         .collection("users")
         .doc(userId)
@@ -101,7 +102,7 @@ exports.register = async (req, res) => {
     });
 
     // Add role-specific details
-    if (role === "supervisor") {
+    if (role === "Supervisor") {
       await db
         .collection("users")
         .doc(id)
@@ -110,7 +111,7 @@ exports.register = async (req, res) => {
         .set({
           supervisorTopics: supervisorTopics || [],
         });
-    } else if (role === "admin") {
+    } else if (role === "Admin") {
       await db
         .collection("users")
         .doc(id)
@@ -122,7 +123,19 @@ exports.register = async (req, res) => {
           personalNotes: "",
         });
     }
+    // Temporarily comment out email-sending functionality
+    /*
+    // Send email notification
+    const emailText = `
+      Hello ${fullName},
 
+      Thank you for registering on our site. Your account has been successfully created. You can now log in and access all features.
+
+      Regards,
+      The Final Project Team
+    `;
+    await sendEmail(email, "Welcome to Final Project Portal", emailText);
+  */
     res.status(201).json({ success: true, message: "User registered successfully" });
   } catch (error) {
     console.error("Error during registration:", error.message);
@@ -158,5 +171,64 @@ exports.getProfile = async (req, res) => {
   } catch (error) {
     console.error("Error fetching user profile:", error.message);
     res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+exports.verifyUser = async (req, res) => {
+  const { email, id } = req.body;
+
+  try {
+    const userDoc = await db
+      .collection("users")
+      .where("email", "==", email)
+      .where("id", "==", id)
+      .limit(1)
+      .get();
+
+    if (userDoc.empty) {
+      return res.status(404).json({ success: false, message: "User not found or invalid credentials." });
+    }
+
+    res.status(200).json({ success: true, message: "User verified successfully." });
+  } catch (error) {
+    console.error("Error verifying user:", error.message);
+    res.status(500).json({ success: false, message: "An error occurred. Please try again." });
+  }
+};
+
+// Reset Password function
+exports.resetPassword = async (req, res) => {
+  const { email, id, newPassword } = req.body;
+
+  try {
+    const userDoc = await db
+      .collection("users")
+      .where("email", "==", email)
+      .where("id", "==", id)
+      .limit(1)
+      .get();
+
+    if (userDoc.empty) {
+      return res.status(404).json({ success: false, message: "User not found or invalid credentials" });
+    }
+
+    const user = userDoc.docs[0];
+    const userId = user.id;
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await db.collection("users").doc(userId).update({
+      password: hashedPassword,
+    });
+    // Temporarily comment out email-sending functionality
+    /*
+    // Send email notification
+    const emailText = `Hello,\n\nYour password has been successfully reset. If you didn't request this change, please contact support immediately.\n\nRegards,\nYour Team`;
+    await sendEmail(email, "Password Reset Confirmation", emailText);
+  */
+    res.status(200).json({ success: true, message: "Password reset successfully" });
+  } catch (error) {
+    console.error("Error resetting password:", error.message);
+    res.status(500).json({ success: false, message: "An error occurred. Please try again." });
   }
 };

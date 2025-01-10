@@ -25,6 +25,7 @@ import AdminForms from "./pages/admin/AdminForms";
 import AdminGrades from "./pages/admin/AdminGrades";
 import ProjectDetailsPage from "./pages/ProjectDetailsPage";
 import SupervisorGradesFeedback from "./pages/SupervisorGradesFeedback";
+import ForgotPassword from "./pages/ForgotPassword";
 
 // Component imports
 import Navbar from "./components/layout/Navbar";
@@ -46,6 +47,7 @@ const AppContent = () => {
         <Route path="/contact" element={<Contact />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="/project/:projectId" element={<ProjectDetailsPage />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
         {/* Protected Routes */}
         <Route

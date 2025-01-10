@@ -5,7 +5,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { Button } from '../components/ui/Button';
 import ErrorMessage from '../components/shared/ErrorMessage';
 import toast, { Toaster } from 'react-hot-toast';
-
+import { api } from "../services/api";
 
 function SignUp() {
   const navigate = useNavigate();
@@ -29,34 +29,27 @@ function SignUp() {
 
   const onSubmit = async (data) => {
     try {
-      const response = await fetch("http://localhost:3001/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data), // `data` includes `id` entered by the user
+      const response = await api.post("/auth/register", {
+        id: data.id,
+        fullName: data.fullName,
+        email: data.email,
+        password: data.password,
+        role: data.role,
       });
   
-      const result = await response.json();
-      if (response.ok) {
-        toast.success("Account created successfully!", {
-          duration: 3000,
-          position: "top-center",
-        });
-  
+      if (response.success) {
+        toast.success("Account created successfully! A confirmation email has been sent.",{
+          duration: 3000, // Keep the toast visible for 3 seconds
+        })
         setTimeout(() => {
           navigate("/login");
-        }, 3000);
+        }, 1000); // 1-second delay
       } else {
-        toast.error(result.message, {
-          duration: 5000,
-          position: "top-center",
-        });
+        toast.error(response.message || "Failed to create account.");
       }
     } catch (error) {
-      console.error("Error creating account:", error);
-      toast.error("An error occurred. Please try again.", {
-        duration: 5000,
-        position: "top-center",
-      });
+      console.error("Error creating account:", error.message);
+      toast.error("An error occurred. Please try again.");
     }
   };
 
