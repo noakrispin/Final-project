@@ -35,7 +35,7 @@
     "fullName": "Prof. Charlie Davis",
     "email": "charlie.davis@e.braude.ac.il",
     "role": "Admin",
-    "password": "Charlie@789",
+    "password": "Charlie@7",
     "supervisorTopics": [
       "machine learning",
       "medical tools"
@@ -50,7 +50,7 @@
 {
   "id": "319746850",
   "fullName": "Prof. Naomi Lavi",
-  "email": "Naomi.lavi@e.braude.ac.il",
+  "email": "Naomi.Lavi@e.braude.ac.il",
   "role": "Admin",
   "password": "Naomi@789",
   "supervisorTopics": [

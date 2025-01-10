@@ -21,10 +21,17 @@ function Login() {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      const result = await login(data.email, data.password); // Use AuthContext login
+      const result = await login(data.email, data.password);
+      console.log("Login result:", result); // Debugging log
       if (result.success) {
-        toast.success("Welcome back!");
-        navigate("/"); // Navigate to homepage on success
+        toast.success("Welcome back!", {
+          duration: 3000, // Keep the toast visible for 3 seconds
+        });
+  
+        // Introduce a short delay to ensure the toast renders before navigating
+        setTimeout(() => {
+          navigate("/");
+        }, 1000); // 1-second delay
       } else {
         toast.error("Login failed: " + result.message);
       }
@@ -114,7 +121,7 @@ function Login() {
 
           <Button
             type="button"
-            onClick={handleForgotPassword}
+            onClick={() => navigate("/forgot-password")}
             className="w-full mt-2 h-[50px] bg-[#f0f4ff] text-blue-500 text-sm font-medium rounded-md"
           >
             Forgot Password?
