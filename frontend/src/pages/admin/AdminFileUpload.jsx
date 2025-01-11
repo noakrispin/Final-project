@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ExcelUploader from '../../components/admin/ExcelUploader';
-import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { Table } from '../../components/ui/Table';
 import { BlurElements } from '../../components/shared/BlurElements';
 import { processExcelFile } from '../../services/fileProcessingService';
-import { mockDatabaseService } from '../../services/mockDatabaseService';
+import { ExcelDatabaseService } from '../../services/ExcelDatabaseService';
+import { getAuth } from 'firebase/auth';
 
 const AdminFileUpload = () => {
   const navigate = useNavigate();
@@ -14,6 +13,9 @@ const AdminFileUpload = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [error, setError] = useState(null);
+
+  const auth = getAuth();
+  console.log("Authenticated user:", auth.currentUser);
 
   const projectColumns = [
     { header: 'Project Code', accessor: 'projectCode' },
@@ -34,13 +36,18 @@ const AdminFileUpload = () => {
     setIsUploading(true);
     setError(null);
     setUploadSuccess(false);
-
+  
     try {
       const processedData = await processExcelFile(file);
-      await mockDatabaseService.insertProjects(processedData);
+      await ExcelDatabaseService.insertProjects(processedData); // Now uses Firestore
       setUploadedProjects(processedData);
       setUploadSuccess(true);
       console.log("Projects uploaded successfully:", processedData);
+      
+      // Navigate to the projects page after successful upload
+      setTimeout(() => {
+        navigate('/admin-projects');
+      }, 2000); // Redirect after 2 seconds
     } catch (err) {
       setError(err.message);
       console.error("Error uploading file:", err);
@@ -91,15 +98,6 @@ const AdminFileUpload = () => {
                 error={error}
               />
 
-              {uploadedProjects.length > 0 && (
-                <div className="mt-8 space-y-4">
-                  <h3 className="text-lg font-semibold text-blue-900">Uploaded Projects Preview</h3>
-                  <Table
-                    columns={projectColumns}
-                    data={uploadedProjects}
-                  />
-                </div>
-              )}
             </div>
 
             {/* Action Buttons */}

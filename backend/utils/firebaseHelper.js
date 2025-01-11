@@ -41,4 +41,67 @@ const getSubcollection = async (collection, docId, subcollection) => {
   }
 };
 
-module.exports = { addDocument, getDocument, addSubcollection, getSubcollection};
+const addProject = async (projectCode, data) => {
+  try {
+    await db.collection("projects").doc(projectCode).set(data);
+    return { success: true };
+  } catch (error) {
+    console.error("Error adding project:", error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+const getProject = async (projectCode) => {
+  try {
+    const doc = await db.collection("projects").doc(projectCode).get();
+    if (!doc.exists) return { success: false, message: "Project not found" };
+    return { success: true, data: doc.data() };
+  } catch (error) {
+    console.error("Error fetching project:", error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+const getAllProjects = async () => {
+  try {
+    const snapshot = await db.collection("projects").get();
+    const projects = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    return { success: true, data: projects };
+  } catch (error) {
+    console.error("Error fetching projects:", error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+const updateProject = async (projectCode, data) => {
+  try {
+    await db.collection("projects").doc(projectCode).update(data);
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating project:", error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+const deleteProject = async (projectCode) => {
+  try {
+    await db.collection("projects").doc(projectCode).delete();
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting project:", error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+module.exports = {
+  addDocument,
+  getDocument,
+  addSubcollection,
+  getSubcollection,
+  addProject,
+  getProject,
+  getAllProjects,
+  updateProject,
+  deleteProject,
+};
+
