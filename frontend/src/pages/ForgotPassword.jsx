@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { toast, Toaster } from 'react-hot-toast'; // Import Toaster
-import { api } from '../services/api'; // Your API service
+import { toast, Toaster } from 'react-hot-toast';
+import { api } from '../services/api';
 
 function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -50,68 +50,85 @@ function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-center bg-gray-100">
-      {/* Toast notifications */}
-      <Toaster /> {/* Mount the toaster here */}
+    <div className="min-h-screen bg-white relative overflow-hidden flex justify-center items-center py-12">
+      {/* Background blur elements */}
+      <div className="absolute top-[338px] left-[610px] w-[300px] h-[294px] bg-[#8bd8ff]/40 rounded-tl-[481.50px] rounded-tr-[600px] rounded-bl-[481.50px] rounded-br-[600px] blur-[80px]" />
+      <div className="absolute bottom-0 left-[-352px] w-[1000px] h-[1018.69px] bg-[#c8d7ff]/70 rounded-[471.19px] blur-[70px]" />
 
-      <form
-        className="bg-white p-6 shadow-md rounded"
-        onSubmit={isVerified ? handleResetPassword : handleVerifyUser}
-      >
-        <h2 className="text-lg font-semibold mb-4">
+      {/* Main Content */}
+      <div className="w-full max-w-[562px] bg-white shadow-md border border-[#d3d3d3] rounded-[20px] relative z-10 p-8">
+        <h2 className="text-[26px] font-semibold text-gray-600 mb-2">
           {isVerified ? 'Reset Password' : 'Forgot Password'}
         </h2>
+        <p className="text-lg text-gray-600 mb-6">
+          {isVerified ? 'Set your new password below.' : 'Enter your email and ID to verify your account.'}
+        </p>
 
-        {!isVerified && (
-          <>
-            <input
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full p-2 border rounded mb-4"
-            />
-            <input
-              type="text"
-              placeholder="Enter your ID"
-              value={id}
-              onChange={(e) => setId(e.target.value)}
-              required
-              className="w-full p-2 border rounded mb-4"
-            />
-          </>
-        )}
+        <form onSubmit={isVerified ? handleResetPassword : handleVerifyUser} className="space-y-4">
+          {!isVerified && (
+            <>
+              <div>
+                <label htmlFor="email" className="block text-gray-600 mb-1">Email</label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full h-[55px] px-4 border border-[#dadada] rounded-md"
+                  placeholder="Enter your email"
+                />
+              </div>
+              <div>
+                <label htmlFor="id" className="block text-gray-600 mb-1">ID</label>
+                <input
+                  id="id"
+                  type="text"
+                  value={id}
+                  onChange={(e) => setId(e.target.value)}
+                  required
+                  className="w-full h-[55px] px-4 border border-[#dadada] rounded-md"
+                  placeholder="Enter your ID"
+                />
+              </div>
+            </>
+          )}
 
-        {isVerified && (
-          <>
-            <input
-              type="password"
-              placeholder="Enter your new password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-              pattern=".{8,}"
-              title="Password must be at least 8 characters long."
-              className="w-full p-2 border rounded mb-4"
-            />
-          </>
-        )}
+          {isVerified && (
+            <div>
+              <label htmlFor="newPassword" className="block text-gray-600 mb-1">New Password</label>
+              <input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                pattern=".{8,}"
+                title="Password must be at least 8 characters long."
+                className="w-full h-[55px] px-4 border border-[#dadada] rounded-md"
+                placeholder="Enter your new password"
+              />
+            </div>
+          )}
 
-        <button
-          type="submit"
-          className="bg-blue-500 text-white py-2 px-4 rounded"
-          disabled={isSubmitting}
-        >
-          {isSubmitting
-            ? isVerified
-              ? 'Resetting Password...'
-              : 'Verifying User...'
-            : isVerified
-            ? 'Reset Password'
-            : 'Verify User'}
-        </button>
-      </form>
+          <button
+            type="submit"
+            className="w-full h-[60px] bg-[#5f6fff] hover:bg-[#4b5ccc] text-white text-lg font-medium rounded-md"
+            disabled={isSubmitting}
+          >
+            {isSubmitting
+              ? isVerified
+                ? 'Resetting Password...'
+                : 'Verifying User...'
+              : isVerified
+              ? 'Reset Password'
+              : 'Verify User'}
+          </button>
+        </form>
+      </div>
+
+      {/* Toast notifications */}
+      <Toaster />
     </div>
   );
 }
