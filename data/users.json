@@ -52,7 +52,7 @@
   "fullName": "Prof. Naomi Lavi",
   "email": "Naomi.Lavi@e.braude.ac.il",
   "role": "Admin",
-  "password": "Naomi@789",
+  "password": "Naomi@789!",
   "supervisorTopics": [
     "data analysis",
     "data modeling",

@@ -30,7 +30,7 @@ function Login() {
   
         // Introduce a short delay to ensure the toast renders before navigating
         setTimeout(() => {
-          navigate("/");
+          navigate("/profile");
         }, 1000); // 1-second delay
       } else {
         toast.error("Login failed: " + result.message);
