@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Table } from "../../components/ui/Table";
 import { mockApi } from "../../services/mockApi";
-import { exportToExcelFile } from "../../services/fileProcessingService";
+// import { exportToExcelFile } from "../../services/fileProcessingService";
 import ProjectDetailsPopup from "../../components/shared/ProjectDetailsPopup";
 import ProjectAssessmentPopup from "../../components/ui/ProjectAssessmentPopup";
 
@@ -163,7 +163,7 @@ const AdminGradesPage = () => {
     }
     return "Not yet graded";
   };
-
+/*
   const handleExport = () => {
     const dataToExport = projects.map((project) => ({
       "Project Code": project.projectCode,
@@ -183,7 +183,7 @@ const AdminGradesPage = () => {
     }));
 
     exportToExcelFile(dataToExport, "Project_Grades.xlsx");
-  };
+  };*/
 
   if (isLoading) {
     return (

@@ -2,20 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { BlurElements } from '../../components/shared/BlurElements';
+import ProjectsTable from '../../components/admin/ProjectsTable';
+import ProjectStats from '../../components/admin/ProjectStats';
 import NotesModal from '../../components/actions/NotesModal';
 import StudentDetailsModal from '../../components/ui/StudentDetailsModal';
 import EditFieldModal from '../../components/actions/EditTitleModal';
-import ProjectsTable from '../../components/admin/ProjectsTable';
-import ProjectStats from '../../components/admin/ProjectStats';
 import { useProjectModals } from '../../hooks/useProjectModals';
-import projectsAdminData from '../../data/projectsAdmin.json';
+import { db } from '../../firebaseConfig';
+import { collection, getDocs, doc, writeBatch, updateDoc } from 'firebase/firestore';
 import { MdOutlineFileUpload } from "react-icons/md";
+import * as XLSX from 'xlsx';
+
 const TABS = ['All Projects', 'Part A', 'Part B'];
 
 const getTabDescription = (tab) => {
-  const interactiveFeatures = "Click on any cell in the table to edit its content directly. Student names are clickable to view detailed student information.";
-  
-  switch(tab) {
+  const interactiveFeatures =
+    "Click on any cell in the table to edit its content directly. Student names are clickable to view detailed student information.";
+
+  switch (tab) {
     case 'All Projects':
       return `Here you can view and manage all projects, including both Part A and Part B projects. Use the filters above to focus on specific project types. ${interactiveFeatures}`;
     case 'Part A':
@@ -45,19 +49,97 @@ const AdminProjects = () => {
     handleSaveNote,
     handleStudentClick,
     handleEditField,
-    handleSaveField
+    handleSaveField,
+    closeStudentModal,
+    closeNotesModal,
   } = useProjectModals(projects, setProjects);
 
   useEffect(() => {
-    try {
-      setProjects(projectsAdminData);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error loading projects:', error);
-      setError(error.message);
-      setLoading(false);
-    }
+    const fetchProjects = async () => {
+      try {
+        setLoading(true);
+        const snapshot = await getDocs(collection(db, 'projects'));
+        const fetchedProjects = snapshot.docs
+          .map(doc => ({
+            id: doc.id, // The document ID becomes the project ID
+            ...doc.data(),
+          }))
+          .filter(project => project.id !== 'placeholder'); // Exclude placeholder templates
+        setProjects(fetchedProjects);
+      } catch (err) {
+        console.error('Error loading projects:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
   }, []);
+
+  const moveToPartB = async () => {
+    try {
+      // Check if there are already projects in Part B
+      const partBProjects = projects.filter(project => project.part === 'B');
+      if (partBProjects.length > 0) {
+        alert('Cannot move projects to Part B because Part B is not empty.');
+        return;
+      }
+
+      const batch = writeBatch(db);
+      const partAProjects = projects.filter(project => project.part === 'A');
+
+      partAProjects.forEach(project => {
+        const projectRef = doc(db, 'projects', project.id);
+        batch.update(projectRef, { part: 'B' });
+      });
+
+      await batch.commit();
+
+      setProjects(current =>
+        current.map(project =>
+          project.part === 'A' ? { ...project, part: 'B' } : project
+        )
+      );
+    } catch (err) {
+      console.error('Error moving projects to Part B:', err);
+    }
+  };
+
+  const exportToExcel = async () => {
+    try {
+      const partBProjects = projects.filter(project => project.part === 'B');
+
+      if (partBProjects.length === 0) {
+        alert('No projects in Part B to export.');
+        return;
+      }
+
+      // Prepare data for Excel
+      const worksheet = XLSX.utils.json_to_sheet(partBProjects);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Part B Projects');
+
+      // Export to Excel
+      XLSX.writeFile(workbook, 'PartB_Projects.xlsx');
+      console.log('Exported Part B projects to Excel');
+
+      // Delete Part B Projects from Firestore
+      const batch = writeBatch(db);
+      partBProjects.forEach(project => {
+        const projectRef = doc(db, 'projects', project.id);
+        batch.delete(projectRef);
+      });
+      await batch.commit();
+
+      // Update state to remove Part B projects
+      setProjects(current => current.filter(project => project.part !== 'B'));
+      alert('Part B projects exported and deleted successfully.');
+    } catch (err) {
+      console.error('Error exporting Part B projects:', err);
+      alert('An error occurred while exporting projects.');
+    }
+  };
 
   if (loading) {
     return <div className="text-center py-10">Loading...</div>;
@@ -80,7 +162,6 @@ const AdminProjects = () => {
   return (
     <div className="relative bg-white min-h-screen overflow-hidden">
       <BlurElements />
-      
       <div className="relative z-10">
         {/* Tabs */}
         <div className="bg-white shadow-sm">
@@ -88,14 +169,14 @@ const AdminProjects = () => {
             <div className="flex justify-center py-4">
               {TABS.map(tab => (
                 <button
-                key={tab}
-                className={`inline-flex items-center px-3 pt-2 pb-3 border-b-2 text-base font-medium ${
-                  activeTab === tab
-                    ? 'border-blue-900 text-blue-900'
-                    : 'border-transparent text-gray-500 hover:border-blue-900 hover:text-blue-900'
-                }`}
-                onClick={() => setActiveTab(tab)}
-              >
+                  key={tab}
+                  className={`inline-flex items-center px-3 pt-2 pb-3 border-b-2 text-base font-medium ${
+                    activeTab === tab
+                      ? 'border-blue-900 text-blue-900'
+                      : 'border-transparent text-gray-500 hover:border-blue-900 hover:text-blue-900'
+                  }`}
+                  onClick={() => setActiveTab(tab)}
+                >
                   {tab}
                 </button>
               ))}
@@ -109,26 +190,36 @@ const AdminProjects = () => {
           <div className="mb-8 max-w-4xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
               {/* Description */}
-              <div className="lg:col-span-2 ">
+              <div className="lg:col-span-2">
                 <div className="bg-white rounded-lg p-6 shadow-sm">
                   <p className="text-gray-600 text-lg leading-relaxed">
-                    Here you can view and manage all projects, including both Part A and Part B projects. 
-                    Use the filters above to focus on specific project types. Click on any cell in the table 
-                    to edit its content directly. Student names are clickable to view detailed student information.
+                    {getTabDescription(activeTab)}
                   </p>
                 </div>
               </div>
 
               {/* Stats and Actions */}
               <div className="space-y-4">
-                <ProjectStats 
-                  projects={projects} 
-                  activeTab={activeTab} 
-                />
-                <Button 
+                <ProjectStats projects={projects} activeTab={activeTab} />
+                {activeTab === 'Part A' && (
+                  <Button
+                    onClick={moveToPartB}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    Move to Part B
+                  </Button>
+                )}
+                {activeTab === 'Part B' && (
+                  <Button
+                    onClick={exportToExcel}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    Export & Delete
+                  </Button>
+                )}
+                <Button
                   onClick={() => navigate('/admin-upload')}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-
                 >
                   <MdOutlineFileUpload />
                   Upload Excel File
@@ -137,9 +228,12 @@ const AdminProjects = () => {
             </div>
           </div>
 
-          {/* Table Section */}
+          {/* Projects Table */}
           <ProjectsTable
-            projects={projects}
+            projects={projects.filter(project => {
+              if (activeTab === 'All Projects') return true;
+              return project.part === activeTab.split(' ')[1];
+            })}
             activeTab={activeTab}
             onEditField={handleEditField}
             onAddNote={handleAddNote}
@@ -151,15 +245,32 @@ const AdminProjects = () => {
       {/* Modals */}
       <NotesModal
         isOpen={notesModal.isOpen}
-        onClose={() => setNotesModal({ isOpen: false, project: null })}
-        onSave={handleSaveNote}
+        onClose={closeNotesModal} // Hook-provided close function
+        onSave={async (note) => {
+          try {
+            const projectRef = doc(db, 'projects', notesModal.project.id); // Use projectCode as the ID
+            await updateDoc(projectRef, { specialNotes: note });
+
+            setProjects(current =>
+              current.map(project =>
+                project.id === notesModal.project.id
+                  ? { ...project, specialNotes: note }
+                  : project
+              )
+            );
+
+            closeNotesModal(); // Close the modal after saving
+          } catch (error) {
+            console.error('Error saving note:', error);
+          }
+        }}
         initialNote={notesModal.project?.specialNotes || ''}
         projectTitle={notesModal.project?.title || ''}
       />
 
       <StudentDetailsModal
         isOpen={studentModal.isOpen}
-        onClose={() => setStudentModal({ isOpen: false, student: null })}
+        onClose={closeStudentModal}
         student={studentModal.student}
       />
 
@@ -178,8 +289,3 @@ const AdminProjects = () => {
 };
 
 export default AdminProjects;
-
-
-
-
-

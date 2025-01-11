@@ -49,4 +49,3 @@ const StudentDetailsModal = ({ isOpen, onClose, student }) => {
 };
 
 export default StudentDetailsModal;
-

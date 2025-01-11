@@ -1,9 +1,8 @@
-import { useState, useCallback } from 'react';
-import { mockApi } from '../services/mockApi';
+import { useState } from 'react';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
 
 export const useProjectModals = (projects, setProjects) => {
-  const [notesModal, setNotesModal] = useState({ isOpen: false, project: null });
-  const [studentModal, setStudentModal] = useState({ isOpen: false, student: null });
   const [editModal, setEditModal] = useState({
     isOpen: false,
     field: '',
@@ -11,101 +10,90 @@ export const useProjectModals = (projects, setProjects) => {
     value: '',
     projectId: null,
     fieldType: 'text',
-    options: []
+    options: [],
   });
 
-  const handleAddNote = useCallback((project) => {
-    setNotesModal({ isOpen: true, project });
-  }, []);
+  const [studentModal, setStudentModal] = useState({
+    isOpen: false,
+    student: null,
+  });
 
-  const handleSaveNote = useCallback(async (note) => {
-    if (!notesModal.project) return;
+  const [notesModal, setNotesModal] = useState({
+    isOpen: false,
+    project: null,
+  });
 
-    const previousProjects = [...projects];
-    const projectId = notesModal.project.id;
-
-    try {
-      // Optimistic update
-      setProjects(currentProjects =>
-        currentProjects.map(project =>
-          project.id === projectId
-            ? { ...project, specialNotes: note }
-            : project
-        )
-      );
-
-      // Update in the backend
-      const result = await mockApi.updateProjectNote(projectId, note);
-
-      if (!result.success) {
-        throw new Error('Failed to update note');
-      }
-
-    } catch (error) {
-      console.error('Error updating note:', error);
-      // Rollback on failure
-      setProjects(previousProjects);
-    }
-  }, [notesModal.project, projects, setProjects]);
-
-  const handleStudentClick = useCallback((student) => {
-    setStudentModal({ isOpen: true, student });
-  }, []);
-
-  const handleEditField = useCallback((project, field, fieldName, fieldType = 'text', options = []) => {
+  const handleEditField = (project, field, fieldName, fieldType = 'text', options = []) => {
     setEditModal({
       isOpen: true,
-      field,
-      fieldName,
-      value: project[field] || '',
-      projectId: project.id,
+      field, // e.g., "projectCode" or "title"
+      fieldName, // e.g., "Project Code" or "Project Title"
+      value: project[field] || '', // Ensure the correct value for the field is set
+      projectId: project.id, // Use the project's unique ID
       fieldType,
-      options
+      options,
     });
-  }, []);
+  };
 
-  const handleSaveField = useCallback(async (newValue) => {
+  const handleSaveField = async (newValue) => {
     const { field, projectId } = editModal;
-    
-    // Store the previous state for rollback
-    const previousProjects = [...projects];
-
+  
     try {
-      // Optimistic update
+      // Update Firestore
+      const projectRef = doc(db, 'projects', projectId);
+      await updateDoc(projectRef, { [field]: newValue });
+  
+      // Update State
       setProjects(currentProjects =>
         currentProjects.map(project =>
-          project.id === projectId
-            ? { ...project, [field]: newValue }
-            : project
+          project.id === projectId ? { ...project, [field]: newValue } : project
         )
       );
-
-      // In the future, this will be an actual API call
-      // const result = await ProjectService.updateProjectField(projectId, field, newValue);
-      
-      // For now, simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-
     } catch (error) {
-      console.error('Error updating field:', error);
-      // Rollback on failure
-      setProjects(previousProjects);
-      // You might want to show an error notification here
+      console.error('Error updating project field:', error);
+    } finally {
+      setEditModal({ ...editModal, isOpen: false });
     }
-  }, [editModal, projects, setProjects]);
+  };
+
+  const handleStudentClick = (student) => {
+    setStudentModal({
+      isOpen: true,
+      student,
+    });
+  };
+
+  const closeStudentModal = () => {
+    setStudentModal({
+      isOpen: false,
+      student: null,
+    });
+  };
+
+  const handleAddNote = (project) => {
+    setNotesModal({
+      isOpen: true,
+      project,
+    });
+  };
+
+  const closeNotesModal = () => {
+    setNotesModal({
+      isOpen: false,
+      project: null,
+    });
+  };
 
   return {
-    notesModal,
-    studentModal,
     editModal,
-    setNotesModal,
-    setStudentModal,
     setEditModal,
-    handleAddNote,
-    handleSaveNote,
-    handleStudentClick,
     handleEditField,
-    handleSaveField
+    handleSaveField,
+    studentModal,
+    handleStudentClick,
+    closeStudentModal,
+    notesModal,
+    handleAddNote,
+    closeNotesModal,
   };
 };
-
