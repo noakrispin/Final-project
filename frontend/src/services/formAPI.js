@@ -135,24 +135,20 @@ export const formsApi = {
    */
   getEvaluationsByEvaluator: async (evaluatorID) => {
     if (!evaluatorID) {
-      console.error("Evaluator ID is missing in the API call.");
-      throw new Error("Evaluator ID is required.");
+        console.error("Evaluator ID is missing in the API call.");
+        throw new Error("Evaluator ID is required.");
     }
 
     try {
-      console.log("Fetching evaluations for evaluator:", evaluatorID); // Debugging log
-      const response = await api.get(`/forms/evaluations/all?evaluatorID=${evaluatorID}`);
-      console.log("Request URL:", `/forms/evaluations/all?evaluatorID=${evaluatorID}`); // Log the full URL
-      console.log("Fetched Evaluations Data:", response.data || []); // Log response data
-      return response.data; // Return fetched evaluations
+        const response = await api.get(`/forms/evaluations/all?evaluatorID=${evaluatorID}`);
+        console.log("Fetched Evaluations Data:", response.data || []);
+        return response.data || []; // Default to empty array if data is undefined
     } catch (error) {
-      console.error(
-        "Error fetching evaluations by evaluator:",
-        error.response?.data || error.message
-      );
-      throw error; // Re-throw to handle in calling code
+        console.error("Error fetching evaluations by evaluator:", error);
+        throw error; // Re-throw to handle in calling code
     }
-  },
+},
+
 
   /**
    * Add a new evaluation for a specific form.
@@ -166,4 +162,7 @@ export const formsApi = {
       throw error;
     }
   },
+
+
+   
 };

@@ -111,7 +111,7 @@ module.exports = {
     if (!formID) {
       return res.status(400).json({ message: "Form ID is required." });
     }
-  
+
     try {
       const questionsSnapshot = await db.collection("forms").doc(formID).collection("questions").get();
       const questions = questionsSnapshot.docs.map((doc) => ({
@@ -125,7 +125,7 @@ module.exports = {
       res.status(500).json({ message: "Failed to fetch questions." });
     }
   },
-  
+
 
 
   // Add a new question to a form
@@ -194,14 +194,36 @@ module.exports = {
     const { formID } = req.params;
     const { evaluatorID, projectCode, general, students } = req.body;
   
+    console.log("Submitting form data:", { evaluatorID, projectCode, general, students });
+  
     if (!formID || !evaluatorID || !projectCode || !general || !students) {
+      console.log("Missing required fields:", { formID, evaluatorID, projectCode, general, students });
       return res.status(400).json({
         message: "Form ID, evaluator ID, project code, general responses, and student responses are required.",
       });
     }
   
     try {
-      // Check if a response already exists
+      console.log("Fetching questions and weights for form:", formID);
+  
+      // Fetch question weights from the `questions` subcollection
+      const questionsSnapshot = await db
+        .collection("forms")
+        .doc(formID)
+        .collection("questions")
+        .get();
+  
+      const questionWeights = {};
+      questionsSnapshot.docs.forEach((doc) => {
+        const { questionID, weight, response_type } = doc.data();
+        if (weight && typeof weight === "number" && response_type === "number") {
+          questionWeights[questionID] = weight;
+        }
+      });
+  
+      console.log("Fetched Question Weights:", questionWeights);
+  
+      // Save or update responses
       const existingResponsesSnapshot = await db
         .collection("forms")
         .doc(formID)
@@ -210,82 +232,145 @@ module.exports = {
         .where("projectCode", "==", projectCode)
         .get();
   
+      let responseRef;
       if (!existingResponsesSnapshot.empty) {
-        // If response exists, update it
-        const responseRef = existingResponsesSnapshot.docs[0].ref; // Get the first response document reference
+        console.log("Updating existing response...");
+        responseRef = existingResponsesSnapshot.docs[0].ref;
         await responseRef.update({
           general,
           students,
-          updated_at: new Date().toISOString(), // Add an `updated_at` timestamp
+          updated_at: new Date().toISOString(),
         });
-        return res.status(200).json({ message: "Response updated successfully." });
-      }
-  
-      // If no response exists, create a new one
-      await db
-        .collection("forms")
-        .doc(formID)
-        .collection("responses")
-        .add({
+      } else {
+        console.log("Creating new response...");
+        responseRef = await db.collection("forms").doc(formID).collection("responses").add({
           evaluatorID,
           projectCode,
           general,
           students,
           created_at: new Date().toISOString(),
         });
+      }
   
-      res.status(201).json({ message: "Response submitted successfully." });
+      console.log("Responses saved successfully.");
+  
+      // Function to calculate weighted grades
+      const calculateGrades = (generalResponses, studentResponses, weights) => {
+        console.log("Calculating grades...");
+  
+        // Calculate the weighted grade for general responses
+        const calculateGeneralGrade = (responses) => {
+          let totalWeightedSum = 0;
+          let totalWeight = 0;
+  
+          Object.entries(responses).forEach(([questionID, score]) => {
+            if (typeof score === "number" && weights[questionID]) {
+              console.log(
+                `Processing General Question: ${questionID}, Score: ${score}, Weight: ${weights[questionID]}`
+              );
+              totalWeightedSum += score * weights[questionID];
+              totalWeight += weights[questionID];
+            } else {
+              console.log(
+                `Skipping General Question: ${questionID} (Score: ${score}, Weight: ${weights[questionID] || "Not Found"})`
+              );
+            }
+          });
+  
+          console.log("Total General Weighted Sum:", totalWeightedSum, "Total Weight:", totalWeight);
+          return totalWeight > 0 ? totalWeightedSum : 0;
+        };
+  
+        const generalGrade = calculateGeneralGrade(generalResponses);
+  
+        // Calculate each student's total weighted grade
+        const studentGrades = {};
+        for (const [studentID, studentSpecificResponses] of Object.entries(studentResponses)) {
+          let studentWeightedSum = 0;
+          let studentWeight = 0;
+  
+          Object.entries(studentSpecificResponses).forEach(([questionID, score]) => {
+            if (typeof score === "number" && weights[questionID]) {
+              console.log(
+                `Processing Student-Specific Question: ${questionID}, Score: ${score}, Weight: ${weights[questionID]}`
+              );
+              studentWeightedSum += score * weights[questionID];
+              studentWeight += weights[questionID];
+            } else {
+              console.log(
+                `Skipping Student-Specific Question: ${questionID} (Score: ${score}, Weight: ${weights[questionID] || "Not Found"})`
+              );
+            }
+          });
+  
+          console.log(
+            `Student-Specific Weighted Sum: ${studentWeightedSum}, Student Weight: ${studentWeight}`
+          );
+          const finalGrade = Number((generalGrade + studentWeightedSum).toFixed(2));
+          console.log(
+            `Final Grade for Student ID: ${studentID} = General Grade (${generalGrade}) + Student-Specific Grade (${studentWeightedSum})`
+          );
+          studentGrades[studentID] = finalGrade;
+        }
+  
+        return studentGrades;
+      };
+  
+      // Calculate weighted grades for each student
+      const weightedGrades = calculateGrades(general, students, questionWeights);
+      console.log("Calculated Weighted Grades:", weightedGrades);
+  
+      // Check for existing evaluation
+      const existingEvaluationSnapshot = await db
+        .collection("forms")
+        .doc(formID)
+        .collection("evaluations")
+        .where("evaluatorID", "==", evaluatorID)
+        .where("projectCode", "==", projectCode)
+        .get();
+  
+      if (!existingEvaluationSnapshot.empty) {
+        console.log("Updating existing evaluation...");
+        const evaluationRef = existingEvaluationSnapshot.docs[0].ref;
+        await evaluationRef.update({
+          grades: weightedGrades, // Update the grades map
+          updated_at: new Date().toISOString(),
+        });
+      } else {
+        console.log("Creating new evaluation...");
+        const evaluationData = {
+          evaluatorID,
+          projectCode,
+          grades: weightedGrades, // Save as a map of studentID to their grade
+          created_at: new Date().toISOString(),
+        };
+        await db.collection("forms").doc(formID).collection("evaluations").add(evaluationData);
+      }
+  
+      console.log("Evaluation saved successfully.");
+  
+      res.status(200).json({
+        message: "Form submitted successfully with calculated evaluations.",
+      });
     } catch (error) {
-      console.error("Error submitting response:", error.message);
-      res.status(500).json({ message: "Failed to submit response." });
+      console.error("Error submitting form:", error.message, error.stack);
+      res.status(500).json({ message: "Failed to submit form." });
     }
   },
   
   
-  
-
-  // Fetch form responses
-getResponses: async (req, res) => {
-  const { formID } = req.params;
-  const { evaluatorID, studentID } = req.query; // Optional student ID filter
-
-  if (!formID || !evaluatorID) {
-    return res.status(400).json({ message: "Form ID and evaluator ID are required." });
-  }
-
-  try {
-    const responsesRef = db.collection("forms").doc(formID).collection("responses");
-    const responseSnapshot = await responsesRef.where("evaluatorID", "==", evaluatorID).get();
-
-    if (responseSnapshot.empty) {
-      return res.status(404).json({ message: "No response found for the evaluator." });
-    }
-
-    const response = responseSnapshot.docs[0].data();
-    const studentResponses = studentID ? response.students[studentID] : response.students;
-
-    res.status(200).json({
-      generalResponses: response.generalResponses,
-      studentResponses,
-    });
-  } catch (error) {
-    console.error("Error fetching responses:", error.message);
-    res.status(500).json({ message: "Failed to fetch responses." });
-  }
-},
-
   // Fetch the last response for a specific form, evaluator, and project
   getLastResponse: async (req, res) => {
     const { formID } = req.params;
     const { evaluatorID, projectCode } = req.query;
-  
+
     if (!formID || !evaluatorID || !projectCode) {
       return res.status(400).json({ message: "Form ID, Evaluator ID, and Project Code are required." });
     }
-  
+
     try {
       console.log("Received params:", { formID, evaluatorID, projectCode }); // Log inputs
-  
+
       const responsesSnapshot = await db
         .collection("forms")
         .doc(formID)
@@ -295,95 +380,26 @@ getResponses: async (req, res) => {
         //.orderBy("created_at", "desc")
         .limit(1)
         .get();
-  
+
       console.log("Query result:", responsesSnapshot.docs); // Log query result
-  
+
       if (responsesSnapshot.empty) {
         return res.status(404).json({ message: "No responses found for the given parameters." });
       }
-  
+
       const lastResponse = responsesSnapshot.docs[0].data();
       console.log("Last response data:", lastResponse); // Log fetched data
-  
+
       res.status(200).json(lastResponse);
     } catch (error) {
       console.error("Error in getLastResponse:", error); // Log error details
       res.status(500).json({ message: "Failed to fetch the last response." });
     }
   },
-  
-  
-
-  // updateResponse: async (req, res) => {
-  //   const { formID, responseId } = req.params;
-  //   const updatedData = req.body;
-
-  //   if (!formID || !responseId || !updatedData) {
-  //     return res.status(400).json({ message: "Form ID, response ID, and updated data are required." });
-  //   }
-
-  //   try {
-  //     await db
-  //       .collection("forms")
-  //       .doc(formID)
-  //       .collection("responses")
-  //       .where("evaluatorID", "==", evaluatorID)
-  //       .where("projectCode", "==", projectCode)
-  //       .update(updatedData);
-  //     res.status(200).json({ message: "Response updated successfully." });
-  //   } catch (error) {
-  //     console.error("Error updating response:", error.message);
-  //     res.status(500).json({ message: "Failed to update response." });
-  //   }
-  // },
-
-  // Delete a specific response from a form
-  deleteResponse: async (req, res) => {
-    const { formID, responseId } = req.params;
-
-    if (!formID || !responseId) {
-      return res.status(400).json({ message: "Form ID and Response ID are required." });
-    }
-
-    try {
-      await db.collection("forms").doc(formID).collection("responses").doc(responseId).delete();
-      res.status(200).json({ message: "Response deleted successfully." });
-    } catch (error) {
-      console.error("Error deleting response:", error.message);
-      res.status(500).json({ message: "Failed to delete response." });
-    }
-  },
 
 
   /* -------------------------form's evaluations (evaluations subCollection) --------------------------*/
 
-  // Add a new evaluation
-  addEvaluation: async (req, res) => {
-    const { formID } = req.params;
-    const { evaluatorID, projectCode, studentID, weightedGrade, comments } = req.body;
-
-    if (!formID || !evaluatorID || !projectCode || !studentID || !weightedGrade) {
-      return res.status(400).json({
-        message: "formID, evaluatorID, projectCode, studentID, and weightedGrade are required.",
-      });
-    }
-
-    try {
-      const evaluationData = {
-        evaluatorID,
-        projectCode,
-        studentID,
-        weightedGrade,
-      };
-
-      await db.collection("forms").doc(formID).collection("evaluations").add(evaluationData);
-
-      res.status(201).json({ message: "Evaluation added successfully." });
-    } catch (error) {
-      console.error("Error adding evaluation:", error.message);
-      res.status(500).json({ message: "Failed to add evaluation." });
-    }
-  },
 
   // Fetch form evaluations
   getEvaluations: async (req, res) => {
@@ -403,87 +419,59 @@ getResponses: async (req, res) => {
     }
   },
 
+  
 
   // Fetch all evaluations for a specific evaluator
   getEvaluationsByEvaluator: async (req, res) => {
     const { evaluatorID } = req.query;
 
     if (!evaluatorID) {
-      console.error("Evaluator ID is missing in the request.");
-      return res.status(400).json({ message: "Evaluator ID is required." });
+        console.error("Evaluator ID is missing in the request.");
+        return res.status(400).json({ message: "Evaluator ID is required." });
     }
 
     try {
-      console.log("Fetching evaluations for evaluatorID:", evaluatorID);
-      const formsSnapshot = await db.collection("forms").get();
+        console.log("Fetching evaluations for evaluatorID:", evaluatorID);
+        const formsSnapshot = await db.collection("forms").get();
 
-      if (formsSnapshot.empty) {
-        console.log("No forms found.");
-        return res.status(200).json([]); // Return an empty array if no forms exist
-      }
-
-      const evaluations = [];
-      for (const formDoc of formsSnapshot.docs) {
-        const evaluationsSnapshot = await db
-          .collection("forms")
-          .doc(formDoc.id)
-          .collection("evaluations")
-          .where("evaluatorID", "==", evaluatorID)
-          .get();
-
-        if (!evaluationsSnapshot.empty) {
-          evaluationsSnapshot.forEach((doc) => {
-            evaluations.push({
-              formID: formDoc.id,
-              ...doc.data(),
-              id: doc.id,
-            });
-          });
-        } else {
-          console.log(`No evaluations for form: ${formDoc.id} and evaluatorID: ${evaluatorID}`);
+        if (formsSnapshot.empty) {
+            console.log("No forms found.");
+            return res.status(200).json([]); // Return an empty array if no forms exist
         }
-      }
 
-      res.status(200).json(evaluations); // Respond with collected evaluations or an empty array
+        const evaluations = [];
+        for (const formDoc of formsSnapshot.docs) {
+            console.log(`Fetching evaluations for form: ${formDoc.id}`);
+            const evaluationsSnapshot = await db
+                .collection("forms")
+                .doc(formDoc.id)
+                .collection("evaluations")
+                .where("evaluatorID", "==", evaluatorID)
+                .get();
+
+            if (!evaluationsSnapshot.empty) {
+                evaluationsSnapshot.forEach((doc) => {
+                    console.log(`Evaluation for form ${formDoc.id}:`, doc.data());
+                    evaluations.push({
+                        formID: formDoc.id,
+                        ...doc.data(),
+                        id: doc.id,
+                    });
+                });
+            } else {
+                console.log(`No evaluations for form: ${formDoc.id} and evaluatorID: ${evaluatorID}`);
+            }
+        }
+
+        console.log("Collected Evaluations:", evaluations);
+        res.status(200).json(evaluations); // Respond with collected evaluations or an empty array
     } catch (error) {
-      console.error("Error fetching evaluations:", error.message);
-      res.status(500).json({ message: "Failed to fetch evaluations." });
+        console.error("Error fetching evaluations:", error.message);
+        res.status(500).json({ message: "Failed to fetch evaluations." });
     }
-  },
+}
 
 
-  // Update a specific evaluation in a form
-  updateEvaluation: async (req, res) => {
-    const { formID, evaluationId } = req.params;
-    const updatedData = req.body;
 
-    if (!formID || !evaluationId || !updatedData) {
-      return res.status(400).json({ message: "Form ID, evaluation ID, and updated data are required." });
-    }
 
-    try {
-      await db.collection("forms").doc(formID).collection("evaluations").doc(evaluationId).update(updatedData);
-      res.status(200).json({ message: "Evaluation updated successfully." });
-    } catch (error) {
-      console.error("Error updating evaluation:", error.message);
-      res.status(500).json({ message: "Failed to update evaluation." });
-    }
-  },
-
-  // Delete a specific evaluation from a form
-  deleteEvaluation: async (req, res) => {
-    const { formID, evaluationId } = req.params;
-
-    if (!formID || !evaluationId) {
-      return res.status(400).json({ message: "Form ID and evaluation ID are required." });
-    }
-
-    try {
-      await db.collection("forms").doc(formID).collection("evaluations").doc(evaluationId).delete();
-      res.status(200).json({ message: "Evaluation deleted successfully." });
-    } catch (error) {
-      console.error("Error deleting evaluation:", error.message);
-      res.status(500).json({ message: "Failed to delete evaluation." });
-    }
-  },
 };

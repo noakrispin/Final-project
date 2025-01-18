@@ -1,38 +1,88 @@
-const bcrypt = require("bcrypt");
 const { addDocument, addSubcollection } = require("./utils/firebaseHelper"); // Firebase Helper functions
 
 const importData = async () => {
   try {
-    // Add a placeholder document to initialize the collection
-    const placeholderData = {
-      projectCode: "placeholder", // Unique placeholder ID
-      title: "",
-      description: "",
-      part: "",
-      type: "",
-      student1Name: "",
-      student1Id: "",
-      student1Email: "",
-      student2Name: "",
-      student2Id: "",
-      student2Email: "",
-      supervisor1Name: "",
-      supervisor1Id: "",
-      supervisor2Name: "",
-      supervisor2Id: "",
-      gitLink: "",
-      deadline: "",
-      specialNotes: "",
+    // Create a placeholder form in the Forms collection
+    const formPlaceholderData = {
+      formName: "Placeholder Form",
+      description: "This is a placeholder form for initialization.",
     };
 
-    const response = await addDocument("projects", "placeholder", placeholderData);
-    if (response.success) {
-      console.log("Projects table initialized successfully.");
+    const formResponse = await addDocument("forms", "placeholderForm", formPlaceholderData);
+    if (formResponse.success) {
+      console.log("Forms collection initialized successfully.");
+
+      // Add a placeholder question to the Form Questions subcollection
+      const questionPlaceholderData = {
+        weight: 0.0,
+        title: "Placeholder Question",
+        description: "This is a placeholder question.",
+        response_type: "text", // 'number' or 'text'
+        reference: "general", // 'general' or 'student'
+        required: false,
+      };
+
+      const questionResponse = await addSubcollection(
+        "forms",
+        "placeholderForm",
+        "questions",
+        "placeholderQuestion",
+        questionPlaceholderData
+      );
+      if (questionResponse.success) {
+        console.log("Form Questions subcollection initialized successfully.");
+      } else {
+        console.error("Failed to initialize Form Questions subcollection:", questionResponse.error);
+      }
+
+      // Add a placeholder response to the Form Responses subcollection
+      const responsePlaceholderData = {
+        questionID: "placeholderQuestion",
+        evaluatorID: null,
+        projectCode: "placeholderProject",
+        studentID: null,
+        score: null,
+        text_response: "Placeholder Response",
+      };
+
+      const responseAdd = await addSubcollection(
+        "forms",
+        "placeholderForm",
+        "responses",
+        "placeholderResponse",
+        responsePlaceholderData
+      );
+      if (responseAdd.success) {
+        console.log("Form Responses subcollection initialized successfully.");
+      } else {
+        console.error("Failed to initialize Form Responses subcollection:", responseAdd.error);
+      }
+
+      // Add a placeholder evaluation to the Form Evaluations subcollection
+      const evaluationPlaceholderData = {
+        evaluatorID: null,
+        projectCode: "placeholderProject",
+        studentID: null,
+        weighted_grade: null,
+      };
+
+      const evaluationResponse = await addSubcollection(
+        "forms",
+        "placeholderForm",
+        "evaluations",
+        "placeholderEvaluation",
+        evaluationPlaceholderData
+      );
+      if (evaluationResponse.success) {
+        console.log("Form Evaluations subcollection initialized successfully.");
+      } else {
+        console.error("Failed to initialize Form Evaluations subcollection:", evaluationResponse.error);
+      }
     } else {
-      console.error("Failed to initialize Projects table:", response.error);
+      console.error("Failed to initialize Forms collection:", formResponse.error);
     }
   } catch (error) {
-    console.error("Error initializing Projects table:", error.message);
+    console.error("Error initializing Forms collection and subcollections:", error.message);
   }
 };
 

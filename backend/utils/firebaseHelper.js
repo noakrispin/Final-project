@@ -20,15 +20,16 @@ const getDocument = async (collection, docId) => {
     return { success: false, error: error.message };
   }
 };
-const addSubcollection = async (collection, docId, subcollection, data) => {
+const addSubcollection = async (parentCollection, docId, subcollectionName, subDocId, data) => {
   try {
-    await db.collection(collection).doc(docId).collection(subcollection).doc("details").set(data);
+    await db.collection(parentCollection).doc(docId).collection(subcollectionName).doc(subDocId).set(data);
     return { success: true };
   } catch (error) {
     console.error("Error adding subcollection:", error.message);
     return { success: false, error: error.message };
   }
 };
+
 
 const getSubcollection = async (collection, docId, subcollection) => {
   try {

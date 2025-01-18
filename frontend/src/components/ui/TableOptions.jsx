@@ -1,15 +1,15 @@
 import React from "react";
 import { Table } from "./Table";
 import { getGrade } from "../../utils/getGrade";
-import { Tooltip } from "react-tooltip";
 
 /**
- * Option 1: Each student appears as a separate row with their grades.
+ * Combined Table: Each project appears as a row with student grades shown in sub-rows within each grade cell.
  */
-export const TableOption1 = ({ data, columns, onRowClick, grades, navigateToForm }) => {
-  const updatedData = data.flatMap((project) =>
-    project.students.map((student) => ({
-      ...project,
+export const CombinedTable = ({ data, columns, onRowClick, grades, navigateToForm }) => {
+  // Modify data to include rows per project with sub-rows for students and their grades
+  const updatedData = data.map((project) => ({
+    ...project,
+    grades: project.students.map((student) => ({
       student: student.name,
       presentationGrade: getGrade(
         grades,
@@ -23,131 +23,52 @@ export const TableOption1 = ({ data, columns, onRowClick, grades, navigateToForm
         "supervisor",
         student.name
       ),
-      bookGrade: getGrade(grades, project.projectCode, "book"),
-    }))
-  );
+      bookGrade: getGrade(
+        grades,
+        project.projectCode,
+        "book",
+        student.name
+      ),
+    })),
+  }));
 
+  // Update columns to render sub-rows for grades
   const updatedColumns = columns.map((column) => {
-    if (column.key === "students") {
-      return {
-        ...column,
-        key: "student",
-        header: "Student",
-        render: (value) => value,
-      };
-    }
     if (["presentationGrade", "supervisorGrade", "bookGrade"].includes(column.key)) {
       return {
         ...column,
-        render: (value, row) => {
-          const caption =
-            column.key === "presentationGrade"
-              ? "Grade Presentation"
-              : column.key === "supervisorGrade"
-              ? "Grade Supervisor"
-              : "Grade Book";
-
-          return value !== null ? (
-            value
-          ) : (
-            <button
-              className="text-blue-500 underline"
-              onClick={(e) => {
-                e.stopPropagation();
-                const formType =
-                  column.key === "presentationGrade"
-                    ? "presentation"
-                    : column.key === "supervisorGrade"
-                    ? "supervisor"
-                    : "book";
-                navigateToForm(formType, row, row.student);
-              }}
-            >
-              {caption}
-            </button>
-          );
-        },
+        render: (_, project) => (
+          <div>
+            {project.grades.map((grade) => (
+              <div key={`${project.projectCode}-${grade.student}`} className="flex justify-between">
+                <span>{grade.student}</span>
+                <span>
+                  {grade[column.key] !== null ? (
+                    grade[column.key]
+                  ) : (
+                    <button
+                      className="text-blue-500 underline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigateToForm(
+                          column.key.replace("Grade", "").toLowerCase(),
+                          project,
+                          grade.student
+                        );
+                      }}
+                    >
+                      Assign Grade
+                    </button>
+                  )}
+                </span>
+              </div>
+            ))}
+          </div>
+        ),
       };
     }
     return column;
   });
 
   return <Table data={updatedData} columns={updatedColumns} onRowClick={onRowClick} />;
-};
-
-/**
- * Option 2: Each project appears as a single row with tooltips showing individual grades.
- */
-export const TableOption2 = ({ data, columns, onRowClick, grades, navigateToForm }) => {
-  const updatedColumns = columns.map((column) => {
-    if (["presentationGrade", "supervisorGrade", "bookGrade"].includes(column.key)) {
-      return {
-        ...column,
-        render: (_, project) => {
-          const tooltipText = project.students
-            .map(
-              (student) =>
-                `${student.name}: ${getGrade(
-                  grades,
-                  project.projectCode,
-                  column.key === "presentationGrade"
-                    ? "presentation"
-                    : column.key === "supervisorGrade"
-                    ? "supervisor"
-                    : "book",
-                  student.name
-                ) || "-"}`
-            )
-            .join(", ");
-
-          const grade =
-            column.key === "presentationGrade"
-              ? getGrade(grades, project.projectCode, "presentation")
-              : column.key === "supervisorGrade"
-              ? getGrade(grades, project.projectCode, "supervisor")
-              : getGrade(grades, project.projectCode, "book");
-
-          const caption =
-            column.key === "presentationGrade"
-              ? "Grade Presentation"
-              : column.key === "supervisorGrade"
-              ? "Grade Supervisor"
-              : "Grade Book";
-
-          return (
-            <div className="flex justify-center">
-              {grade !== null ? (
-                <span
-                  data-tooltip-id={`tooltip-${project.projectCode}-${column.key}`}
-                  data-tooltip-content={tooltipText}
-                >
-                  {grade}
-                </span>
-              ) : (
-                <button
-                  className="text-blue-500 underline"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const formType =
-                      column.key === "presentationGrade"
-                        ? "presentation"
-                        : column.key === "supervisorGrade"
-                        ? "supervisor"
-                        : "book";
-                    navigateToForm(formType, project);
-                  }}
-                >
-                  {caption}
-                </button>
-              )}
-              <Tooltip id={`tooltip-${project.projectCode}-${column.key}`} />
-            </div>
-          );
-        },
-      };
-    }
-    return column;
-  });
-
-  return <Table data={data} columns={updatedColumns} onRowClick={onRowClick} />;
 };

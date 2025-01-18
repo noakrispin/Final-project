@@ -4,9 +4,8 @@ import { useAuth } from "../context/AuthContext";
 import { mockApi } from "../services/mockApi";
 import { BlurElements } from "../components/shared/BlurElements";
 import ProjectDetailsPopup from "../components/shared/ProjectDetailsPopup";
-import { TableOption1, TableOption2 } from "../components/ui/TableOptions";
+import { Table } from "../components/ui/Table";
 import { getGrade } from "../utils/getGrade";
-import { Button } from "../components/ui/Button";
 
 const TABS = ["My Projects", "Other Projects"];
 
@@ -17,13 +16,12 @@ const OtherProjectsReview = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
-  const [selectedTableOption, setSelectedTableOption] = useState("option1");
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const navigateToForm = useCallback(
-    (formType, project) => {
+    (formType, project, studentName = null) => {
       if (!project.part) {
         console.error("Project part is missing:", project);
         return;
@@ -38,6 +36,7 @@ const OtherProjectsReview = () => {
         projectCode: project.projectCode,
         projectName: project.title,
         students: JSON.stringify(project.students),
+        studentName: studentName || "",
       }).toString();
 
       navigate(`/evaluation-forms/${formPath}?${queryParams}`);
@@ -113,49 +112,32 @@ const OtherProjectsReview = () => {
         key: "title",
         header: "Project Title",
         className: "text-lg text-center",
-        render: (title) => <span>{title}</span>,
         sortable: true,
       },
       {
         key: "students",
-        header: "Students",
+        header: "Students & Grades",
         className: "text-lg text-center",
-        render: (students) => (
-          <span>{students.map((s) => s.name).join(", ")}</span>
+        render: (_, project) => (
+          <div>
+            {project.students.map((student) => (
+              <div key={student.name}>
+                <strong>{student.name}</strong>: <br />
+                Presentation:{" "}
+                {getGrade(
+                  grades,
+                  project.projectCode,
+                  "presentation",
+                  student.name
+                ) || "Pending"}{" "}
+                | Book:{" "}
+                {getGrade(grades, project.projectCode, "book", student.name) ||
+                  "Pending"}
+              </div>
+            ))}
+          </div>
         ),
-        sortable: true,
-      },
-      {
-        key: "gitLink",
-        header: "Git Link",
-        className: "text-lg text-center",
-        render: (value) =>
-          value ? (
-            <a
-              href={value}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-500 hover:underline"
-              onClick={(e) => e.stopPropagation()}
-            >
-              View
-            </a>
-          ) : (
-            <span className="text-gray-500">Missing Link</span>
-          ),
-        sortable: true,
-      },
-      {
-        key: "presentationGrade",
-        header: "Presentation Grade",
-        className: "text-lg text-center",
-        sortable: true,
-      },
-      {
-        key: "bookGrade",
-        header: "Book Grade",
-        className: "text-lg text-center",
-        sortable: true,
+        sortable: false,
       },
       {
         key: "deadline",
@@ -166,14 +148,8 @@ const OtherProjectsReview = () => {
         sortable: true,
       },
     ],
-    [isDeadlinePassed]
+    [grades, isDeadlinePassed]
   );
-
-  const toggleTableOption = () => {
-    setSelectedTableOption((prev) =>
-      prev === "option1" ? "option2" : "option1"
-    );
-  };
 
   if (isLoading) return <div className="text-center mt-10">Loading...</div>;
   if (error)
@@ -230,31 +206,12 @@ const OtherProjectsReview = () => {
               </p>
             </div>
           </div>
-          <Button
-            onClick={toggleTableOption}
-            variant="outline"
-            size="sm"
-            className="mb-4"
-          >
-            Toggle Table View
-          </Button>
-          {selectedTableOption === "option1" ? (
-            <TableOption1
-              data={projects}
-              columns={otherProjectColumns}
-              onRowClick={setSelectedProject}
-              grades={grades}
-              navigateToForm={navigateToForm}
-            />
-          ) : (
-            <TableOption2
-              data={projects}
-              columns={otherProjectColumns}
-              onRowClick={setSelectedProject}
-              grades={grades}
-              navigateToForm={navigateToForm}
-            />
-          )}
+
+          <Table
+            data={projects}
+            columns={otherProjectColumns}
+            onRowClick={setSelectedProject}
+          />
         </div>
       </div>
 

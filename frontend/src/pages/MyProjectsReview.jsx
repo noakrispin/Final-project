@@ -30,52 +30,6 @@ const MyProjectsReview = () => {
 
   const [formSubmitted, setFormSubmitted] = useState(false);
 
-  // const handleGradeButtonClick = (gradeType, project, studentName = null) => {
-  //   let formID;
-
-  //   // Dynamically set the formID based on gradeType and project part
-  //   if (gradeType === "supervisor") {
-  //     formID = "SupervisorForm";
-  //   } else if (gradeType === "presentation") {
-  //     formID = project.part === "A" ? "PresentationFormA" : "PresentationFormB";
-  //   } else if (gradeType === "book") {
-  //     formID = project.part === "A" ? "bookReviewerFormA" : "bookReviewerFormB";
-  //   }
-
-  //   const queryParams = new URLSearchParams({
-  //     formID, // Dynamically pass the resolved formID
-  //     projectCode: project.projectCode,
-  //     projectName: project.title,
-  //     students: JSON.stringify(project.students),
-  //     studentName: studentName || "",
-  //   }).toString();
-
-  //   navigate(`/evaluation-forms/${formID}?${queryParams}`);
-  // };
-
-  // const navigateToForm = useCallback(
-  //   (formType, project, studentName = null) => {
-  //     let formPath;
-  //     if (formType === "supervisor") {
-  //       formPath = "supervisor"; // Single form for supervisors
-  //     } else if (formType === "presentation" || formType === "book") {
-  //       formPath = `${formType}-${project.part.toLowerCase()}`; // Append part (A or B) for book/presentation
-  //     }
-
-  //     const queryParams = new URLSearchParams({
-  //       formType: formPath, // Pass the resolved formPath as formType
-  //       projectCode: project.projectCode,
-  //       projectName: project.title,
-  //       students: JSON.stringify(project.students),
-  //       studentName: studentName || "",
-  //     }).toString();
-
-  //     console.log("Navigating to:", `/evaluation-forms/${formPath}?${queryParams}`); // Debugging
-  //     navigate(`/evaluation-forms/${formPath}?${queryParams}`);
-  //   },
-  //   [navigate]
-  // );
-
   useEffect(() => {
     if (location.state?.formSubmitted) {
       setFormSubmitted(true);
@@ -89,82 +43,79 @@ const MyProjectsReview = () => {
         console.error("User or Evaluator ID is missing.");
         return;
       }
-
+  
       try {
         setIsLoading(true);
-        console.log("Evaluator ID sent:", user.id); // Debug log
-
+        console.log("Fetching data...");
+  
         // Fetch all projects and evaluations in parallel
         const [projectsData, evaluationsData] = await Promise.all([
           projectsApi.getAllProjects(),
           formsApi.getEvaluationsByEvaluator(user.id),
         ]);
-
-        console.log("Projects Data:", projectsData); // Log projects data
-        console.log("Evaluations Data:", evaluationsData); // Log evaluations data
-
-        // Convert deadlines to standard JavaScript dates during fetch
+  
+        console.log("Projects Data:", projectsData);
+        console.log("Evaluations Data:", evaluationsData);
+  
+        // Ensure evaluationsData is an array
+        const safeEvaluationsData = Array.isArray(evaluationsData)
+          ? evaluationsData
+          : [];
+        if (!safeEvaluationsData.length) {
+          console.warn("No evaluations found.");
+        }
+  
+        // Map evaluations into a dictionary based on projectCode
+        const evaluationsMapped = safeEvaluationsData.reduce((acc, evaluation) => {
+          if (!evaluation.projectCode || !evaluation.grades) {
+            console.warn("Skipping invalid evaluation:", evaluation);
+            return acc;
+          }
+  
+          // Map grades to projectCode
+          acc[evaluation.projectCode] = evaluation.grades;
+          return acc;
+        }, {});
+  
+        console.log("Mapped Evaluations:", evaluationsMapped);
+  
+        // Format project data with fallback logic for missing fields
         const formattedProjects = projectsData.map((project) => ({
           ...project,
           deadline: project.deadline?._seconds
             ? new Date(project.deadline._seconds * 1000)
-            : project.deadline, // Convert Firestore Timestamps to JS Dates
+            : project.deadline,
           isSupervisor:
             project.supervisor1 === user.id || project.supervisor2 === user.id,
+          students: project.students.map((student) => ({
+            ...student,
+            id: String(student.id), // Ensure student ID is a string
+          })),
         }));
-
-        // Ensure evaluationsData is always an array
-        const safeEvaluationsData = Array.isArray(evaluationsData)
-          ? evaluationsData
-          : [];
-
-        // Map evaluations by projectCode, formID, and studentID
-        const evaluationsMapped = safeEvaluationsData.reduce(
-          (acc, evaluation) => {
-            if (!evaluation || !evaluation.projectCode) return acc; // Avoid invalid data
-            const { projectCode, formID, studentID } = evaluation;
-            acc[projectCode] = acc[projectCode] || {};
-            acc[projectCode][formID] = acc[projectCode][formID] || {};
-            acc[projectCode][formID][studentID] = evaluation;
-            return acc;
-          },
-          {}
-        );
-
-        // Do NOT filter projects — show all projects from the database
+  
+        console.log("Formatted Projects:", formattedProjects);
+  
+        // Update state
         setProjects(formattedProjects);
-
-        // Map evaluations for later use
         setGrades(evaluationsMapped);
       } catch (err) {
         console.error("Error fetching data:", err);
+  
+        // Handle error more explicitly if the response contains error details
+        if (err.response) {
+          console.error("Response data:", err.response.data);
+          console.error("Response status:", err.response.status);
+        }
+  
         setError("Failed to fetch data. Please try again later.");
       } finally {
         setIsLoading(false);
       }
     };
-
+  
     fetchData();
   }, [user]);
-
-  // const formatDeadline = (deadline) => {
-  //   if (!deadline) return "No deadline"; // Handle missing deadlines
-
-  //   // If it's a Firestore Timestamp
-  //   if (deadline._seconds && deadline._nanoseconds) {
-  //     const date = new Date(deadline._seconds * 1000); // Convert seconds to milliseconds
-  //     return date.toLocaleDateString(); // Format as a readable date
-  //   }
-
-  //   // If it's already a string or Date object
-  //   const deadlineDate = deadline.toDate
-  //     ? deadline.toDate() // Firestore Timestamp method
-  //     : new Date(deadline); // Parse as Date object
-
-  //   return isNaN(deadlineDate.getTime())
-  //     ? "Invalid Date" // Handle invalid dates
-  //     : deadlineDate.toLocaleDateString(); // Format as a readable date
-  // };
+  
 
   const isDeadlinePassed = (deadline) => {
     if (!deadline) return false; // No deadline means it's not passed
@@ -186,23 +137,27 @@ const MyProjectsReview = () => {
   };
 
   const progressStats = useMemo(() => {
-    const total = projects.length;
-    const graded = projects.filter((project) => {
+    // Filter projects where the evaluator is the supervisor
+    const supervisedProjects = projects.filter(
+      (project) =>
+        project.supervisor1 === user.id || project.supervisor2 === user.id
+    );
+
+    // Total projects to be graded
+    const total = supervisedProjects.length;
+
+    // Count projects with a submitted supervisor grade
+    const graded = supervisedProjects.filter((project) => {
       const supervisorGrade = getGrade(
         grades,
         project.projectCode,
         "supervisor"
       );
-      const presentationGrade = getGrade(
-        grades,
-        project.projectCode,
-        "presentation"
-      );
-      return supervisorGrade !== null && presentationGrade !== null;
+      return supervisorGrade !== null; // Consider it graded if a grade exists
     }).length;
 
     return { graded, total };
-  }, [projects, grades]);
+  }, [projects, grades, user]);
 
   const getProgressBarColor = (progress) => {
     if (progress === 100) return "bg-green-500";
@@ -210,14 +165,10 @@ const MyProjectsReview = () => {
     return "bg-red-500";
   };
 
-  // const handleProjectClick = (project) => {
-  //   setSelectedProject(project);
-  // };
-
   const handleRowClick = (data, isGradeAction) => {
     if (isGradeAction) {
       const { gradeType, project, studentName } = data;
-  
+
       // Dynamically set the formID based on gradeType and project part
       let formID;
       if (gradeType === "supervisor") {
@@ -229,13 +180,13 @@ const MyProjectsReview = () => {
         formID =
           project.part === "A" ? "bookReviewerFormA" : "bookReviewerFormB";
       }
-  
+
       // Validate formID
       if (!formID) {
         console.error("Invalid formID for gradeType:", gradeType);
         return; // Prevent navigation if formID is not valid
       }
-  
+
       const queryParams = new URLSearchParams({
         formID, // Pass the resolved formID
         projectCode: project.projectCode,
@@ -243,14 +194,13 @@ const MyProjectsReview = () => {
         students: JSON.stringify(project.students),
         studentName: studentName || "",
       }).toString();
-  
+
       navigate(`/evaluation-forms/${formID}?${queryParams}`);
     } else {
       // Open project details
       setSelectedProject(data);
     }
   };
-  
 
   const handleClosePopup = () => {
     setSelectedProject(null);
@@ -350,7 +300,7 @@ const MyProjectsReview = () => {
         header: "Presentation Grade",
         className: "text-lg text-center",
         render: (_, project) =>
-          renderGradeCell(project, "presentation", user?.id, isDeadlinePassed),
+          renderGradeCell(project, "presentation", grades, user?.id, isDeadlinePassed),
         sortable: true,
       },
       {
@@ -358,7 +308,7 @@ const MyProjectsReview = () => {
         header: "Supervisor Grade",
         className: "text-lg text-center",
         render: (_, project) =>
-          renderGradeCell(project, "supervisor", user?.id, isDeadlinePassed),
+          renderGradeCell(project, "supervisor", grades, user?.id, isDeadlinePassed),
         sortable: true,
       },
       {
@@ -372,6 +322,26 @@ const MyProjectsReview = () => {
     ],
     [grades, user]
   );
+
+  const renderGradeCell = (project, gradeType, grades, userId, isDeadlinePassed) => {
+    const grade = getGrade(grades, project.projectCode, gradeType);
+    if (grade === null) {
+      return isDeadlinePassed(project.deadline) ? (
+        <span className="text-red-500">Not Submitted</span>
+      ) : (
+        <button
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded"
+          onClick={() =>
+            handleRowClick({ gradeType, project, studentName: null }, true)
+          }
+        >
+          Grade
+        </button>
+      );
+    }
+    return <span>{grade}</span>;
+  };
+
 
   if (isLoading) return <div className="text-center mt-10">Loading...</div>;
   if (error)
@@ -422,20 +392,24 @@ const MyProjectsReview = () => {
                   )}`}
                   style={{
                     width: `${
-                      (progressStats.graded / progressStats.total) * 100
+                      progressStats.total > 0
+                        ? (progressStats.graded / progressStats.total) * 100
+                        : 0
                     }%`,
                   }}
                 ></div>
               </div>
               <p className="text-base text-gray-600 mt-2 text-center">
-                {`${progressStats.graded}/${progressStats.total} Final Grades Submitted`}
+                {progressStats.total > 0
+                  ? `${progressStats.graded}/${progressStats.total} Supervisor Grades Submitted`
+                  : "No projects to grade"}
               </p>
             </div>
           </div>
 
           <Table
             data={projects}
-            grades={grades}
+            evaluationsMapped={grades}
             userId={user?.id}
             isDeadlinePassed={isDeadlinePassed}
             columns={myProjectColumns}
@@ -459,3 +433,4 @@ const MyProjectsReview = () => {
 };
 
 export default MyProjectsReview;
+

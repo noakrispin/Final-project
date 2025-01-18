@@ -10,7 +10,7 @@ const FILTERS = ["All", "Part A", "Part B"];
 
 export const Table = ({
   data,
-  grades,
+  evaluationsMapped,
   columns,
   className = "",
   onRowClick,
@@ -60,21 +60,21 @@ export const Table = ({
     setVisibleColumns(columns.map((col) => col.key));
   };
 
-  const renderGradeCell = (project, gradeType, userId) => {
+  const renderGradeCell = (project, gradeType, evaluationsMapped, userId) => {
     const isUserSupervisor = project.isSupervisor;
-
+    console.log("Evaluations Mapped in Table:", evaluationsMapped);
     return (
       <div>
         {project.students.map((student) => {
-          const grade = getGrade(
-            grades,
-            project.projectCode,
-            gradeType,
-            student.id,
-            userId
+          // Access grades using projectCode and student ID
+          
+          const grade = evaluationsMapped[project.projectCode]?.[student.id];
+
+          console.log(
+            `Rendering grade for student: ${student.name}, projectCode: ${project.projectCode}, grade: ${grade}`
           );
 
-          // Dynamically determine the correct formID based on gradeType and project part
+          // Determine formID for the grade action
           let formID;
           if (gradeType === "supervisor") {
             formID = "SupervisorForm";
@@ -101,7 +101,7 @@ export const Table = ({
               >
                 <span>{student.name}</span>
                 <span>
-                  {grade !== null ? (
+                  {grade !== undefined ? (
                     grade
                   ) : (
                     <div
@@ -124,7 +124,7 @@ export const Table = ({
               >
                 <span>{student.name}</span>
                 <span>
-                  {grade !== null ? (
+                  {grade !== undefined ? (
                     grade
                   ) : (
                     <div
@@ -139,29 +139,6 @@ export const Table = ({
             );
           }
 
-          // if (gradeType === "book") {
-          //   return (
-          //     <div
-          //       key={`${project.id}-${student.id}`}
-          //       className="flex flex-col"
-          //     >
-          //       <span>{student.name}</span>
-          //       <span>
-          //         {grade !== null ? (
-          //           grade
-          //         ) : (
-          //           <div
-          //             data-grade-action={JSON.stringify(metadata)}
-          //             className="text-blue-500 underline cursor-pointer"
-          //           >
-          //             Grade Book Review
-          //           </div>
-          //         )}
-          //       </span>
-          //     </div>
-          //   );
-          // }
-
           return null;
         })}
       </div>
@@ -170,7 +147,6 @@ export const Table = ({
 
   return (
     <div className="space-y-4">
-      {/* Filters and Search Bar */}
       <div className="flex items-center justify-between mb-4 px-6">
         <div className="flex space-x-2">
           {FILTERS.map((filter) => (
@@ -194,15 +170,14 @@ export const Table = ({
         />
       </div>
 
-      {/* Table */}
       <div
         className={`w-full overflow-auto rounded-lg border border-[#e5e7eb] bg-white ${className}`}
         onClick={(e) => {
           const gradeAction = e.target.closest("[data-grade-action]");
           if (gradeAction) {
             const metadata = JSON.parse(gradeAction.dataset.gradeAction);
-            e.stopPropagation(); // Prevent row click
-            onRowClick(metadata, true); // Pass an additional flag for grade actions
+            e.stopPropagation();
+            onRowClick(metadata, true);
           }
         }}
       >
@@ -253,7 +228,7 @@ export const Table = ({
                 <tr
                   key={rowIndex}
                   className="hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => onRowClick(project, false)} // Normal row click
+                  onClick={() => onRowClick(project, false)}
                 >
                   {visibleColumnsList.map((column) => (
                     <td
@@ -264,6 +239,7 @@ export const Table = ({
                         ? renderGradeCell(
                             project,
                             column.key.replace("Grade", "").toLowerCase(),
+                            evaluationsMapped,
                             userId
                           )
                         : column.render
