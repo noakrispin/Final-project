@@ -1,0 +1,58 @@
+const express = require("express");
+const router = express.Router();
+const formController = require("../controllers/formController");
+
+// Fetch a specific form
+router.get("/:formID", formController.getForm);
+
+// Update a specific form
+router.put("/:formID", formController.updateForm);
+
+// Fetch questions for a specific form
+router.get("/:formID/questions", formController.getQuestions);
+
+// Submit form data
+router.post("/:formID/submit", formController.submitForm);
+
+// Update a specific question in a form
+router.put("/:formID/questions/:questionId", formController.updateQuestion);
+
+// Add a new question to a form
+router.post("/:formID/questions", formController.addQuestion);
+
+// Delete a specific question from a form
+router.delete("/:formID/questions/:questionId", formController.deleteQuestion);
+
+// Fetch form responses
+router.get("/:formID/responses", formController.getResponses);
+
+// Update a specific response in a form
+router.put("/:formID/responses/:responseId", formController.updateResponse);
+
+// Delete a specific response from a form
+router.delete("/:formID/responses/:responseId", formController.deleteResponse);
+
+// Fetch form evaluations
+router.get("/:formID/evaluations", formController.getEvaluations);
+
+// Update a specific evaluation in a form
+router.put("/:formID/evaluations/:evaluationId", formController.updateEvaluation);
+
+// Delete a specific evaluation from a form
+router.delete("/:formID/evaluations/:evaluationId", formController.deleteEvaluation);
+
+// Create a new form
+router.post("/", formController.createForm);
+
+// Delete a specific form along with its subcollections
+router.delete("/:formID", formController.deleteForm);
+
+
+// Fetch all evaluations for a evaluator
+router.get("/evaluations/all", formController.getEvaluationsByEvaluator);
+
+
+// Add a new evaluation
+router.post("/:formID/evaluations", formController.addEvaluation);
+
+module.exports = router;

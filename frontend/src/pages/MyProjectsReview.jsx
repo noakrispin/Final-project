@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { mockApi } from "../services/mockApi";
+import { projectsApi } from "../services/projectsAPI";
+import { formsApi } from "../services/formAPI";
 import { BlurElements } from "../components/shared/BlurElements";
 import ProjectDetailsPopup from "../components/shared/ProjectDetailsPopup";
-import { TableOption1, TableOption2 } from "../components/ui/TableOptions";
-import { Button } from "../components/ui/Button";
+import { Table } from "../components/ui/Table";
 import { getGrade } from "../utils/getGrade";
-import { Tooltip } from "react-tooltip";
+import { formatDate } from "../utils/dateUtils";
+
+/////////THE WORKING VERSION!!!!!!!!!!!!!!!!!!
 
 const TABS = ["My Projects", "Other Projects"];
 const FILTERS = ["All", "Part A", "Part B"];
@@ -21,29 +23,58 @@ const MyProjectsReview = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
-  const [selectedTableOption, setSelectedTableOption] = useState("option1");
+
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [formSubmitted, setFormSubmitted] = useState(false);
 
-  const navigateToForm = useCallback(
-    (formType, project, studentName = null) => {
-      const formPath =
-        formType === "presentation"
-          ? `presentation-${project.part.toLowerCase()}`
-          : formType;
-      const queryParams = new URLSearchParams({
-        projectCode: project.projectCode,
-        projectName: project.title,
-        students: JSON.stringify(project.students),
-        studentName: studentName || "",
-      }).toString();
-      navigate(`/evaluation-forms/${formPath}?${queryParams}`);
-    },
-    [navigate]
-  );
+  // const handleGradeButtonClick = (gradeType, project, studentName = null) => {
+  //   let formID;
+
+  //   // Dynamically set the formID based on gradeType and project part
+  //   if (gradeType === "supervisor") {
+  //     formID = "SupervisorForm";
+  //   } else if (gradeType === "presentation") {
+  //     formID = project.part === "A" ? "PresentationFormA" : "PresentationFormB";
+  //   } else if (gradeType === "book") {
+  //     formID = project.part === "A" ? "bookReviewerFormA" : "bookReviewerFormB";
+  //   }
+
+  //   const queryParams = new URLSearchParams({
+  //     formID, // Dynamically pass the resolved formID
+  //     projectCode: project.projectCode,
+  //     projectName: project.title,
+  //     students: JSON.stringify(project.students),
+  //     studentName: studentName || "",
+  //   }).toString();
+
+  //   navigate(`/evaluation-forms/${formID}?${queryParams}`);
+  // };
+
+  // const navigateToForm = useCallback(
+  //   (formType, project, studentName = null) => {
+  //     let formPath;
+  //     if (formType === "supervisor") {
+  //       formPath = "supervisor"; // Single form for supervisors
+  //     } else if (formType === "presentation" || formType === "book") {
+  //       formPath = `${formType}-${project.part.toLowerCase()}`; // Append part (A or B) for book/presentation
+  //     }
+
+  //     const queryParams = new URLSearchParams({
+  //       formType: formPath, // Pass the resolved formPath as formType
+  //       projectCode: project.projectCode,
+  //       projectName: project.title,
+  //       students: JSON.stringify(project.students),
+  //       studentName: studentName || "",
+  //     }).toString();
+
+  //     console.log("Navigating to:", `/evaluation-forms/${formPath}?${queryParams}`); // Debugging
+  //     navigate(`/evaluation-forms/${formPath}?${queryParams}`);
+  //   },
+  //   [navigate]
+  // );
 
   useEffect(() => {
     if (location.state?.formSubmitted) {
@@ -54,37 +85,104 @@ const MyProjectsReview = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!user) return;
+      if (!user || !user.id) {
+        console.error("User or Evaluator ID is missing.");
+        return;
+      }
 
       try {
         setIsLoading(true);
-        const [projectsData, gradesData] = await Promise.all([
-          mockApi.getProjects(),
-          mockApi.getGrades(),
+        console.log("Evaluator ID sent:", user.id); // Debug log
+
+        // Fetch all projects and evaluations in parallel
+        const [projectsData, evaluationsData] = await Promise.all([
+          projectsApi.getAllProjects(),
+          formsApi.getEvaluationsByEvaluator(user.id),
         ]);
 
-        const filteredProjects = projectsData.filter(
-          (project) => project.supervisor === user.fullName
+        console.log("Projects Data:", projectsData); // Log projects data
+        console.log("Evaluations Data:", evaluationsData); // Log evaluations data
+
+        // Convert deadlines to standard JavaScript dates during fetch
+        const formattedProjects = projectsData.map((project) => ({
+          ...project,
+          deadline: project.deadline?._seconds
+            ? new Date(project.deadline._seconds * 1000)
+            : project.deadline, // Convert Firestore Timestamps to JS Dates
+          isSupervisor:
+            project.supervisor1 === user.id || project.supervisor2 === user.id,
+        }));
+
+        // Ensure evaluationsData is always an array
+        const safeEvaluationsData = Array.isArray(evaluationsData)
+          ? evaluationsData
+          : [];
+
+        // Map evaluations by projectCode, formID, and studentID
+        const evaluationsMapped = safeEvaluationsData.reduce(
+          (acc, evaluation) => {
+            if (!evaluation || !evaluation.projectCode) return acc; // Avoid invalid data
+            const { projectCode, formID, studentID } = evaluation;
+            acc[projectCode] = acc[projectCode] || {};
+            acc[projectCode][formID] = acc[projectCode][formID] || {};
+            acc[projectCode][formID][studentID] = evaluation;
+            return acc;
+          },
+          {}
         );
 
-        setProjects(filteredProjects);
-        setGrades(gradesData);
+        // Do NOT filter projects — show all projects from the database
+        setProjects(formattedProjects);
+
+        // Map evaluations for later use
+        setGrades(evaluationsMapped);
       } catch (err) {
         console.error("Error fetching data:", err);
         setError("Failed to fetch data. Please try again later.");
       } finally {
         setIsLoading(false);
-        setFormSubmitted(false);
       }
     };
 
     fetchData();
-  }, [user, formSubmitted]);
+  }, [user]);
+
+  // const formatDeadline = (deadline) => {
+  //   if (!deadline) return "No deadline"; // Handle missing deadlines
+
+  //   // If it's a Firestore Timestamp
+  //   if (deadline._seconds && deadline._nanoseconds) {
+  //     const date = new Date(deadline._seconds * 1000); // Convert seconds to milliseconds
+  //     return date.toLocaleDateString(); // Format as a readable date
+  //   }
+
+  //   // If it's already a string or Date object
+  //   const deadlineDate = deadline.toDate
+  //     ? deadline.toDate() // Firestore Timestamp method
+  //     : new Date(deadline); // Parse as Date object
+
+  //   return isNaN(deadlineDate.getTime())
+  //     ? "Invalid Date" // Handle invalid dates
+  //     : deadlineDate.toLocaleDateString(); // Format as a readable date
+  // };
 
   const isDeadlinePassed = (deadline) => {
-    if (!deadline) return false;
-    const [day, month, year] = deadline.split("/");
-    return new Date(`${year}-${month}-${day}`) < new Date();
+    if (!deadline) return false; // No deadline means it's not passed
+
+    let deadlineDate;
+
+    // Handle Firestore Timestamp
+    if (deadline.toDate) {
+      deadlineDate = deadline.toDate();
+    } else if (typeof deadline === "string" || deadline instanceof Date) {
+      deadlineDate = new Date(deadline);
+    } else {
+      console.error("Invalid deadline format:", deadline);
+      return false; // Return false for invalid formats
+    }
+
+    // Check if the deadline has passed
+    return deadlineDate < new Date();
   };
 
   const progressStats = useMemo(() => {
@@ -112,9 +210,47 @@ const MyProjectsReview = () => {
     return "bg-red-500";
   };
 
-  const handleProjectClick = (project) => {
-    setSelectedProject(project);
+  // const handleProjectClick = (project) => {
+  //   setSelectedProject(project);
+  // };
+
+  const handleRowClick = (data, isGradeAction) => {
+    if (isGradeAction) {
+      const { gradeType, project, studentName } = data;
+  
+      // Dynamically set the formID based on gradeType and project part
+      let formID;
+      if (gradeType === "supervisor") {
+        formID = "SupervisorForm";
+      } else if (gradeType === "presentation") {
+        formID =
+          project.part === "A" ? "PresentationFormA" : "PresentationFormB";
+      } else if (gradeType === "book") {
+        formID =
+          project.part === "A" ? "bookReviewerFormA" : "bookReviewerFormB";
+      }
+  
+      // Validate formID
+      if (!formID) {
+        console.error("Invalid formID for gradeType:", gradeType);
+        return; // Prevent navigation if formID is not valid
+      }
+  
+      const queryParams = new URLSearchParams({
+        formID, // Pass the resolved formID
+        projectCode: project.projectCode,
+        projectName: project.title,
+        students: JSON.stringify(project.students),
+        studentName: studentName || "",
+      }).toString();
+  
+      navigate(`/evaluation-forms/${formID}?${queryParams}`);
+    } else {
+      // Open project details
+      setSelectedProject(data);
+    }
   };
+  
 
   const handleClosePopup = () => {
     setSelectedProject(null);
@@ -138,7 +274,7 @@ const MyProjectsReview = () => {
 
   const saveGitLinkToBackend = async (projectId, gitLink) => {
     try {
-      await mockApi.updateProjectGitLink(projectId, gitLink);
+      await projectsApi.updateProject(projectId, { gitLink });
       setProjects((prevProjects) =>
         prevProjects.map((project) =>
           project.id === projectId ? { ...project, gitLink } : project
@@ -151,7 +287,7 @@ const MyProjectsReview = () => {
 
   const saveNotesToBackend = async (projectId, notes) => {
     try {
-      await mockApi.updateProjectNotes(projectId, notes);
+      await projectsApi.updateProject(projectId, { personalNotes: notes });
       setProjects((prevProjects) =>
         prevProjects.map((project) =>
           project.id === projectId
@@ -162,12 +298,6 @@ const MyProjectsReview = () => {
     } catch (error) {
       console.error("Error saving notes:", error);
     }
-  };
-
-  const toggleTableOption = () => {
-    setSelectedTableOption((prev) =>
-      prev === "option1" ? "option2" : "option1"
-    );
   };
 
   const myProjectColumns = useMemo(
@@ -189,9 +319,10 @@ const MyProjectsReview = () => {
         key: "students",
         header: "Students",
         className: "text-lg text-center",
-        render: (students) => (
-          <span>{students.map((s) => s.name).join(", ")}</span>
-        ),
+        render: (students) =>
+          students && students.length > 0
+            ? students.map((s) => s.name).join(", ")
+            : "No students",
         sortable: true,
       },
       {
@@ -218,83 +349,28 @@ const MyProjectsReview = () => {
         key: "presentationGrade",
         header: "Presentation Grade",
         className: "text-lg text-center",
-        render: (_, project) => {
-          return project.students.map((student) => {
-            const grade = getGrade(
-              grades,
-              project.projectCode,
-              "presentation",
-              student.name
-            );
-            return (
-              <span key={student.name} className="mx-1">
-                {grade !== null ? (
-                  isDeadlinePassed(project.deadline) ? (
-                    <span>{grade}</span>
-                  ) : (
-                    <button
-                      className="text-blue-900 hover:underline cursor-pointer"
-                      onClick={() =>
-                        navigateToForm("presentation", project, student.name)
-                      }
-                    >
-                      {grade || "Grade"}
-                    </button>
-                  )
-                ) : (
-                  "Pending"
-                )}
-              </span>
-            );
-          });
-        },
+        render: (_, project) =>
+          renderGradeCell(project, "presentation", user?.id, isDeadlinePassed),
         sortable: true,
       },
       {
         key: "supervisorGrade",
         header: "Supervisor Grade",
         className: "text-lg text-center",
-        render: (_, project) => {
-          return project.students.map((student) => {
-            const grade = getGrade(
-              grades,
-              project.projectCode,
-              "supervisor",
-              student.name
-            );
-            return (
-              <span key={student.name} className="mx-1">
-                {grade !== null ? (
-                  isDeadlinePassed(project.deadline) ? (
-                    <span>{grade}</span>
-                  ) : (
-                    <button
-                      className="text-blue-900 hover:underline cursor-pointer"
-                      onClick={() =>
-                        navigateToForm("supervisor", project, student.name)
-                      }
-                    >
-                      {grade || "Grade"}
-                    </button>
-                  )
-                ) : (
-                  "Pending"
-                )}
-              </span>
-            );
-          });
-        },
+        render: (_, project) =>
+          renderGradeCell(project, "supervisor", user?.id, isDeadlinePassed),
         sortable: true,
       },
       {
         key: "deadline",
         header: "Deadline",
         className: "text-lg text-center",
-        render: (deadline) => (isDeadlinePassed(deadline) ? "Passed" : deadline),
+        render: (deadline) =>
+          isDeadlinePassed(deadline) ? "Passed" : formatDate(deadline),
         sortable: true,
       },
     ],
-    [grades]
+    [grades, user]
   );
 
   if (isLoading) return <div className="text-center mt-10">Loading...</div>;
@@ -332,7 +408,9 @@ const MyProjectsReview = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="ml-2 mb-11">
-            <h1 className="text-2xl font-bold">My Projects To Review</h1>
+            <h1 className="text-2xl font-bold">
+              My Projects To Review - {user.fullName}
+            </h1>
             <p className="text-gray-600 text-lg mt-2">
               Projects you need to grade as a supervisor
             </p>
@@ -355,32 +433,14 @@ const MyProjectsReview = () => {
             </div>
           </div>
 
-          <Button
-            onClick={toggleTableOption}
-            variant="outline"
-            size="sm"
-            className="mb-4"
-          >
-            Toggle Table View
-          </Button>
-
-          {selectedTableOption === "option1" ? (
-            <TableOption1
-              data={projects}
-              columns={myProjectColumns}
-              onRowClick={handleProjectClick}
-              grades={grades}
-              navigateToForm={navigateToForm} // Pass the navigation function
-            />
-          ) : (
-            <TableOption2
-              data={projects}
-              columns={myProjectColumns}
-              onRowClick={handleProjectClick}
-              grades={grades}
-              navigateToForm={navigateToForm} // Pass the navigation function
-            />
-          )}
+          <Table
+            data={projects}
+            grades={grades}
+            userId={user?.id}
+            isDeadlinePassed={isDeadlinePassed}
+            columns={myProjectColumns}
+            onRowClick={handleRowClick}
+          />
         </div>
       </div>
 
