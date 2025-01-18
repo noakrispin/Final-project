@@ -192,63 +192,150 @@ module.exports = {
   // Submit form data
   submitForm: async (req, res) => {
     const { formID } = req.params;
-    const formData = req.body;
-
-    if (!formID || !formData) {
-      return res.status(400).json({ message: "Form ID and form data are required." });
-    }
-
-    try {
-      await db.collection("forms").doc(formID).collection("responses").add({
-        ...formData,
-        created_at: new Date().toISOString(),
+    const { evaluatorID, projectCode, general, students } = req.body;
+  
+    if (!formID || !evaluatorID || !projectCode || !general || !students) {
+      return res.status(400).json({
+        message: "Form ID, evaluator ID, project code, general responses, and student responses are required.",
       });
-      res.status(200).json({ message: "Form submitted successfully." });
-    } catch (error) {
-      console.error("Error submitting form:", error.message);
-      res.status(500).json({ message: "Failed to submit form." });
     }
-  },
-
-  // Fetch form responses
-  getResponses: async (req, res) => {
-    const { formID } = req.params;
-
-    if (!formID) {
-      return res.status(400).json({ message: "Form ID is required." });
-    }
-
+  
     try {
-      const responsesSnapshot = await db.collection("forms").doc(formID).collection("responses").get();
-      const responses = responsesSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      res.status(200).json(responses);
-    } catch (error) {
-      console.error("Error fetching responses:", error.message);
-      res.status(500).json({ message: "Failed to fetch responses." });
-    }
-  },
-
-  updateResponse: async (req, res) => {
-    const { formID, responseId } = req.params;
-    const updatedData = req.body;
-
-    if (!formID || !responseId || !updatedData) {
-      return res.status(400).json({ message: "Form ID, response ID, and updated data are required." });
-    }
-
-    try {
+      // Check if a response already exists
+      const existingResponsesSnapshot = await db
+        .collection("forms")
+        .doc(formID)
+        .collection("responses")
+        .where("evaluatorID", "==", evaluatorID)
+        .where("projectCode", "==", projectCode)
+        .get();
+  
+      if (!existingResponsesSnapshot.empty) {
+        // If response exists, update it
+        const responseRef = existingResponsesSnapshot.docs[0].ref; // Get the first response document reference
+        await responseRef.update({
+          general,
+          students,
+          updated_at: new Date().toISOString(), // Add an `updated_at` timestamp
+        });
+        return res.status(200).json({ message: "Response updated successfully." });
+      }
+  
+      // If no response exists, create a new one
       await db
         .collection("forms")
         .doc(formID)
         .collection("responses")
-        .doc(responseId)
-        .update(updatedData);
-      res.status(200).json({ message: "Response updated successfully." });
+        .add({
+          evaluatorID,
+          projectCode,
+          general,
+          students,
+          created_at: new Date().toISOString(),
+        });
+  
+      res.status(201).json({ message: "Response submitted successfully." });
     } catch (error) {
-      console.error("Error updating response:", error.message);
-      res.status(500).json({ message: "Failed to update response." });
+      console.error("Error submitting response:", error.message);
+      res.status(500).json({ message: "Failed to submit response." });
     }
   },
+  
+  
+  
+
+  // Fetch form responses
+getResponses: async (req, res) => {
+  const { formID } = req.params;
+  const { evaluatorID, studentID } = req.query; // Optional student ID filter
+
+  if (!formID || !evaluatorID) {
+    return res.status(400).json({ message: "Form ID and evaluator ID are required." });
+  }
+
+  try {
+    const responsesRef = db.collection("forms").doc(formID).collection("responses");
+    const responseSnapshot = await responsesRef.where("evaluatorID", "==", evaluatorID).get();
+
+    if (responseSnapshot.empty) {
+      return res.status(404).json({ message: "No response found for the evaluator." });
+    }
+
+    const response = responseSnapshot.docs[0].data();
+    const studentResponses = studentID ? response.students[studentID] : response.students;
+
+    res.status(200).json({
+      generalResponses: response.generalResponses,
+      studentResponses,
+    });
+  } catch (error) {
+    console.error("Error fetching responses:", error.message);
+    res.status(500).json({ message: "Failed to fetch responses." });
+  }
+},
+
+  // Fetch the last response for a specific form, evaluator, and project
+  getLastResponse: async (req, res) => {
+    const { formID } = req.params;
+    const { evaluatorID, projectCode } = req.query;
+  
+    if (!formID || !evaluatorID || !projectCode) {
+      return res.status(400).json({ message: "Form ID, Evaluator ID, and Project Code are required." });
+    }
+  
+    try {
+      console.log("Received params:", { formID, evaluatorID, projectCode }); // Log inputs
+  
+      const responsesSnapshot = await db
+        .collection("forms")
+        .doc(formID)
+        .collection("responses")
+        .where("evaluatorID", "==", evaluatorID)
+        .where("projectCode", "==", projectCode)
+        //.orderBy("created_at", "desc")
+        .limit(1)
+        .get();
+  
+      console.log("Query result:", responsesSnapshot.docs); // Log query result
+  
+      if (responsesSnapshot.empty) {
+        return res.status(404).json({ message: "No responses found for the given parameters." });
+      }
+  
+      const lastResponse = responsesSnapshot.docs[0].data();
+      console.log("Last response data:", lastResponse); // Log fetched data
+  
+      res.status(200).json(lastResponse);
+    } catch (error) {
+      console.error("Error in getLastResponse:", error); // Log error details
+      res.status(500).json({ message: "Failed to fetch the last response." });
+    }
+  },
+  
+  
+
+  // updateResponse: async (req, res) => {
+  //   const { formID, responseId } = req.params;
+  //   const updatedData = req.body;
+
+  //   if (!formID || !responseId || !updatedData) {
+  //     return res.status(400).json({ message: "Form ID, response ID, and updated data are required." });
+  //   }
+
+  //   try {
+  //     await db
+  //       .collection("forms")
+  //       .doc(formID)
+  //       .collection("responses")
+  //       .where("evaluatorID", "==", evaluatorID)
+  //       .where("projectCode", "==", projectCode)
+  //       .update(updatedData);
+  //     res.status(200).json({ message: "Response updated successfully." });
+  //   } catch (error) {
+  //     console.error("Error updating response:", error.message);
+  //     res.status(500).json({ message: "Failed to update response." });
+  //   }
+  // },
 
   // Delete a specific response from a form
   deleteResponse: async (req, res) => {

@@ -11,7 +11,7 @@ router.put("/:formID", formController.updateForm);
 // Fetch questions for a specific form
 router.get("/:formID/questions", formController.getQuestions);
 
-// Submit form data
+// Submit form data (for general and student-specific responses)
 router.post("/:formID/submit", formController.submitForm);
 
 // Update a specific question in a form
@@ -23,11 +23,11 @@ router.post("/:formID/questions", formController.addQuestion);
 // Delete a specific question from a form
 router.delete("/:formID/questions/:questionId", formController.deleteQuestion);
 
-// Fetch form responses
+// Fetch form responses (supports evaluatorID and optional studentID query parameters)
 router.get("/:formID/responses", formController.getResponses);
 
 // Update a specific response in a form
-router.put("/:formID/responses/:responseId", formController.updateResponse);
+//router.put("/:formID/responses/:responseId", formController.updateResponse);
 
 // Delete a specific response from a form
 router.delete("/:formID/responses/:responseId", formController.deleteResponse);
@@ -47,12 +47,15 @@ router.post("/", formController.createForm);
 // Delete a specific form along with its subcollections
 router.delete("/:formID", formController.deleteForm);
 
-
-// Fetch all evaluations for a evaluator
+// Fetch all evaluations for an evaluator
 router.get("/evaluations/all", formController.getEvaluationsByEvaluator);
-
 
 // Add a new evaluation
 router.post("/:formID/evaluations", formController.addEvaluation);
+
+// Fetch the last response for an evaluator and optionally for a specific student
+router.get("/:formID/last-response", formController.getLastResponse);
+
+
 
 module.exports = router;

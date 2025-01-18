@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 const FormField = ({
   label,
@@ -13,17 +13,8 @@ const FormField = ({
   disabled,
   placeholder,
   options, // For dropdown or radio types
-  defaultValue, // If coming from the DB
 }) => {
   const [error, setError] = useState("");
-  const [validatedValue, setValidatedValue] = useState(value || defaultValue || "");
-
-  useEffect(() => {
-    // Initialize with defaultValue if not already set
-    if (defaultValue && !value) {
-      setValidatedValue(defaultValue);
-    }
-  }, [defaultValue, value]);
 
   const handleInputChange = (e) => {
     const { name, value, type } = e.target;
@@ -49,8 +40,7 @@ const FormField = ({
       setError("");
     }
 
-    // Update local state and propagate to parent
-    setValidatedValue(updatedValue);
+    // Propagate to parent
     onChange({ target: { name, value: updatedValue } });
   };
 
@@ -61,11 +51,11 @@ const FormField = ({
           <textarea
             id={name}
             name={name}
-            value={validatedValue}
+            value={value || ""}
             onChange={handleInputChange}
             required={required}
             disabled={disabled}
-            placeholder={"At least 5 words required"}
+            placeholder={placeholder || "At least 5 words required"}
             className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:shadow-outline"
             rows="4"
           />
@@ -75,7 +65,7 @@ const FormField = ({
           <select
             id={name}
             name={name}
-            value={validatedValue}
+            value={value || ""}
             onChange={handleInputChange}
             required={required}
             disabled={disabled}
@@ -105,7 +95,7 @@ const FormField = ({
                     type="radio"
                     name={name}
                     value={option.value}
-                    checked={validatedValue === option.value}
+                    checked={value === option.value}
                     onChange={handleInputChange}
                     disabled={disabled}
                     className="form-radio focus:outline-none focus:shadow-outline"
@@ -121,7 +111,7 @@ const FormField = ({
             id={name}
             name={name}
             type={type}
-            value={validatedValue}
+            value={value || ""}
             onChange={handleInputChange}
             min={type === "number" ? min : undefined}
             max={type === "number" ? max : undefined}

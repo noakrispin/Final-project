@@ -30,9 +30,6 @@ export const formsApi = {
       throw error;
     }
   },
-  
-  
-
 
   /**
    * Add a new question to a specific form.
@@ -72,11 +69,38 @@ export const formsApi = {
   },
 
   /**
+   * Fetch the last response for a specific evaluator and optionally for a specific student.
+   * @param {string} formID - The form ID.
+   * @param {string} evaluatorID - The evaluator's ID.
+   * @param {string} [studentID] - The student's ID (optional).
+   */
+  getLastResponse: async (formID, evaluatorID, projectCode) => {
+    if (!formID || !evaluatorID || !projectCode) {
+      throw new Error("Form ID, Evaluator ID, and Project Code are required.");
+    }
+    
+    try {
+      const url = `/forms/${formID}/last-response`;
+      console.log("Sending GET request with params:", { evaluatorID, projectCode }); // Debugging
+      const response = await api.get(
+        `/forms/${formID}/last-response?evaluatorID=${evaluatorID}&projectCode=${projectCode}`
+      );
+      console.log("API Response:", response); // Log the raw response
+      return response.data || response; // Adjust if the data is nested
+    } catch (error) {
+      console.error("Error fetching the last response:", error.message);
+      throw error;
+    }
+  },
+  
+  
+
+  /**
    * Update a specific response in a form.
    */
-  updateResponse: async (formID, responseId, updatedData) => {
-    return await api.put(`/forms/${formID}/responses/${responseId}`, updatedData);
-  },
+  // updateResponse: async (formID, responseId, updatedData) => {
+  //   return await api.put(`/forms/${formID}/responses/${responseId}`, updatedData);
+  // },
 
   /**
    * Delete a specific response from a form.
@@ -130,9 +154,6 @@ export const formsApi = {
     }
   },
 
-
-
-
   /**
    * Add a new evaluation for a specific form.
    */
@@ -146,4 +167,3 @@ export const formsApi = {
     }
   },
 };
-
