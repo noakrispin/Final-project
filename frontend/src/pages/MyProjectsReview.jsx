@@ -9,10 +9,8 @@ import { Table } from "../components/ui/Table";
 import { getGrade } from "../utils/getGrade";
 import { formatDate } from "../utils/dateUtils";
 
-/////////THE WORKING VERSION!!!!!!!!!!!!!!!!!!
-
 const TABS = ["My Projects", "Other Projects"];
-const FILTERS = ["All", "Part A", "Part B"];
+
 
 const MyProjectsReview = () => {
   const [activeTab, setActiveTab] = useState(TABS[0]);
@@ -23,7 +21,7 @@ const MyProjectsReview = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
-
+  
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -105,7 +103,7 @@ const MyProjectsReview = () => {
   
 
   const isDeadlinePassed = (deadline) => {
-    if (!deadline) return false; // No deadline means it's not passed
+    if (!deadline) return false; // Return false if deadline is missing
 
     let deadlineDate;
 
@@ -193,50 +191,7 @@ const MyProjectsReview = () => {
     setSelectedProject(null);
   };
 
-  const handleEmailStudents = () => {
-    if (!selectedProject) return;
-
-    const studentEmails = selectedProject.students
-      .map((student) => student.email)
-      .join(",");
-    const subject = encodeURIComponent(
-      `Regarding Project: ${selectedProject.title}`
-    );
-    const body = encodeURIComponent(
-      `Dear students,\n\nI hope this email finds you well. I wanted to discuss your project "${selectedProject.title}".\n\nBest regards,\n${user.fullName}`
-    );
-
-    window.location.href = `mailto:${studentEmails}?subject=${subject}&body=${body}`;
-  };
-
-  const saveGitLinkToBackend = async (projectId, gitLink) => {
-    try {
-      await projectsApi.updateProject(projectId, { gitLink });
-      setProjects((prevProjects) =>
-        prevProjects.map((project) =>
-          project.id === projectId ? { ...project, gitLink } : project
-        )
-      );
-    } catch (error) {
-      console.error("Error saving Git link:", error);
-    }
-  };
-
-  const saveNotesToBackend = async (projectId, notes) => {
-    try {
-      await projectsApi.updateProject(projectId, { personalNotes: notes });
-      setProjects((prevProjects) =>
-        prevProjects.map((project) =>
-          project.id === projectId
-            ? { ...project, personalNotes: notes }
-            : project
-        )
-      );
-    } catch (error) {
-      console.error("Error saving notes:", error);
-    }
-  };
-
+  
   const myProjectColumns = useMemo(
     () => [
       {
@@ -407,13 +362,11 @@ const MyProjectsReview = () => {
 
       {selectedProject && (
         <ProjectDetailsPopup
-          project={selectedProject}
-          onClose={handleClosePopup}
-          handleEmailStudents={handleEmailStudents}
-          saveGitLinkToBackend={saveGitLinkToBackend}
-          saveNotesToBackend={saveNotesToBackend}
-          userRole={user?.role}
-        />
+        project={selectedProject}
+        onClose={handleClosePopup}
+        api={projectsApi}
+        userRole={user?.role}
+      />
       )}
     </div>
   );

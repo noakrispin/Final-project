@@ -2,9 +2,13 @@ import React, { useEffect, useState } from "react";
 import { Button } from "../ui/Button";
 import { X, Edit3 } from "lucide-react";
 import { userApi } from "../../services/userAPI.js";
-
+import { useAuth } from "../../context/AuthContext";
+  
 const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
-  const [personalNotes, setPersonalNotes] = useState(project.personalNotes || "");
+  const { user } = useAuth();
+  const [personalNotes, setPersonalNotes] = useState(
+    project.personalNotes || ""
+  );
   const [gitLink, setGitLink] = useState(project.gitLink || "");
   const [isEditingGitLink, setIsEditingGitLink] = useState(false);
   const [supervisors, setSupervisors] = useState([]);
@@ -12,13 +16,20 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
   useEffect(() => {
     const fetchSupervisors = async () => {
       try {
-        const supervisorIds = [project.supervisor1, project.supervisor2].filter(Boolean);
+        const supervisorIds = [project.supervisor1, project.supervisor2].filter(
+          Boolean
+        );
+        console.log("Supervisor IDs to fetch:", supervisorIds);
 
         const fetchedSupervisors = await Promise.all(
           supervisorIds.map(async (id) => {
             try {
               const userResponse = await userApi.getUser(id);
-              return userResponse.data?.fullName || `Supervisor with ID: ${id}`;
+              console.log(
+                `Fetched supervisor data for ID ${id}:`,
+                userResponse
+              );
+              return userResponse.fullName || `Supervisor with ID: ${id}`;
             } catch (error) {
               console.error(`Error fetching supervisor with ID ${id}:`, error);
               return `Supervisor with ID: ${id}`;
@@ -26,6 +37,7 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
           })
         );
 
+        console.log("Fetched Supervisors:", fetchedSupervisors);
         setSupervisors(fetchedSupervisors);
       } catch (error) {
         console.error("Error fetching supervisors:", error);
@@ -33,12 +45,6 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
     };
 
     fetchSupervisors();
-
-    // Disable scrolling when popup is open
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "unset";
-    };
   }, [project]);
 
   const handleSaveGitLink = async () => {
@@ -77,7 +83,7 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
     if (studentEmails) {
       const subject = encodeURIComponent(`Regarding Project: ${project.title}`);
       const body = encodeURIComponent(
-        `Dear students,\n\nI hope this email finds you well. I wanted to discuss your project "${project.title}".\n\nBest regards,\n[Your Name]`
+        `Dear students,\n\nI hope this email finds you well. I wanted to discuss your project "${project.title}".\n\nBest regards,\n${user?.fullName}`
       );
 
       window.location.href = `mailto:${studentEmails}?subject=${subject}&body=${body}`;
@@ -133,22 +139,28 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
                   Students
                 </h3>
                 <div className="space-y-4">
-                  {[project.Student1, project.Student2].map((student, index) => (
-                    student && (
-                      <div
-                        key={index}
-                        className="bg-blue-50 rounded-md p-4 flex flex-col gap-2"
-                      >
-                        <p className="font-semibold text-gray-800">
-                          {student.fullName}
-                        </p>
-                        <p className="text-sm text-gray-500">ID: {student.ID}</p>
-                        <p className="text-sm text-gray-500">
-                          Email: {student.Email || student.email || "No email provided"}
-                        </p>
-                      </div>
-                    )
-                  ))}
+                  {[project.Student1, project.Student2].map(
+                    (student, index) =>
+                      student && (
+                        <div
+                          key={index}
+                          className="bg-blue-50 rounded-md p-4 flex flex-col gap-2"
+                        >
+                          <p className="font-semibold text-gray-800">
+                            {student.fullName}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            ID: {student.ID}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            Email:{" "}
+                            {student.Email ||
+                              student.email ||
+                              "No email provided"}
+                          </p>
+                        </div>
+                      )
+                  )}
                 </div>
                 <Button
                   onClick={handleEmailStudents}
@@ -159,7 +171,10 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
               </div>
 
               {/* Personal Notes */}
-              {userRole === "Supervisor" && (
+              {(userRole === "Admin" ||
+                (userRole === "Supervisor" &&
+                  (project.supervisor1 === user?.id ||
+                    project.supervisor2 === user?.id))) && (
                 <div>
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">
                     Personal Notes
@@ -191,7 +206,9 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
                 <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                   <div>
                     <p className="text-gray-500">Project Code</p>
-                    <p className="text-gray-800 font-medium">{project.projectCode}</p>
+                    <p className="text-gray-800 font-medium">
+                      {project.projectCode}
+                    </p>
                   </div>
                   <div>
                     <p className="text-gray-500">Part</p>
@@ -201,7 +218,9 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
                     <p className="text-gray-500">Deadline</p>
                     <p className="text-gray-800 font-medium">
                       {project.deadline
-                        ? new Date(project.deadline._seconds * 1000).toLocaleDateString()
+                        ? new Date(
+                            project.deadline._seconds * 1000
+                          ).toLocaleDateString()
                         : "No deadline provided"}
                     </p>
                   </div>
@@ -244,21 +263,22 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
                       </div>
                     )}
                   </div>
-                  <div className="col-span-2 bg-yellow-50 p-4 rounded-md">
-                    <p className="text-gray-500 font-semibold">Supervisors</p>
-                    {supervisors.length > 0 ? (
-                      supervisors.map((supervisor, index) => (
-                        <p key={index} className="text-gray-800 font-medium mt-1">
-                          {supervisor}
-                        </p>
-                      ))
-                    ) : (
-                      <p className="text-gray-600">No supervisors assigned.</p>
-                    )}
-                  </div>
                 </div>
               </div>
-
+              <div className="col-span-2 bg-yellow-50 p-4 rounded-md">
+                <h3 className="text-lg font-semibold text-gray-700 mb-3">
+                  Supervisors
+                </h3>
+                {supervisors.length > 0 ? (
+                  supervisors.map((supervisor, index) => (
+                    <p key={index} className="text-gray-800 font-medium mt-1">
+                      {supervisor}
+                    </p>
+                  ))
+                ) : (
+                  <p className="text-gray-600">No supervisors assigned.</p>
+                )}
+              </div>
               {/* Special Notes */}
               <div className="bg-green-50 rounded-md p-6 shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-700 mb-3">
