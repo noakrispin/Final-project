@@ -10,7 +10,9 @@ const ProjectDetailsPopup = ({
   saveNotesToBackend,
   userRole,
 }) => {
-  const [personalNotes, setPersonalNotes] = useState(project.personalNotes || "");
+  const [personalNotes, setPersonalNotes] = useState(
+    project.personalNotes || ""
+  );
   const [gitLink, setGitLink] = useState(project.gitLink || "");
   const [isEditingGitLink, setIsEditingGitLink] = useState(false);
 
@@ -92,7 +94,9 @@ const ProjectDetailsPopup = ({
                         <p className="font-semibold text-gray-800">
                           {student.name}
                         </p>
-                        <p className="text-base text-gray-500">ID: {student.id}</p>
+                        <p className="text-base text-gray-500">
+                          ID: {student.id}
+                        </p>
                       </div>
                       <p className="text-base text-gray-600">{student.email}</p>
                     </div>
@@ -148,11 +152,16 @@ const ProjectDetailsPopup = ({
                     <p className="text-gray-800 font-medium">{project.part}</p>
                   </div>
                   <div>
-                    <p className=" text-gray-500">Deadline</p>
+                    <p className="text-gray-500">Deadline</p>
                     <p className="text-gray-800 font-medium">
-                      {project.deadline}
+                      {project.deadline
+                        ? new Date(
+                            project.deadline._seconds * 1000
+                          ).toLocaleDateString()
+                        : "No deadline provided"}
                     </p>
                   </div>
+
                   <div>
                     <p className=" text-gray-500">Git Link</p>
                     {isEditingGitLink ? (
@@ -173,7 +182,6 @@ const ProjectDetailsPopup = ({
                           </Button>
                         </div>
                       </div>
-                    
                     ) : gitLink ? (
                       <a
                         href={gitLink}

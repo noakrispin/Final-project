@@ -65,20 +65,6 @@ const MyProjectsReview = () => {
           console.warn("No evaluations found.");
         }
   
-        // Map evaluations into a dictionary based on projectCode
-        const evaluationsMapped = safeEvaluationsData.reduce((acc, evaluation) => {
-          if (!evaluation.projectCode || !evaluation.grades) {
-            console.warn("Skipping invalid evaluation:", evaluation);
-            return acc;
-          }
-  
-          // Map grades to projectCode
-          acc[evaluation.projectCode] = evaluation.grades;
-          return acc;
-        }, {});
-  
-        console.log("Mapped Evaluations:", evaluationsMapped);
-  
         // Format project data with fallback logic for missing fields
         const formattedProjects = projectsData.map((project) => ({
           ...project,
@@ -97,7 +83,7 @@ const MyProjectsReview = () => {
   
         // Update state
         setProjects(formattedProjects);
-        setGrades(evaluationsMapped);
+        setGrades(safeEvaluationsData); // Pass raw evaluations data
       } catch (err) {
         console.error("Error fetching data:", err);
   
@@ -115,6 +101,7 @@ const MyProjectsReview = () => {
   
     fetchData();
   }, [user]);
+  
   
 
   const isDeadlinePassed = (deadline) => {
