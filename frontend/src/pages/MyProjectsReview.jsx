@@ -11,7 +11,6 @@ import { formatDate } from "../utils/dateUtils";
 
 const TABS = ["My Projects", "Other Projects"];
 
-
 const MyProjectsReview = () => {
   const [activeTab, setActiveTab] = useState(TABS[0]);
   const [projectsFilter, setProjectsFilter] = useState("All");
@@ -21,7 +20,7 @@ const MyProjectsReview = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
-  
+
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -41,28 +40,22 @@ const MyProjectsReview = () => {
         console.error("User or Evaluator ID is missing.");
         return;
       }
-  
+
       try {
         setIsLoading(true);
         console.log("Fetching data...");
-  
+
         // Fetch all projects and evaluations in parallel
         const [projectsData, evaluationsData] = await Promise.all([
           projectsApi.getAllProjects(),
           formsApi.getEvaluationsByEvaluator(user.id),
         ]);
-  
+        console.log("Evaluations Data from API:", evaluationsData);
         console.log("Projects Data:", projectsData);
-        console.log("Evaluations Data:", evaluationsData);
-  
+        
         // Ensure evaluationsData is an array
-        const safeEvaluationsData = Array.isArray(evaluationsData)
-          ? evaluationsData
-          : [];
-        if (!safeEvaluationsData.length) {
-          console.warn("No evaluations found.");
-        }
-  
+        const evaluationsArray = Array.isArray(evaluationsData) ? evaluationsData : [];
+
         // Format project data with fallback logic for missing fields
         const formattedProjects = projectsData.map((project) => ({
           ...project,
@@ -76,31 +69,29 @@ const MyProjectsReview = () => {
             id: String(student.id), // Ensure student ID is a string
           })),
         }));
-  
+
         console.log("Formatted Projects:", formattedProjects);
-  
+
         // Update state
         setProjects(formattedProjects);
-        setGrades(safeEvaluationsData); // Pass raw evaluations data
+        setGrades(evaluationsArray);
       } catch (err) {
         console.error("Error fetching data:", err);
-  
+
         // Handle error more explicitly if the response contains error details
         if (err.response) {
           console.error("Response data:", err.response.data);
           console.error("Response status:", err.response.status);
         }
-  
+
         setError("Failed to fetch data. Please try again later.");
       } finally {
         setIsLoading(false);
       }
     };
-  
+
     fetchData();
   }, [user]);
-  
-  
 
   const isDeadlinePassed = (deadline) => {
     if (!deadline) return false; // Return false if deadline is missing
@@ -191,7 +182,6 @@ const MyProjectsReview = () => {
     setSelectedProject(null);
   };
 
-  
   const myProjectColumns = useMemo(
     () => [
       {
@@ -241,16 +231,14 @@ const MyProjectsReview = () => {
         key: "presentationGrade",
         header: "Presentation Grade",
         className: "text-lg text-center",
-        render: (_, project) =>
-          renderGradeCell(project, "presentation", grades, user?.id, isDeadlinePassed),
+        render: (_, project) => renderGradeCell(project, "presentation"),
         sortable: true,
       },
       {
         key: "supervisorGrade",
         header: "Supervisor Grade",
         className: "text-lg text-center",
-        render: (_, project) =>
-          renderGradeCell(project, "supervisor", grades, user?.id, isDeadlinePassed),
+        render: (_, project) => renderGradeCell(project, "supervisor"),
         sortable: true,
       },
       {
@@ -265,7 +253,13 @@ const MyProjectsReview = () => {
     [grades, user]
   );
 
-  const renderGradeCell = (project, gradeType, grades, userId, isDeadlinePassed) => {
+  const renderGradeCell = (
+    project,
+    gradeType,
+    grades,
+    userId,
+    isDeadlinePassed
+  ) => {
     const grade = getGrade(grades, project.projectCode, gradeType);
     if (grade === null) {
       return isDeadlinePassed(project.deadline) ? (
@@ -283,7 +277,6 @@ const MyProjectsReview = () => {
     }
     return <span>{grade}</span>;
   };
-
 
   if (isLoading) return <div className="text-center mt-10">Loading...</div>;
   if (error)
@@ -351,7 +344,7 @@ const MyProjectsReview = () => {
 
           <Table
             data={projects}
-            evaluationsMapped={grades}
+            apiResponse={grades} // Pass the full evaluationsData array
             userId={user?.id}
             isDeadlinePassed={isDeadlinePassed}
             columns={myProjectColumns}
@@ -362,11 +355,11 @@ const MyProjectsReview = () => {
 
       {selectedProject && (
         <ProjectDetailsPopup
-        project={selectedProject}
-        onClose={handleClosePopup}
-        api={projectsApi}
-        userRole={user?.role}
-      />
+          project={selectedProject}
+          onClose={handleClosePopup}
+          api={projectsApi}
+          userRole={user?.role}
+        />
       )}
     </div>
   );

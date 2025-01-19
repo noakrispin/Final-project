@@ -449,6 +449,11 @@ module.exports = {
                 .where("evaluatorID", "==", evaluatorID)
                 .get();
 
+            console.log(
+                `Query for form ${formDoc.id} returned ${evaluationsSnapshot.size} evaluations.`
+            );
+            
+
             if (!evaluationsSnapshot.empty) {
                 evaluationsSnapshot.forEach((doc) => {
                     console.log(`Evaluation for form ${formDoc.id}:`, doc.data());
@@ -469,7 +474,8 @@ module.exports = {
         console.error("Error fetching evaluations:", error.message);
         res.status(500).json({ message: "Failed to fetch evaluations." });
     }
-}
+},
+
 
 
 
