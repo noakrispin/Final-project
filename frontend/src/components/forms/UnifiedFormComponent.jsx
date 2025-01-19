@@ -2,181 +2,244 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import FormField from "./FormField";
-import { mockApi } from "../../services/mockApi";
 import { Button } from "../ui/Button";
+import { formsApi } from "../../services/formAPI";
 
 export default function UnifiedFormComponent({
   formTitle,
   formDescription,
-  formFields,
   submitEndpoint,
   students = [],
   projectCode,
   projectName,
+  formID,
 }) {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState(() => {
-    const initialData = formFields.reduce((acc, field) => {
-      acc[field.name] = field.defaultValue || "";
-      return acc;
-    }, {});
-
-    // Initialize student-specific fields
-    students.forEach((student, index) => {
-      formFields
-        .filter((question) => question.evaluates === "student")
-        .forEach((question) => {
-          const fieldName = `student${index + 1}_${question.name}`;
-          initialData[fieldName] = "";
-        });
-    });
-
-    return initialData;
-  });
-
+  const [generalQuestions, setGeneralQuestions] = useState([]);
+  const [studentQuestions, setStudentQuestions] = useState([]);
+  const [formData, setFormData] = useState({});
   const [progress, setProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false); // Admin edit mode toggle
 
   useEffect(() => {
-    if (!user) navigate("/login");
-    else if (user.role !== "Supervisor" && user.role !== "Admin") navigate("/");
-  }, [user, navigate]);
+    if (!user) {
+      navigate("/login");
+    } else if (formID) {
+      console.log("UnifiedFormComponent received formID:", formID); // Debug log
+      fetchFormData();
+    } else {
+      console.error("Missing formID for fetching form data.");
+    }
+  }, [user, formID]);
 
-  // Fetch required questions for the specific form type
-  const fetchRequiredQuestions = async (formType) => {
-    const questions = await mockApi.getQuestions(formType);
-    return questions.filter((q) => q.required && !q.disabled);
+  const fetchFormData = async () => {
+    try {
+      if (!formID) {
+        throw new Error("formID is undefined!");
+      }
+
+      console.log("Fetching questions for formID:", formID);
+      const questions = await formsApi.getQuestions(formID);
+      console.log("Fetched questions:", questions);
+
+      if (!questions || questions.length === 0) {
+        console.error(`No questions found for this formID: ${formID}`);
+        return;
+      }
+
+      const formattedQuestions = questions
+        .map((q) => ({
+          name: q.questionID,
+          label: q.title,
+          description: q.description,
+          type: q.response_type, // Ensure this is passed correctly
+          required: q.required,
+          weight: q.weight,
+          order: q.order,
+          reference: q.reference,
+        }))
+        .sort((a, b) => a.order - b.order); // Sort by order property
+
+      setGeneralQuestions(
+        formattedQuestions.filter((q) => q.reference === "general")
+      );
+      setStudentQuestions(
+        formattedQuestions.filter((q) => q.reference === "student")
+      );
+
+      await fetchLastResponse(formattedQuestions);
+    } catch (error) {
+      console.error("Error fetching form data:", error);
+    }
   };
 
-  // Calculate progress circle
+  const fetchLastResponse = async (questions) => {
+    try {
+      console.log(
+        `Fetching last response for formID: ${formID}, evaluatorID: ${user?.id}, projectCode: ${projectCode}`
+      );
+      const lastResponse = await formsApi.getLastResponse(
+        formID,
+        user?.id,
+        projectCode
+      );
+
+      if (!lastResponse || !lastResponse.general || !lastResponse.students) {
+        console.log("No last response found for the evaluator and project.");
+        initializeFormData(questions);
+        return;
+      }
+
+      console.log("Fetched last response:", lastResponse);
+
+      const initialData = {};
+
+      // Populate general questions
+      questions
+        .filter((q) => q.reference === "general")
+        .forEach((field) => {
+          initialData[field.name] = lastResponse.general[field.name] || "";
+        });
+
+      // Populate student-specific questions
+      students.forEach((student) => {
+        questions
+          .filter((q) => q.reference === "student")
+          .forEach((field) => {
+            const fieldName = `student${student.id}_${field.name}`;
+            initialData[fieldName] =
+              lastResponse.students[student.id]?.[field.name] || "";
+          });
+      });
+
+      console.log("Populated initialData:", initialData);
+      setFormData(initialData); // Update the state with fetched data
+      updateProgress(); // Update the progress bar
+    } catch (error) {
+      console.error("Error fetching last response:", error);
+    }
+  };
+
   useEffect(() => {
-  
-    // Filter for required, editable general fields
-    const generalFields = formFields.filter(
-      (f) => f.required && !f.disabled && !f.evaluates
-    );
+    console.log("Form Data State:", formData);
+  }, [formData]);
 
-    // Generate required, editable student-specific fields
-    const studentFields = students.flatMap((_, index) =>
-      formFields
-        .filter(
-          (f) =>
-            f.required &&
-            f.evaluates === "student" &&
-            !f.disabled
-        )
-        .map((q) => `student${index + 1}_${q.name}`)
-    );
-    
-    // Calculate total required fields (editable and mandatory only)
-    const totalFields = generalFields.length + studentFields.length;
-    
-    // Count valid answers only for required and editable fields
-    const completedFields = [
-      ...generalFields.map((f) => ({ field: f, value: formData[f.name] })),
-      ...studentFields.map((fieldName) => ({
-        field: formFields.find((f) => f.name === fieldName),
-        value: formData[fieldName],
-      })),
-    ].filter(({ field, value }) => {
-      if (value === undefined || value === null) {
-        return false; // Exclude undefined or null values
-      }
-    
-      // Validate number inputs
-      if (field.type === 'number') {
-        const numberValue = Number(value);
-        const min = field.min || 0;
-        const max = field.max || 100;
-        return numberValue >= min && numberValue <= max;
-      }
-    
-      // Validate textarea for minimum 5 words
-      if (field.type === 'textarea' && field.required) {
-        const wordCount = value.trim().split(/\s+/).filter((word) => word).length;
-        return wordCount >= 5;
-      }
-    
-      // Validate general strings
-      if (typeof value === 'string') {
-        return value.trim() !== '';
-      }
-    
-      // Default to valid for other types
-      return true;
-    }).length;
-    
-    
-    // Calculate progress as a percentage of completed required fields
-    const calculatedProgress = Math.round(
-      (completedFields / Math.max(totalFields, 1)) * 100
-    );
-  
-    setProgress(calculatedProgress);
-  }, [formData, formFields, students]);
+  const initializeFormData = (questions) => {
+    const initialData = questions.reduce((acc, field) => {
+      acc[field.name] = ""; // Initialize empty string for general questions
+      return acc;
+    }, {});
 
-
-  const handleChange = (e) => {
-    const { name, value, type } = e.target;
-    const updatedValue =
-      type === "number"
-        ? value === ""
-          ? ""
-          : Math.max(0, Math.min(100, Number(value)))
-        : value;
-
-    setFormData((prev) => ({ ...prev, [name]: updatedValue }));
-  };
-
-  const calculateWeightedScore = (formData, formFields) => {
-    let totalWeight = 0;
-    let weightedScore = 0;
-
-    formFields.forEach((field) => {
-      if (field.type === "number" && field.weight) {
-        const value = parseFloat(formData[field.name]) || 0;
-        weightedScore += value * field.weight;
-        totalWeight += field.weight;
-      }
+    students.forEach((student) => {
+      questions
+        .filter((q) => q.reference === "student")
+        .forEach((q) => {
+          const fieldName = `student${student.id}_${q.name}`;
+          initialData[fieldName] = ""; // Initialize empty string
+        });
     });
+    
 
-    return totalWeight > 0 ? (weightedScore / totalWeight).toFixed(2) : 0;
+    setFormData(initialData);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const weightedScore = calculateWeightedScore(formData, formFields);
-    try {
-      const result = await mockApi.submitForm(submitEndpoint, {
-        ...formData,
-        weightedScore,
+  
+    if (!isFormValid()) {
+      alert("Please fill in all required fields. Text areas must have at least 5 words.");
+      return;
+    }
+  
+    const responses = {
+      evaluatorID: user.id, // Include evaluatorID here
+      projectCode, // Include the projectCode
+      general: {},
+      students: {},
+    };
+  
+    // Populate general responses
+    generalQuestions.forEach((field) => {
+      responses.general[field.name] = formData[field.name];
+    });
+  
+    // Populate student-specific responses
+    students.forEach((student) => {
+      responses.students[student.id] = {
+        ...formData[`student${student.id}`], // Preserve existing responses for this student
+      };
+  
+      studentQuestions.forEach((field) => {
+        const fieldName = `student${student.id}_${field.name}`;
+        responses.students[student.id][field.name] = formData[fieldName] || responses.students[student.id][field.name] || ""; // Merge existing and new responses
       });
-      if (result.success) {
-        console.log("Form submitted successfully");
-        navigate("/ProjectToReview");
-      } else {
-        console.error("Form submission failed");
-      }
+    });
+  
+    try {
+      console.log("Submitting form data:", responses); // Debug log
+      await formsApi.submitForm(formID, responses); // Pass formID and the complete responses object
+      console.log("Form submitted successfully");
+      navigate("/MyProjectsReview"); // Redirect after successful submission
     } catch (error) {
       console.error("Error submitting form:", error);
     }
   };
+  
 
-  const isFormValid =
-    formFields.every((f) => {
-      return !f.required || formData[f.name]?.toString().trim() !== "";
-    }) &&
-    students.every((_, index) =>
-      formFields
-        .filter((q) => q.evaluates === "student")
-        .every((q) => {
-          const fieldName = `student${index + 1}_${q.name}`;
-          return !q.required || formData[fieldName]?.toString().trim() !== "";
-        })
-    );
+  const updateProgress = () => {
+    const staticFields = ["projectCode", "title", "evaluatorName"];
+  
+    // Combine general and student questions
+    const editableQuestions = [
+      ...generalQuestions.filter(
+        (field) => !staticFields.includes(field.name) && field.required // Include only required general questions
+      ),
+      ...students
+        .flatMap((student) =>
+          studentQuestions.map((field) => ({
+            ...field,
+            dynamicKey: `student${student.id}_${field.name}`, // Generate dynamic keys for student questions
+          }))
+        )
+        .filter((field) => field.required), // Include only required student questions
+    ];
+  
+    const totalEditableFields = editableQuestions.length;
+  
+    const filledEditableFields = editableQuestions.filter((field) => {
+      const key = field.dynamicKey || field.name;
+      const value = formData[key];
+      if (!value || value.toString().trim() === "") return false;
+  
+      // Validate text area with at least 5 words
+      if (field.type === "textarea") {
+        const wordCount = value.trim().split(/\s+/).length;
+        return wordCount >= 5;
+      }
+  
+      return true; // All other types are valid as long as they're not empty
+    }).length;
+  
+    // If the form is pre-filled, set progress to 100%
+    if (filledEditableFields === totalEditableFields) {
+      setProgress(100);
+    } else {
+      setProgress(
+        totalEditableFields > 0
+          ? Math.round((filledEditableFields / totalEditableFields) * 100)
+          : 0
+      );
+    }
+  };
+  
+
+  const isFormValid = () => {
+    return progress === 100;
+  };
 
   const getColor = (progress) => {
     if (progress <= 30) return "stroke-red-500";
@@ -184,8 +247,30 @@ export default function UnifiedFormComponent({
     return "stroke-green-500";
   };
 
+  const handleEditToggle = () => {
+    setIsEditMode((prev) => !prev);
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value, // Update specific field
+    }));
+    updateProgress(); // Recalculate progress
+  };
+
   return (
     <div className="relative p-6">
+      {/* Edit Mode Toggle for Admins */}
+      {user?.role === "Admin" && (
+        <div className="mb-4 flex justify-end">
+          <Button onClick={handleEditToggle} className="bg-blue-500 text-white">
+            {isEditMode ? "Exit Edit Mode" : "Edit Form"}
+          </Button>
+        </div>
+      )}
+
       {/* Interactive Progress Circle */}
       {isVisible && (
         <div className="fixed bottom-4 right-4 bg-white shadow-lg rounded-lg p-3 flex flex-col items-center">
@@ -228,7 +313,6 @@ export default function UnifiedFormComponent({
             </svg>
           )}
           <p className="text-sm font-semibold mt-1">{`Form Progress: ${progress}%`}</p>
-          {console.log("Progress circle rendered with progress:", progress)}
         </div>
       )}
 
@@ -259,7 +343,7 @@ export default function UnifiedFormComponent({
           <FormField
             label="Project Name"
             type="text"
-            name="projectName"
+            name="title"
             value={projectName}
             onChange={handleChange}
             required
@@ -277,53 +361,46 @@ export default function UnifiedFormComponent({
 
           {/* General Fields */}
           <h3 className="text-lg font-bold text-blue-900 mb-4">
-            {`Overall Project Evaluation`}
+            Overall Project Evaluation
           </h3>
-          {formFields
-            .filter((field) => !field.evaluates)
-            .map((field) => (
-              <FormField
-                key={field.name}
-                {...field}
-                value={formData[field.name]}
-                onChange={handleChange}
-              />
-            ))}
+          {generalQuestions?.map((field) => (
+            <FormField
+              key={field.name}
+              {...field}
+              value={formData[field.name]}
+              onChange={handleChange}
+              disabled={isEditMode && user?.role === "Admin"}
+            />
+          ))}
         </div>
 
         {/* Student Evaluation */}
-        {students.length > 0 ? (
-          students.map((student, index) => (
+        {students.length > 0 &&
+          students.map((student) => (
             <div
-              key={`student-${index}`}
+              key={`student-${student.id}`}
               className="p-6 bg-slate-200 border border-blue-100 rounded-lg shadow-sm mb-6"
             >
-              <h3 className="text-lg font-bold text-blue-900 mb-4">
-                {`Evaluation for ${student.name}`}
-              </h3>
-              {formFields
-                .filter((question) => question.evaluates === "student")
-                .map((question) => {
-                  const fieldName = `student${index + 1}_${question.name}`;
-                  return (
-                    <FormField
-                      key={fieldName}
-                      {...question}
-                      name={fieldName}
-                      value={formData[fieldName]}
-                      onChange={handleChange}
-                    />
-                  );
-                })}
+              <h3 className="text-lg font-bold text-blue-900 mb-4">{`Evaluation for ${student.name}`}</h3>
+              {studentQuestions?.map((field) => {
+                const fieldName = `student${student.id}_${field.name}`;
+                return (
+                  <FormField
+                    key={fieldName}
+                    {...field}
+                    name={fieldName}
+                    value={formData[fieldName]}
+                    onChange={handleChange}
+                    disabled={isEditMode && user?.role === "Admin"}
+                  />
+                );
+              })}
             </div>
-          ))
-        ) : (
-          <p></p>
-        )}
+          ))}
 
         {/* Submit Button */}
         <div className="flex justify-center mt-6">
-          <Button type="submit" className="w-64" disabled={!isFormValid}>
+          <Button type="submit" className="w-64" disabled={!isFormValid()}>
             Submit Evaluation
           </Button>
         </div>

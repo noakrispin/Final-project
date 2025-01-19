@@ -13,6 +13,12 @@ const handleError = (error) => {
   return error.message || "An unexpected error occurred.";
 };
 
+const serializeParams = (params) => {
+  return Object.keys(params)
+    .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+    .join("&");
+};
+
 export const api = {
   post: async (endpoint, data) => {
     try {
@@ -36,15 +42,17 @@ export const api = {
     }
   },
 
-  get: async (endpoint) => {
+  get: async (endpoint, params = {}) => {
     try {
-      console.log(`GET Request to: ${BASE_URL}${endpoint}`);
-      const response = await fetch(`${BASE_URL}${endpoint}`, {
+      const queryString = serializeParams(params);
+      const url = queryString ? `${BASE_URL}${endpoint}?${queryString}` : `${BASE_URL}${endpoint}`;
+      console.log(`GET Request to: ${url}`);
+      const response = await fetch(url, {
         headers: {
           ...authHeaders(),
         },
       });
-      console.log(`Response from: ${BASE_URL}${endpoint}`, response);
+      console.log(`Response from: ${url}`, response);
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText || "API GET request failed");

@@ -234,72 +234,56 @@
     },
     {
         "name": "organizationComments",
-        "label": "Comments on organization",
+        "label": "Comments on organizing the presentation",
         "type": "textarea",
         "required": true,
         "form": "PresentationFormA",
         "weight": 0
     },
     {
-        "name": "systemPresentationScore",
-        "label": "Quality of the presentation of the system",
+        "name": "presentationContentScore",
+        "label": "Quality of the presentation content",
         "type": "number",
         "required": true,
-        "description": "Description of the background, need and solution. Quality of the software demonstration.",
+        "description": "Description and analysis of the current situation, review of challenges, description of the problem and proposed solution, testing plan. Basing information on relevant sources, proper focus and summarization of important topics.",
         "form": "PresentationFormA",
         "weight": 0.3
     },
     {
-        "name": "systemPresentationComments",
-        "label": "Comments on system presentation",
+        "name": "presentationContentComments",
+        "label": "Comments on presentation content",
         "type": "textarea",
         "required": true,
         "form": "PresentationFormA",
         "weight": 0
     },
     {
-        "name": "projectReviewScore",
-        "label": "Quality of the project review",
+        "name": "slidesScore",
+        "label": "Quality of presentation slides",
         "type": "number",
         "required": true,
-        "description": "Project summary, review of challenges, presentation of insights.",
+        "description": "Slides are easily readable (text size, color, and density), clarity of graphics and diagrams, overall quality of visibility.",
+        "form": "PresentationFormA",
+        "weight": 0.2
+    },
+    {
+        "name": "slidesComments",
+        "label": "Comments on project presentation slides",
+        "type": "textarea",
+        "required": true,
+        "form": "PresentationFormA",
+        "weight": 0
+    },
+    {
+        "name": "generalScore",
+        "label": "General Evaluation of the presentation",
+        "type": "number",
+        "required": true,
+        "description": "General impression, difficulty and scope of the project, use of a special approach.",
         "form": "PresentationFormA",
         "weight": 0.1
     },
-    {
-        "name": "projectReviewComments",
-        "label": "Comments on project review",
-        "type": "textarea",
-        "required": true,
-        "form": "PresentationFormA",
-        "weight": 0
-    },
-    {
-        "name": "visibilityScore",
-        "label": "Quality of the presentation visibility",
-        "type": "number",
-        "required": true,
-        "description": "Slides are easily read (size, color, and density), clarity of graphics presentation.",
-        "form": "PresentationFormA",
-        "weight": 0.20
-    },
-    {
-        "name": "visibilityComments",
-        "label": "Comments on presentation visibility",
-        "type": "textarea",
-        "required": true,
-        "form": "PresentationFormA",
-        "weight": 0
-    },
-    {
-        "name": "overallScore",
-        "label": "Overall Score--------------------is this the general part?  ",
-        "type": "number",
-        "required": true,
-        "description": "Overall score for the project presentation",
-        "form": "PresentationFormA",
-        "weight": 0.10
-    },
+    
     {
         "name": "additionalComments",
         "label": "Additional Comments",
@@ -309,23 +293,23 @@
         "weight": 0
     },
     {
-        "name": "Knowledge",
-        "label": "Level of knowledge and answering questions",
-        "type": "number",
-        "required": true,
-        "description": "Level of knowledge demonstrated and clarity in answering questions.",
-        "form": "PresentationFormA",
-        "weight": 0.10,
-        "evaluates": "student"
-    },
-    {
-        "name": "PresentationSkills",
+        "name": "studentPresentationSkills",
         "label": "Presentation skills",
         "type": "number",
         "required": true,
-        "description": "Clarity, confidence, and delivery of the presentation.",
+        "description": "natural, clear and understandable speech, control of presentation flow, eye contact with the audience.",
         "form": "PresentationFormA",
         "weight": 0.15,
+        "evaluates": "student"
+    },
+    {
+        "name": "studentKnowledge",
+        "label": "Level of knowledge",
+        "type": "number",
+        "required": true,
+        "description": "Level of knowledge and understanding of the various topics, quality of response to audience questions.",
+        "form": "PresentationFormA",
+        "weight": 0.10,
         "evaluates": "student"
     },
     {
@@ -361,7 +345,7 @@
         "weight": 0
     },
     {
-        "name": "systemPresentationScore",
+        "name": "solutionPresentationScore",
         "label": "Solution presentation",
         "type": "number",
         "required": true,
@@ -370,8 +354,8 @@
         "weight": 0.2
     },
     {
-        "name": "systemPresentationComments",
-        "label": "Comments on system presentation",
+        "name": "solutionPresentationComments",
+        "label": "Comments on solution presentation",
         "type": "textarea",
         "required": true,
         "form": "PresentationFormB",
@@ -412,11 +396,11 @@
         "weight": 0
     },
     {
-        "name": "overallScore",
-        "label": "Overall Score--------------------is this the general part?  ",
+        "name": "generalScore",
+        "label": "General Evaluation of the presentation",
         "type": "number",
         "required": true,
-        "description": "Overall score for the project presentation.",
+        "description": "General impression, difficulty and scope of the project, use of a special approach.",
         "form": "PresentationFormB",
         "weight": 0.10
     },
@@ -429,25 +413,26 @@
         "weight": 0
     },
     {
-        "name": "Knowledge",
-        "label": "Level of knowledge and answering questions",
+        "name": "PresentationSkills",
+        "label": "Presentation skills",
         "type": "number",
         "required": true,
-        "description": "Level of knowledge demonstrated and clarity in answering questions.",
+        "description": "Natural, clear and understandable speech, control of the presentation, proficiency in English, eye contact with the audience.",
         "form": "PresentationFormB",
         "weight": 0.15,
         "evaluates": "student"
     },
     {
-        "name": "PresentationSkills",
-        "label": "Presentation skills",
+        "name": "Knowledge",
+        "label": "Level of knowledge and answering questions",
         "type": "number",
         "required": true,
-        "description": "Clarity, confidence, and delivery of the presentation.",
+        "description": "Level of knowledge and understanding of the various topics, quality of response to audience questions.",
         "form": "PresentationFormB",
         "weight": 0.15,
         "evaluates": "student"
     },
+    
     {
         "name": "Comments",
         "label": "Comments on the student performance",
@@ -491,15 +476,6 @@
         "type": "number",
         "required": true,
         "description": "General impression, difficulty and scope of the project, use of a special approach.",
-        "form": "SupervisorForm",
-        "weight": 0.1667
-    },
-    {
-        "name": "overallScore",
-        "label": "Overall Grade",
-        "type": "number",
-        "required": true,
-        "description": "Overall grade for the project.",
         "form": "SupervisorForm",
         "weight": 0.1667
     },

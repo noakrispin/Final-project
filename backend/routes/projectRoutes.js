@@ -5,39 +5,23 @@ const {
   getAllProjects,
   updateProject,
   deleteProject,
-} = require("../utils/firebaseHelper");
+} = require("../controllers/projectController");
 
 const router = express.Router();
 
 // Add a new project
-router.post("/", async (req, res) => {
-  const { projectCode, data } = req.body;
-  const response = await addProject(projectCode, data);
-  res.json(response);
-});
+router.post("/", addProject);
 
 // Get details of a specific project
-router.get("/:projectCode", async (req, res) => {
-  const response = await getProject(req.params.projectCode);
-  res.json(response);
-});
+router.get("/:projectCode", getProject);
 
 // Get all projects
-router.get("/", async (req, res) => {
-  const response = await getAllProjects();
-  res.json(response);
-});
+router.get("/", getAllProjects);
 
 // Update a project
-router.put("/:projectCode", async (req, res) => {
-  const response = await updateProject(req.params.projectCode, req.body);
-  res.json(response);
-});
+router.put("/:projectCode", updateProject);
 
 // Delete a project
-router.delete("/:projectCode", async (req, res) => {
-  const response = await deleteProject(req.params.projectCode);
-  res.json(response);
-});
+router.delete("/:projectCode", deleteProject);
 
 module.exports = router;

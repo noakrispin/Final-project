@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
-import { mockApi } from "../services/mockApi";
+import { projectsApi } from "../services/projectsAPI"; // Updated API import
 import { BlurElements } from "../components/shared/BlurElements";
 import ProjectDetailsPopup from "../components/shared/ProjectDetailsPopup";
 import { Table } from "../components/ui/Table";
@@ -23,9 +23,9 @@ const ProjectsSupervisors = () => {
 
       try {
         setIsLoading(true);
-        const projectsData = await mockApi.getProjects();
+        const projectsData = await projectsApi.getAllProjects(); // Fetch projects from the backend
         const filteredProjects = projectsData.filter(
-          (project) => project.supervisor === user.fullName
+          (project) => project.supervisor1 === user.id || project.supervisor2 === user.id
         );
         setProjects(filteredProjects);
       } catch (err) {
@@ -41,24 +41,26 @@ const ProjectsSupervisors = () => {
 
   const handleProjectClick = useCallback((project) => {
     setSelectedProject(project);
-    setPersonalNotes(project.personalNotes || "");
+    setPersonalNotes(project.specialNotes || "");
   }, []);
 
   const handleClosePopup = () => {
     setSelectedProject(null);
-    setPersonalNotes("");
+    
   };
 
   const handleSaveNotes = async () => {
     if (!selectedProject) return;
 
     try {
-      await mockApi.updateProjectNotes(selectedProject.id, personalNotes);
+      await projectsApi.updateProject(selectedProject.projectCode, {
+        specialNotes: personalNotes,
+      });
 
       setProjects((prevProjects) =>
         prevProjects.map((project) =>
-          project.id === selectedProject.id
-            ? { ...project, personalNotes }
+          project.projectCode === selectedProject.projectCode
+            ? { ...project, specialNotes: personalNotes }
             : project
         )
       );
@@ -66,13 +68,34 @@ const ProjectsSupervisors = () => {
       console.error("Error saving notes:", error);
     }
   };
+  const saveGitLinkToBackend = async (projectId, gitLink) => {
+    try {
+      await projectsApi.updateProject(projectId, { gitLink });
+      alert("Git link updated successfully!");
+    } catch (error) {
+      console.error("Error updating Git link:", error);
+    }
+  };
 
+  const saveNotesToBackend = async (projectId, personalNotes) => {
+    try {
+      await projectsApi.updateProject(projectId, { personalNotes });
+      alert("Notes updated successfully!");
+    } catch (error) {
+      console.error("Error updating personal notes:", error);
+    }
+  };
+  
   const handleEmailStudents = () => {
     if (!selectedProject) return;
 
-    const studentEmails = selectedProject.students
-      .map((student) => student.email)
+    const studentEmails = [
+      selectedProject.Student1?.Email,
+      selectedProject.Student2?.email,
+    ]
+      .filter(Boolean)
       .join(",");
+
     const subject = encodeURIComponent(
       `Regarding Project: ${selectedProject.title}`
     );
@@ -139,6 +162,8 @@ const ProjectsSupervisors = () => {
         header: "Deadline",
         sortable: true,
         className: "text-base",
+        render: (deadline) =>
+          deadline ? new Date(deadline._seconds * 1000).toLocaleDateString() : "N/A",
       },
     ],
     []
@@ -159,8 +184,6 @@ const ProjectsSupervisors = () => {
       <div className="relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="ml-2 mb-6">
-            {" "}
-            {/* Reduced margin-bottom */}
             <h1 className="text-2xl font-bold">{`My Supervised Projects - ${user?.fullName}`}</h1>
             <p className="text-gray-600 text-lg mt-2">
               Here are all the projects currently under your supervision,
@@ -170,8 +193,6 @@ const ProjectsSupervisors = () => {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          {" "}
-          {/* Reduced padding */}
           <Table
             data={projects}
             columns={projectColumns}
@@ -187,16 +208,16 @@ const ProjectsSupervisors = () => {
       </div>
 
       {selectedProject && (
-        <ProjectDetailsPopup
-          project={selectedProject}
-          onClose={handleClosePopup}
-          personalNotes={personalNotes}
-          setPersonalNotes={setPersonalNotes}
-          handleSaveNotes={handleSaveNotes}
-          handleEmailStudents={handleEmailStudents}
-          userRole={user?.role}
-        />
-      )}
+  <ProjectDetailsPopup
+    project={selectedProject}
+    onClose={handleClosePopup}
+    api={projectsApi}
+    userRole={user?.role}
+  />
+)}
+
+
+
     </div>
   );
 };

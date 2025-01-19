@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { mockApi } from "../services/mockApi";
+import { projectsApi } from "../services/projectsAPI";
+import { formsApi } from "../services/formAPI";
 import { BlurElements } from "../components/shared/BlurElements";
 import ProjectDetailsPopup from "../components/shared/ProjectDetailsPopup";
-import { TableOption1, TableOption2 } from "../components/ui/TableOptions";
-import { Button } from "../components/ui/Button";
+import { Table } from "../components/ui/Table";
 import { getGrade } from "../utils/getGrade";
-import { Tooltip } from "react-tooltip";
+import { formatDate } from "../utils/dateUtils";
+
+/////////THE WORKING VERSION!!!!!!!!!!!!!!!!!!
 
 const TABS = ["My Projects", "Other Projects"];
 const FILTERS = ["All", "Part A", "Part B"];
@@ -21,29 +23,12 @@ const MyProjectsReview = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
-  const [selectedTableOption, setSelectedTableOption] = useState("option1");
+
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [formSubmitted, setFormSubmitted] = useState(false);
-
-  const navigateToForm = useCallback(
-    (formType, project, studentName = null) => {
-      const formPath =
-        formType === "presentation"
-          ? `presentation-${project.part.toLowerCase()}`
-          : formType;
-      const queryParams = new URLSearchParams({
-        projectCode: project.projectCode,
-        projectName: project.title,
-        students: JSON.stringify(project.students),
-        studentName: studentName || "",
-      }).toString();
-      navigate(`/evaluation-forms/${formPath}?${queryParams}`);
-    },
-    [navigate]
-  );
 
   useEffect(() => {
     if (location.state?.formSubmitted) {
@@ -54,57 +39,112 @@ const MyProjectsReview = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!user) return;
-
+      if (!user || !user.id) {
+        console.error("User or Evaluator ID is missing.");
+        return;
+      }
+  
       try {
         setIsLoading(true);
-        const [projectsData, gradesData] = await Promise.all([
-          mockApi.getProjects(),
-          mockApi.getGrades(),
+        console.log("Fetching data...");
+  
+        // Fetch all projects and evaluations in parallel
+        const [projectsData, evaluationsData] = await Promise.all([
+          projectsApi.getAllProjects(),
+          formsApi.getEvaluationsByEvaluator(user.id),
         ]);
-
-        const filteredProjects = projectsData.filter(
-          (project) => project.supervisor === user.fullName
-        );
-
-        setProjects(filteredProjects);
-        setGrades(gradesData);
+  
+        console.log("Projects Data:", projectsData);
+        console.log("Evaluations Data:", evaluationsData);
+  
+        // Ensure evaluationsData is an array
+        const safeEvaluationsData = Array.isArray(evaluationsData)
+          ? evaluationsData
+          : [];
+        if (!safeEvaluationsData.length) {
+          console.warn("No evaluations found.");
+        }
+  
+        // Format project data with fallback logic for missing fields
+        const formattedProjects = projectsData.map((project) => ({
+          ...project,
+          deadline: project.deadline?._seconds
+            ? new Date(project.deadline._seconds * 1000)
+            : project.deadline,
+          isSupervisor:
+            project.supervisor1 === user.id || project.supervisor2 === user.id,
+          students: project.students.map((student) => ({
+            ...student,
+            id: String(student.id), // Ensure student ID is a string
+          })),
+        }));
+  
+        console.log("Formatted Projects:", formattedProjects);
+  
+        // Update state
+        setProjects(formattedProjects);
+        setGrades(safeEvaluationsData); // Pass raw evaluations data
       } catch (err) {
         console.error("Error fetching data:", err);
+  
+        // Handle error more explicitly if the response contains error details
+        if (err.response) {
+          console.error("Response data:", err.response.data);
+          console.error("Response status:", err.response.status);
+        }
+  
         setError("Failed to fetch data. Please try again later.");
       } finally {
         setIsLoading(false);
-        setFormSubmitted(false);
       }
     };
-
+  
     fetchData();
-  }, [user, formSubmitted]);
+  }, [user]);
+  
+  
 
   const isDeadlinePassed = (deadline) => {
-    if (!deadline) return false;
-    const [day, month, year] = deadline.split("/");
-    return new Date(`${year}-${month}-${day}`) < new Date();
+    if (!deadline) return false; // No deadline means it's not passed
+
+    let deadlineDate;
+
+    // Handle Firestore Timestamp
+    if (deadline.toDate) {
+      deadlineDate = deadline.toDate();
+    } else if (typeof deadline === "string" || deadline instanceof Date) {
+      deadlineDate = new Date(deadline);
+    } else {
+      console.error("Invalid deadline format:", deadline);
+      return false; // Return false for invalid formats
+    }
+
+    // Check if the deadline has passed
+    return deadlineDate < new Date();
   };
 
   const progressStats = useMemo(() => {
-    const total = projects.length;
-    const graded = projects.filter((project) => {
+    // Filter projects where the evaluator is the supervisor
+    const supervisedProjects = projects.filter(
+      (project) =>
+        project.supervisor1 === user.id || project.supervisor2 === user.id
+    );
+
+    // Total projects to be graded
+    const total = supervisedProjects.length;
+
+    // Count projects with a submitted supervisor grade
+    const graded = supervisedProjects.filter((project) => {
       const supervisorGrade = getGrade(
         grades,
         project.projectCode,
         "supervisor"
       );
-      const presentationGrade = getGrade(
-        grades,
-        project.projectCode,
-        "presentation"
-      );
-      return supervisorGrade !== null && presentationGrade !== null;
+      return supervisorGrade !== null; // Consider it graded if a grade exists
     }).length;
 
     return { graded, total };
-  }, [projects, grades]);
+  }, [projects, grades, user]);
 
   const getProgressBarColor = (progress) => {
     if (progress === 100) return "bg-green-500";
@@ -112,8 +152,41 @@ const MyProjectsReview = () => {
     return "bg-red-500";
   };
 
-  const handleProjectClick = (project) => {
-    setSelectedProject(project);
+  const handleRowClick = (data, isGradeAction) => {
+    if (isGradeAction) {
+      const { gradeType, project, studentName } = data;
+
+      // Dynamically set the formID based on gradeType and project part
+      let formID;
+      if (gradeType === "supervisor") {
+        formID = "SupervisorForm";
+      } else if (gradeType === "presentation") {
+        formID =
+          project.part === "A" ? "PresentationFormA" : "PresentationFormB";
+      } else if (gradeType === "book") {
+        formID =
+          project.part === "A" ? "bookReviewerFormA" : "bookReviewerFormB";
+      }
+
+      // Validate formID
+      if (!formID) {
+        console.error("Invalid formID for gradeType:", gradeType);
+        return; // Prevent navigation if formID is not valid
+      }
+
+      const queryParams = new URLSearchParams({
+        formID, // Pass the resolved formID
+        projectCode: project.projectCode,
+        projectName: project.title,
+        students: JSON.stringify(project.students),
+        studentName: studentName || "",
+      }).toString();
+
+      navigate(`/evaluation-forms/${formID}?${queryParams}`);
+    } else {
+      // Open project details
+      setSelectedProject(data);
+    }
   };
 
   const handleClosePopup = () => {
@@ -138,7 +211,7 @@ const MyProjectsReview = () => {
 
   const saveGitLinkToBackend = async (projectId, gitLink) => {
     try {
-      await mockApi.updateProjectGitLink(projectId, gitLink);
+      await projectsApi.updateProject(projectId, { gitLink });
       setProjects((prevProjects) =>
         prevProjects.map((project) =>
           project.id === projectId ? { ...project, gitLink } : project
@@ -151,7 +224,7 @@ const MyProjectsReview = () => {
 
   const saveNotesToBackend = async (projectId, notes) => {
     try {
-      await mockApi.updateProjectNotes(projectId, notes);
+      await projectsApi.updateProject(projectId, { personalNotes: notes });
       setProjects((prevProjects) =>
         prevProjects.map((project) =>
           project.id === projectId
@@ -162,12 +235,6 @@ const MyProjectsReview = () => {
     } catch (error) {
       console.error("Error saving notes:", error);
     }
-  };
-
-  const toggleTableOption = () => {
-    setSelectedTableOption((prev) =>
-      prev === "option1" ? "option2" : "option1"
-    );
   };
 
   const myProjectColumns = useMemo(
@@ -189,9 +256,10 @@ const MyProjectsReview = () => {
         key: "students",
         header: "Students",
         className: "text-lg text-center",
-        render: (students) => (
-          <span>{students.map((s) => s.name).join(", ")}</span>
-        ),
+        render: (students) =>
+          students && students.length > 0
+            ? students.map((s) => s.name).join(", ")
+            : "No students",
         sortable: true,
       },
       {
@@ -218,84 +286,49 @@ const MyProjectsReview = () => {
         key: "presentationGrade",
         header: "Presentation Grade",
         className: "text-lg text-center",
-        render: (_, project) => {
-          return project.students.map((student) => {
-            const grade = getGrade(
-              grades,
-              project.projectCode,
-              "presentation",
-              student.name
-            );
-            return (
-              <span key={student.name} className="mx-1">
-                {grade !== null ? (
-                  isDeadlinePassed(project.deadline) ? (
-                    <span>{grade}</span>
-                  ) : (
-                    <button
-                      className="text-blue-900 hover:underline cursor-pointer"
-                      onClick={() =>
-                        navigateToForm("presentation", project, student.name)
-                      }
-                    >
-                      {grade || "Grade"}
-                    </button>
-                  )
-                ) : (
-                  "Pending"
-                )}
-              </span>
-            );
-          });
-        },
+        render: (_, project) =>
+          renderGradeCell(project, "presentation", grades, user?.id, isDeadlinePassed),
         sortable: true,
       },
       {
         key: "supervisorGrade",
         header: "Supervisor Grade",
         className: "text-lg text-center",
-        render: (_, project) => {
-          return project.students.map((student) => {
-            const grade = getGrade(
-              grades,
-              project.projectCode,
-              "supervisor",
-              student.name
-            );
-            return (
-              <span key={student.name} className="mx-1">
-                {grade !== null ? (
-                  isDeadlinePassed(project.deadline) ? (
-                    <span>{grade}</span>
-                  ) : (
-                    <button
-                      className="text-blue-900 hover:underline cursor-pointer"
-                      onClick={() =>
-                        navigateToForm("supervisor", project, student.name)
-                      }
-                    >
-                      {grade || "Grade"}
-                    </button>
-                  )
-                ) : (
-                  "Pending"
-                )}
-              </span>
-            );
-          });
-        },
+        render: (_, project) =>
+          renderGradeCell(project, "supervisor", grades, user?.id, isDeadlinePassed),
         sortable: true,
       },
       {
         key: "deadline",
         header: "Deadline",
         className: "text-lg text-center",
-        render: (deadline) => (isDeadlinePassed(deadline) ? "Passed" : deadline),
+        render: (deadline) =>
+          isDeadlinePassed(deadline) ? "Passed" : formatDate(deadline),
         sortable: true,
       },
     ],
-    [grades]
+    [grades, user]
   );
+
+  const renderGradeCell = (project, gradeType, grades, userId, isDeadlinePassed) => {
+    const grade = getGrade(grades, project.projectCode, gradeType);
+    if (grade === null) {
+      return isDeadlinePassed(project.deadline) ? (
+        <span className="text-red-500">Not Submitted</span>
+      ) : (
+        <button
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded"
+          onClick={() =>
+            handleRowClick({ gradeType, project, studentName: null }, true)
+          }
+        >
+          Grade
+        </button>
+      );
+    }
+    return <span>{grade}</span>;
+  };
+
 
   if (isLoading) return <div className="text-center mt-10">Loading...</div>;
   if (error)
@@ -332,7 +365,9 @@ const MyProjectsReview = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="ml-2 mb-11">
-            <h1 className="text-2xl font-bold">My Projects To Review</h1>
+            <h1 className="text-2xl font-bold">
+              My Projects To Review - {user.fullName}
+            </h1>
             <p className="text-gray-600 text-lg mt-2">
               Projects you need to grade as a supervisor
             </p>
@@ -344,43 +379,29 @@ const MyProjectsReview = () => {
                   )}`}
                   style={{
                     width: `${
-                      (progressStats.graded / progressStats.total) * 100
+                      progressStats.total > 0
+                        ? (progressStats.graded / progressStats.total) * 100
+                        : 0
                     }%`,
                   }}
                 ></div>
               </div>
               <p className="text-base text-gray-600 mt-2 text-center">
-                {`${progressStats.graded}/${progressStats.total} Final Grades Submitted`}
+                {progressStats.total > 0
+                  ? `${progressStats.graded}/${progressStats.total} Supervisor Grades Submitted`
+                  : "No projects to grade"}
               </p>
             </div>
           </div>
 
-          <Button
-            onClick={toggleTableOption}
-            variant="outline"
-            size="sm"
-            className="mb-4"
-          >
-            Toggle Table View
-          </Button>
-
-          {selectedTableOption === "option1" ? (
-            <TableOption1
-              data={projects}
-              columns={myProjectColumns}
-              onRowClick={handleProjectClick}
-              grades={grades}
-              navigateToForm={navigateToForm} // Pass the navigation function
-            />
-          ) : (
-            <TableOption2
-              data={projects}
-              columns={myProjectColumns}
-              onRowClick={handleProjectClick}
-              grades={grades}
-              navigateToForm={navigateToForm} // Pass the navigation function
-            />
-          )}
+          <Table
+            data={projects}
+            evaluationsMapped={grades}
+            userId={user?.id}
+            isDeadlinePassed={isDeadlinePassed}
+            columns={myProjectColumns}
+            onRowClick={handleRowClick}
+          />
         </div>
       </div>
 
@@ -399,3 +420,4 @@ const MyProjectsReview = () => {
 };
 
 export default MyProjectsReview;
+
