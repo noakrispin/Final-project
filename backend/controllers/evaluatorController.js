@@ -58,40 +58,6 @@ exports.getEvaluator = async (req, res) => {
   }
 };
 
-// Get all projects associated with a specific evaluator ID
-exports.getEvaluatorProjects = async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const evaluatorsSnapshot = await admin
-      .firestore()
-      .collection("evaluators")
-      .where("evaluatorID", "==", id)
-      .get();
-
-    if (evaluatorsSnapshot.empty) {
-      return res.status(404).json({ success: false, error: "No projects found for this evaluator" });
-    }
-
-    const projectCodes = evaluatorsSnapshot.docs.map((doc) => doc.data().projectCode);
-
-    const projectsSnapshot = await admin
-      .firestore()
-      .collection("projects")
-      .where(admin.firestore.FieldPath.documentId(), "in", projectCodes)
-      .get();
-
-    const projects = projectsSnapshot.docs.map((doc) => ({
-      projectCode: doc.id,
-      ...doc.data(),
-    }));
-
-    res.status(200).json({ success: true, data: projects });
-  } catch (error) {
-    console.error("Error fetching evaluator projects:", error.message);
-    res.status(500).json({ success: false, error: "Failed to fetch evaluator projects" });
-  }
-};
 
 // Get all evaluators
 exports.getAllEvaluators = async (req, res) => {
