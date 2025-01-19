@@ -49,25 +49,6 @@ const ProjectsSupervisors = () => {
     
   };
 
-  // const handleSaveNotes = async () => {
-  //   if (!selectedProject) return;
-
-  //   try {
-  //     await projectsApi.updateProject(selectedProject.projectCode, {
-  //       specialNotes: personalNotes,
-  //     });
-
-  //     setProjects((prevProjects) =>
-  //       prevProjects.map((project) =>
-  //         project.projectCode === selectedProject.projectCode
-  //           ? { ...project, specialNotes: personalNotes }
-  //           : project
-  //       )
-  //     );
-  //   } catch (error) {
-  //     console.error("Error saving notes:", error);
-  //   }
-  // };
   
   const projectColumns = useMemo(
     () => [
@@ -178,8 +159,6 @@ const ProjectsSupervisors = () => {
     userRole={user?.role}
   />
 )}
-
-
 
     </div>
   );

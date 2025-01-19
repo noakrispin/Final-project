@@ -128,7 +128,7 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
                 <h3 className="text-lg font-semibold text-gray-700 mb-2">
                   Description
                 </h3>
-                <p className="text-gray-600 text-base leading-relaxed">
+                <p className="text-gray-700 text-base leading-relaxed">
                   {project.description || "No description available."}
                 </p>
               </div>
@@ -141,23 +141,26 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
                 <div className="space-y-4">
                   {[project.Student1, project.Student2].map(
                     (student, index) =>
+                      
                       student && (
                         <div
                           key={index}
                           className="bg-blue-50 rounded-md p-4 flex flex-col gap-2"
                         >
-                          <p className="font-semibold text-gray-800">
+                          <p className="font-semibold text-lg text-gray-800">
                             {student.fullName}
                           </p>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-base text-gray-700">
                             ID: {student.ID}
                           </p>
-                          <p className="text-sm text-gray-500">
+                          <div>
+                          <p className="text-base text-gray-700">
                             Email:{" "}
                             {student.Email ||
                               student.email ||
                               "No email provided"}
                           </p>
+                          </div>
                         </div>
                       )
                   )}

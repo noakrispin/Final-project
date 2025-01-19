@@ -197,7 +197,9 @@ const OtherProjectsReview = () => {
                     (progressStats.graded / progressStats.total) * 100
                   )}`}
                   style={{
-                    width: `${(progressStats.graded / progressStats.total) * 100}%`,
+                    width: `${
+                      (progressStats.graded / progressStats.total) * 100
+                    }%`,
                   }}
                 ></div>
               </div>
@@ -218,48 +220,8 @@ const OtherProjectsReview = () => {
       {selectedProject && (
         <ProjectDetailsPopup
           project={selectedProject}
-          onClose={() => setSelectedProject(null)}
-          handleEmailStudents={() => {
-            if (!selectedProject) return;
-
-            const studentEmails = selectedProject.students
-              .map((student) => student.email)
-              .join(",");
-            const subject = encodeURIComponent(
-              `Regarding Project: ${selectedProject.title}`
-            );
-            const body = encodeURIComponent(
-              `Dear students,\n\nI hope this email finds you well. I wanted to discuss your project "${selectedProject.title}".\n\nBest regards,\n${user.fullName}`
-            );
-
-            window.location.href = `mailto:${studentEmails}?subject=${subject}&body=${body}`;
-          }}
-          saveGitLinkToBackend={async (projectId, gitLink) => {
-            try {
-              await mockApi.updateProjectGitLink(projectId, gitLink);
-              setProjects((prevProjects) =>
-                prevProjects.map((project) =>
-                  project.id === projectId ? { ...project, gitLink } : project
-                )
-              );
-            } catch (error) {
-              console.error("Error saving Git link:", error);
-            }
-          }}
-          saveNotesToBackend={async (projectId, notes) => {
-            try {
-              await mockApi.updateProjectNotes(projectId, notes);
-              setProjects((prevProjects) =>
-                prevProjects.map((project) =>
-                  project.id === projectId
-                    ? { ...project, personalNotes: notes }
-                    : project
-                )
-              );
-            } catch (error) {
-              console.error("Error saving notes:", error);
-            }
-          }}
+          onClose={handleClosePopup}
+          api={projectsApi}
           userRole={user?.role}
         />
       )}
