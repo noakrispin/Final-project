@@ -46,7 +46,7 @@ const ProjectsSupervisors = () => {
 
   const handleClosePopup = () => {
     setSelectedProject(null);
-    setPersonalNotes("");
+    
   };
 
   const handleSaveNotes = async () => {
@@ -211,12 +211,12 @@ const ProjectsSupervisors = () => {
   <ProjectDetailsPopup
     project={selectedProject}
     onClose={handleClosePopup}
-    handleEmailStudents={handleEmailStudents}
-    saveGitLinkToBackend={saveGitLinkToBackend}
-    saveNotesToBackend={saveNotesToBackend}
+    api={projectsApi}
     userRole={user?.role}
   />
 )}
+
+
 
     </div>
   );

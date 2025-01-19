@@ -47,24 +47,31 @@ const getUser = async (req, res) => {
       return res.status(404).json({ success: false, error: "User not found." });
     }
 
+    // Extract the necessary fields
+    const { fullName, role } = userResponse.data;
+
     // Fetch supervisorDetails subcollection (if exists)
     let supervisorDetails = null;
-    if (userResponse.data.role === "Supervisor") {
+    if (role === "Supervisor") {
       const supervisorData = await getSubcollection("users", req.params.id, "supervisorDetails");
       supervisorDetails = supervisorData.success ? supervisorData.data : null;
     }
 
     // Fetch adminDetails subcollection (if exists)
     let adminDetails = null;
-    if (userResponse.data.role === "Admin") {
+    if (role === "Admin") {
       const adminData = await getSubcollection("users", req.params.id, "adminDetails");
       adminDetails = adminData.success ? adminData.data : null;
     }
 
+    // Respond with user details, including fullName
     res.json({
       success: true,
       data: {
-        ...userResponse.data,
+        id: req.params.id,
+        fullName,
+        email,
+        role,
         supervisorDetails,
         adminDetails,
       },
@@ -74,5 +81,6 @@ const getUser = async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch user." });
   }
 };
+
 
 module.exports = { addUser, getUser };

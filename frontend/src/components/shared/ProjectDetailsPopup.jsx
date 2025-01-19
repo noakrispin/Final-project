@@ -1,45 +1,93 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "../ui/Button";
 import { X, Edit3 } from "lucide-react";
+import { userApi } from "../../services/userAPI.js";
 
-const ProjectDetailsPopup = ({
-  project,
-  onClose,
-  handleEmailStudents,
-  saveGitLinkToBackend,
-  saveNotesToBackend,
-  userRole,
-}) => {
-  const [personalNotes, setPersonalNotes] = useState(
-    project.personalNotes || ""
-  );
+const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
+  const [personalNotes, setPersonalNotes] = useState(project.personalNotes || "");
   const [gitLink, setGitLink] = useState(project.gitLink || "");
   const [isEditingGitLink, setIsEditingGitLink] = useState(false);
+  const [supervisors, setSupervisors] = useState([]);
 
   useEffect(() => {
+    const fetchSupervisors = async () => {
+      try {
+        const supervisorIds = [project.supervisor1, project.supervisor2].filter(Boolean);
+
+        const fetchedSupervisors = await Promise.all(
+          supervisorIds.map(async (id) => {
+            try {
+              const userResponse = await userApi.getUser(id);
+              return userResponse.data?.fullName || `Supervisor with ID: ${id}`;
+            } catch (error) {
+              console.error(`Error fetching supervisor with ID ${id}:`, error);
+              return `Supervisor with ID: ${id}`;
+            }
+          })
+        );
+
+        setSupervisors(fetchedSupervisors);
+      } catch (error) {
+        console.error("Error fetching supervisors:", error);
+      }
+    };
+
+    fetchSupervisors();
+
+    // Disable scrolling when popup is open
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "unset";
     };
-  }, []);
+  }, [project]);
 
   const handleSaveGitLink = async () => {
     if (gitLink.trim()) {
-      await saveGitLinkToBackend(project.id, gitLink);
-      alert("Git link saved successfully!");
-      setIsEditingGitLink(false);
+      try {
+        await api.updateProject(project.id, { gitLink });
+        alert("Git link saved successfully!");
+        setIsEditingGitLink(false);
+      } catch (error) {
+        console.error("Error saving Git link:", error);
+        alert("Failed to save Git link.");
+      }
     } else {
       alert("Please enter a valid Git link.");
     }
   };
 
   const handleSaveNotes = async () => {
-    await saveNotesToBackend(project.id, personalNotes);
-    alert("Notes saved successfully!");
+    try {
+      await api.updateProject(project.id, { personalNotes });
+      alert("Notes updated successfully!");
+    } catch (error) {
+      console.error("Error saving notes:", error);
+      alert("Failed to save notes.");
+    }
+  };
+
+  const handleEmailStudents = () => {
+    const studentEmails = [
+      project.Student1?.Email || project.Student1?.email,
+      project.Student2?.Email || project.Student2?.email,
+    ]
+      .filter(Boolean)
+      .join(",");
+
+    if (studentEmails) {
+      const subject = encodeURIComponent(`Regarding Project: ${project.title}`);
+      const body = encodeURIComponent(
+        `Dear students,\n\nI hope this email finds you well. I wanted to discuss your project "${project.title}".\n\nBest regards,\n[Your Name]`
+      );
+
+      window.location.href = `mailto:${studentEmails}?subject=${subject}&body=${body}`;
+    } else {
+      alert("No student emails available.");
+    }
   };
 
   return (
-    <>
+    <div>
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
@@ -85,21 +133,21 @@ const ProjectDetailsPopup = ({
                   Students
                 </h3>
                 <div className="space-y-4">
-                  {project.students.map((student, index) => (
-                    <div
-                      key={index}
-                      className="bg-blue-50 rounded-md p-4 flex items-center justify-between"
-                    >
-                      <div>
+                  {[project.Student1, project.Student2].map((student, index) => (
+                    student && (
+                      <div
+                        key={index}
+                        className="bg-blue-50 rounded-md p-4 flex flex-col gap-2"
+                      >
                         <p className="font-semibold text-gray-800">
-                          {student.name}
+                          {student.fullName}
                         </p>
-                        <p className="text-base text-gray-500">
-                          ID: {student.id}
+                        <p className="text-sm text-gray-500">ID: {student.ID}</p>
+                        <p className="text-sm text-gray-500">
+                          Email: {student.Email || student.email || "No email provided"}
                         </p>
                       </div>
-                      <p className="text-base text-gray-600">{student.email}</p>
-                    </div>
+                    )
                   ))}
                 </div>
                 <Button
@@ -127,7 +175,7 @@ const ProjectDetailsPopup = ({
                     onClick={handleSaveNotes}
                     className="mt-3 w-full lg:w-auto bg-green-500 hover:bg-green-600 text-white text-base font-medium rounded-md px-4 py-2 shadow-sm transition"
                   >
-                    Save Notes
+                    Submit Notes
                   </Button>
                 </div>
               )}
@@ -142,28 +190,23 @@ const ProjectDetailsPopup = ({
                 </h3>
                 <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                   <div>
-                    <p className=" text-gray-500">Project Code</p>
-                    <p className="text-gray-800 font-medium">
-                      {project.projectCode}
-                    </p>
+                    <p className="text-gray-500">Project Code</p>
+                    <p className="text-gray-800 font-medium">{project.projectCode}</p>
                   </div>
                   <div>
-                    <p className=" text-gray-500">Part</p>
+                    <p className="text-gray-500">Part</p>
                     <p className="text-gray-800 font-medium">{project.part}</p>
                   </div>
                   <div>
                     <p className="text-gray-500">Deadline</p>
                     <p className="text-gray-800 font-medium">
                       {project.deadline
-                        ? new Date(
-                            project.deadline._seconds * 1000
-                          ).toLocaleDateString()
+                        ? new Date(project.deadline._seconds * 1000).toLocaleDateString()
                         : "No deadline provided"}
                     </p>
                   </div>
-
                   <div>
-                    <p className=" text-gray-500">Git Link</p>
+                    <p className="text-gray-500">Git Link</p>
                     {isEditingGitLink ? (
                       <div className="flex flex-col items-start">
                         <input
@@ -173,14 +216,12 @@ const ProjectDetailsPopup = ({
                           value={gitLink}
                           onChange={(e) => setGitLink(e.target.value)}
                         />
-                        <div className="flex justify-end w-full">
-                          <Button
-                            onClick={handleSaveGitLink}
-                            className="mt-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-md px-3 py-1 text-sm shadow-sm transition"
-                          >
-                            Save
-                          </Button>
-                        </div>
+                        <Button
+                          onClick={handleSaveGitLink}
+                          className="mt-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-md px-3 py-1 text-sm shadow-sm transition"
+                        >
+                          Save
+                        </Button>
                       </div>
                     ) : gitLink ? (
                       <a
@@ -203,30 +244,22 @@ const ProjectDetailsPopup = ({
                       </div>
                     )}
                   </div>
+                  <div className="col-span-2 bg-yellow-50 p-4 rounded-md">
+                    <p className="text-gray-500 font-semibold">Supervisors</p>
+                    {supervisors.length > 0 ? (
+                      supervisors.map((supervisor, index) => (
+                        <p key={index} className="text-gray-800 font-medium mt-1">
+                          {supervisor}
+                        </p>
+                      ))
+                    ) : (
+                      <p className="text-gray-600">No supervisors assigned.</p>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Supervisor Section */}
-              <div className="bg-yellow-50 rounded-md p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-700 mb-3">
-                  Supervisors
-                </h3>
-                <p className="font-medium text-gray-800 mb-3">
-                  {project.supervisor}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {project.supervisorTopics?.map((topic, index) => (
-                    <span
-                      key={index}
-                      className="bg-yellow-100 text-yellow-800 text-sm font-medium px-2 py-1 rounded"
-                    >
-                      {topic}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Special Notes Section */}
+              {/* Special Notes */}
               <div className="bg-green-50 rounded-md p-6 shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-700 mb-3">
                   Special Notes
@@ -239,7 +272,7 @@ const ProjectDetailsPopup = ({
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

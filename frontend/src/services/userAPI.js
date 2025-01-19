@@ -22,7 +22,16 @@ export const userApi = {
   getUser: async (userId) => {
     try {
       const response = await api.get(`/users/${userId}`);
-      return response.data;
+      if (response.data.success) {
+        return {
+          fullName: response.data.data.fullName, // Extract fullName
+          role: response.data.data.role,
+          supervisorDetails: response.data.data.supervisorDetails,
+          adminDetails: response.data.data.adminDetails,
+        };
+      } else {
+        throw new Error("User not found.");
+      }
     } catch (error) {
       console.error("Error fetching user:", error);
       throw error;
