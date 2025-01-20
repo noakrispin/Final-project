@@ -9,10 +9,7 @@ import { Table } from "../components/ui/Table";
 import { getGrade } from "../utils/getGrade";
 import { formatDate } from "../utils/dateUtils";
 
-/////////THE WORKING VERSION!!!!!!!!!!!!!!!!!!
-
 const TABS = ["My Projects", "Other Projects"];
-const FILTERS = ["All", "Part A", "Part B"];
 
 const MyProjectsReview = () => {
   const [activeTab, setActiveTab] = useState(TABS[0]);
@@ -43,28 +40,22 @@ const MyProjectsReview = () => {
         console.error("User or Evaluator ID is missing.");
         return;
       }
-  
+
       try {
         setIsLoading(true);
         console.log("Fetching data...");
-  
+
         // Fetch all projects and evaluations in parallel
         const [projectsData, evaluationsData] = await Promise.all([
           projectsApi.getAllProjects(),
           formsApi.getEvaluationsByEvaluator(user.id),
         ]);
-  
+        console.log("Evaluations Data from API:", evaluationsData);
         console.log("Projects Data:", projectsData);
-        console.log("Evaluations Data:", evaluationsData);
-  
+        
         // Ensure evaluationsData is an array
-        const safeEvaluationsData = Array.isArray(evaluationsData)
-          ? evaluationsData
-          : [];
-        if (!safeEvaluationsData.length) {
-          console.warn("No evaluations found.");
-        }
-  
+        const evaluationsArray = Array.isArray(evaluationsData) ? evaluationsData : [];
+
         // Format project data with fallback logic for missing fields
         const formattedProjects = projectsData.map((project) => ({
           ...project,
@@ -78,34 +69,32 @@ const MyProjectsReview = () => {
             id: String(student.id), // Ensure student ID is a string
           })),
         }));
-  
+
         console.log("Formatted Projects:", formattedProjects);
-  
+
         // Update state
         setProjects(formattedProjects);
-        setGrades(safeEvaluationsData); // Pass raw evaluations data
+        setGrades(evaluationsArray);
       } catch (err) {
         console.error("Error fetching data:", err);
-  
+
         // Handle error more explicitly if the response contains error details
         if (err.response) {
           console.error("Response data:", err.response.data);
           console.error("Response status:", err.response.status);
         }
-  
+
         setError("Failed to fetch data. Please try again later.");
       } finally {
         setIsLoading(false);
       }
     };
-  
+
     fetchData();
   }, [user]);
-  
-  
 
   const isDeadlinePassed = (deadline) => {
-    if (!deadline) return false; // No deadline means it's not passed
+    if (!deadline) return false; // Return false if deadline is missing
 
     let deadlineDate;
 
@@ -193,50 +182,6 @@ const MyProjectsReview = () => {
     setSelectedProject(null);
   };
 
-  const handleEmailStudents = () => {
-    if (!selectedProject) return;
-
-    const studentEmails = selectedProject.students
-      .map((student) => student.email)
-      .join(",");
-    const subject = encodeURIComponent(
-      `Regarding Project: ${selectedProject.title}`
-    );
-    const body = encodeURIComponent(
-      `Dear students,\n\nI hope this email finds you well. I wanted to discuss your project "${selectedProject.title}".\n\nBest regards,\n${user.fullName}`
-    );
-
-    window.location.href = `mailto:${studentEmails}?subject=${subject}&body=${body}`;
-  };
-
-  const saveGitLinkToBackend = async (projectId, gitLink) => {
-    try {
-      await projectsApi.updateProject(projectId, { gitLink });
-      setProjects((prevProjects) =>
-        prevProjects.map((project) =>
-          project.id === projectId ? { ...project, gitLink } : project
-        )
-      );
-    } catch (error) {
-      console.error("Error saving Git link:", error);
-    }
-  };
-
-  const saveNotesToBackend = async (projectId, notes) => {
-    try {
-      await projectsApi.updateProject(projectId, { personalNotes: notes });
-      setProjects((prevProjects) =>
-        prevProjects.map((project) =>
-          project.id === projectId
-            ? { ...project, personalNotes: notes }
-            : project
-        )
-      );
-    } catch (error) {
-      console.error("Error saving notes:", error);
-    }
-  };
-
   const myProjectColumns = useMemo(
     () => [
       {
@@ -286,16 +231,14 @@ const MyProjectsReview = () => {
         key: "presentationGrade",
         header: "Presentation Grade",
         className: "text-lg text-center",
-        render: (_, project) =>
-          renderGradeCell(project, "presentation", grades, user?.id, isDeadlinePassed),
+        render: (_, project) => renderGradeCell(project, "presentation"),
         sortable: true,
       },
       {
         key: "supervisorGrade",
         header: "Supervisor Grade",
         className: "text-lg text-center",
-        render: (_, project) =>
-          renderGradeCell(project, "supervisor", grades, user?.id, isDeadlinePassed),
+        render: (_, project) => renderGradeCell(project, "supervisor"),
         sortable: true,
       },
       {
@@ -310,7 +253,13 @@ const MyProjectsReview = () => {
     [grades, user]
   );
 
-  const renderGradeCell = (project, gradeType, grades, userId, isDeadlinePassed) => {
+  const renderGradeCell = (
+    project,
+    gradeType,
+    grades,
+    userId,
+    isDeadlinePassed
+  ) => {
     const grade = getGrade(grades, project.projectCode, gradeType);
     if (grade === null) {
       return isDeadlinePassed(project.deadline) ? (
@@ -328,7 +277,6 @@ const MyProjectsReview = () => {
     }
     return <span>{grade}</span>;
   };
-
 
   if (isLoading) return <div className="text-center mt-10">Loading...</div>;
   if (error)
@@ -396,7 +344,7 @@ const MyProjectsReview = () => {
 
           <Table
             data={projects}
-            evaluationsMapped={grades}
+            apiResponse={grades} // Pass the full evaluationsData array
             userId={user?.id}
             isDeadlinePassed={isDeadlinePassed}
             columns={myProjectColumns}
@@ -409,9 +357,7 @@ const MyProjectsReview = () => {
         <ProjectDetailsPopup
           project={selectedProject}
           onClose={handleClosePopup}
-          handleEmailStudents={handleEmailStudents}
-          saveGitLinkToBackend={saveGitLinkToBackend}
-          saveNotesToBackend={saveNotesToBackend}
+          api={projectsApi}
           userRole={user?.role}
         />
       )}

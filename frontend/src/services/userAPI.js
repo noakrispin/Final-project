@@ -22,19 +22,24 @@ export const userApi = {
   getUser: async (userId) => {
     try {
       const response = await api.get(`/users/${userId}`);
-      if (response.data.success) {
+      console.log("API Response for getUser:", response.data);
+  
+      // Ensure we check if the required data exists, fallback otherwise
+      if (response.data && response.data.id && response.data.fullName) {
         return {
-          fullName: response.data.data.fullName, // Extract fullName
-          role: response.data.data.role,
-          supervisorDetails: response.data.data.supervisorDetails,
-          adminDetails: response.data.data.adminDetails,
+          fullName: response.data.fullName, // Correct extraction
+          role: response.data.role,
+          email: response.data.email || null,
+          supervisorDetails: response.data.supervisorDetails || null,
+          adminDetails: response.data.adminDetails || null,
         };
       } else {
-        throw new Error("User not found.");
+        throw new Error(`User data is incomplete or missing for ID: ${userId}`);
       }
     } catch (error) {
       console.error("Error fetching user:", error);
-      throw error;
+      throw new Error(`Failed to fetch user with ID: ${userId}`);
     }
   },
+  
 };

@@ -76,9 +76,6 @@ exports.getAllProjects = async (req, res) => {
   }
 };
 
-
-
-
 // Update a project
 exports.updateProject = async (req, res) => {
   const { projectCode } = req.params;

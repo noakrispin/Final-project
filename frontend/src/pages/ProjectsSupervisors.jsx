@@ -49,63 +49,7 @@ const ProjectsSupervisors = () => {
     
   };
 
-  const handleSaveNotes = async () => {
-    if (!selectedProject) return;
-
-    try {
-      await projectsApi.updateProject(selectedProject.projectCode, {
-        specialNotes: personalNotes,
-      });
-
-      setProjects((prevProjects) =>
-        prevProjects.map((project) =>
-          project.projectCode === selectedProject.projectCode
-            ? { ...project, specialNotes: personalNotes }
-            : project
-        )
-      );
-    } catch (error) {
-      console.error("Error saving notes:", error);
-    }
-  };
-  const saveGitLinkToBackend = async (projectId, gitLink) => {
-    try {
-      await projectsApi.updateProject(projectId, { gitLink });
-      alert("Git link updated successfully!");
-    } catch (error) {
-      console.error("Error updating Git link:", error);
-    }
-  };
-
-  const saveNotesToBackend = async (projectId, personalNotes) => {
-    try {
-      await projectsApi.updateProject(projectId, { personalNotes });
-      alert("Notes updated successfully!");
-    } catch (error) {
-      console.error("Error updating personal notes:", error);
-    }
-  };
   
-  const handleEmailStudents = () => {
-    if (!selectedProject) return;
-
-    const studentEmails = [
-      selectedProject.Student1?.Email,
-      selectedProject.Student2?.email,
-    ]
-      .filter(Boolean)
-      .join(",");
-
-    const subject = encodeURIComponent(
-      `Regarding Project: ${selectedProject.title}`
-    );
-    const body = encodeURIComponent(
-      `Dear students,\n\nI hope this email finds you well. I wanted to discuss your project \"${selectedProject.title}\".\n\nBest regards,\n${user.fullName}`
-    );
-
-    window.location.href = `mailto:${studentEmails}?subject=${subject}&body=${body}`;
-  };
-
   const projectColumns = useMemo(
     () => [
       {
@@ -215,8 +159,6 @@ const ProjectsSupervisors = () => {
     userRole={user?.role}
   />
 )}
-
-
 
     </div>
   );

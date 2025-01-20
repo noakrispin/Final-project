@@ -140,9 +140,11 @@ export const formsApi = {
     }
 
     try {
-        const response = await api.get(`/forms/evaluations/all?evaluatorID=${evaluatorID}`);
-        console.log("Fetched Evaluations Data:", response.data || []);
-        return response.data || []; // Default to empty array if data is undefined
+      console.log("Fetching evaluations by evaluatorID:", evaluatorID);
+      const response = await api.get(`/forms/evaluations/all?evaluatorID=${evaluatorID}`);
+      console.log("API Response (formAPI):", response); // Log the raw response
+      
+      return response || []; // Return the data or an empty array
     } catch (error) {
         console.error("Error fetching evaluations by evaluator:", error);
         throw error; // Re-throw to handle in calling code
