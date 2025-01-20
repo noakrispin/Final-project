@@ -17,20 +17,20 @@ const AdminFileUpload = () => {
   const auth = getAuth();
   console.log("Authenticated user:", auth.currentUser);
 
-  const projectColumns = [
-    { header: "Project Code", accessor: "projectCode" },
-    { header: "Student 1 Name", accessor: (row) => row.student1?.name || "" },
-    { header: "Student 1 ID", accessor: (row) => row.student1?.id || "" },
-    { header: "Student 1 Email", accessor: (row) => row.student1?.email || "" },
-    { header: "Student 2 Name", accessor: (row) => row.student2?.name || "" },
-    { header: "Student 2 ID", accessor: (row) => row.student2?.id || "" },
-    { header: "Student 2 Email", accessor: (row) => row.student2?.email || "" },
-    { header: "Supervisor 1", accessor: "supervisor1" },
-    { header: "Supervisor 2", accessor: "supervisor2" },
-    { header: "Project Title", accessor: "title" },
-    { header: "Part", accessor: "part" },
-    { header: "Type", accessor: "type" },
-  ];
+  // const projectColumns = [
+  //   { header: "Project Code", accessor: "projectCode" },
+  //   { header: "Student 1 Name", accessor: (row) => row.student1?.name || "" },
+  //   { header: "Student 1 ID", accessor: (row) => row.student1?.id || "" },
+  //   { header: "Student 1 Email", accessor: (row) => row.student1?.email || "" },
+  //   { header: "Student 2 Name", accessor: (row) => row.student2?.name || "" },
+  //   { header: "Student 2 ID", accessor: (row) => row.student2?.id || "" },
+  //   { header: "Student 2 Email", accessor: (row) => row.student2?.email || "" },
+  //   { header: "Supervisor 1", accessor: "supervisor1" },
+  //   { header: "Supervisor 2", accessor: "supervisor2" },
+  //   { header: "Project Title", accessor: "title" },
+  //   { header: "Part", accessor: "part" },
+  //   { header: "Type", accessor: "type" },
+  // ];
 
   const handleFileSelect = async (file) => {
     setIsUploading(true);
@@ -80,22 +80,20 @@ const AdminFileUpload = () => {
               <div className="max-w-xl mx-auto">
                 <ul className="list-disc list-inside space-y-2 text-gray-600">
                   <li>Column 1: Project Code (Required)</li>
-                  <li>Column 2: Student 1 Name (Required)</li>
-                  <li>Column 3: Student 1 ID (Required - 9 digits)</li>
-                  <li>
-                    Column 4: Student 1 Email (Required - @e.braude.ac.il)
-                  </li>
-                  <li>Column 5: Student 2 Name (Optional)</li>
-                  <li>Column 6: Student 2 ID (Optional - 9 digits)</li>
-                  <li>
-                    Column 7: Student 2 Email (Optional - @e.braude.ac.il)
-                  </li>
-                  <li>Column 8: Supervisor 1 (Required)</li>
-                  <li>Column 9: Supervisor 2 (Optional)</li>
-                  <li>Column 10: Project Title (Required)</li>
-                  <li>Column 11: Project Description (Optional)</li>
-                  <li>Column 12: Part (Required - A or B)</li>
-                  <li>Column 13: Type (Required - Development or Research)</li>
+                  <li>Column 2: Student 1 First Name (Required)</li>
+                  <li>Column 3: Student 1 Last Name (Required)</li>
+                  <li>Column 4: Student 1 ID (Required - 9 digits)</li>
+                  <li>Column 5: Student 1 Email (Required - @e.braude.ac.il)</li>
+                  <li>Column 6: Student 2 First Name (Optional)</li>
+                  <li>Column 7: Student 2 Last Name (Optional)</li>
+                  <li>Column 8: Student 2 ID (Optional - 9 digits)</li>
+                  <li>Column 9: Student 2 Email (Optional - @e.braude.ac.il)</li>
+                  <li>Column 10: Supervisor 1 ID (Required)</li>
+                  <li>Column 11: Supervisor 2 ID (Optional)</li>
+                  <li>Column 12: Project Title (Required)</li>
+                  <li>Column 13: Project Description (Optional)</li>
+                  <li>Column 14: Part (Required - A or B)</li>
+                  <li>Column 15: Type (Required - Development or Research)</li>
                 </ul>
               </div>
             </div>

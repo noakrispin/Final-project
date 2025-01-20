@@ -56,4 +56,19 @@ export const userApi = {
       }
     },
   
+  /**
+   * Fetch all users from the database.
+   */
+  getAllUsers: async () => {
+    try {
+      console.log("Fetching all users from API...");
+      const response = await api.get("/users");
+      console.log("Users fetched successfully(userAPI):", response.data);
+      return response.data || []; 
+    } catch (error) {
+      console.error("Error fetching users:", error.response?.data || error.message);
+      throw error;
+    }
+  },
+
 };

@@ -14,16 +14,20 @@ export const processExcelFile = async (file) => {
       personalNotes: null,
       gitLink: null, // Explicitly set null for fields to be edited later
       Student1: {
-        fullName: row.student1Name,
+        firstName: row.student1firstName,
+        lastName: row.student1lastName,
+        fullName: row.student1firstName + ' ' + row.student1lastName,
         ID: row.student1Id,
         Email: row.student1Email,
       },
-      Student2: row.student2Name
+      Student2: row.student2firstName
         ? {
-          fullName: row.student2Name,
+          firstName: row.student2firstName,
+          lastName: row.student2lastName,
+          fullName: row.student2firstName + ' ' + row.student2lastName,
           ID: row.student2Id,
-            Email: row.student2Email,
-          }
+          Email: row.student2Email,
+        }
         : null,
       supervisor1: row.supervisor1,
       supervisor2: row.supervisor2 || '',
@@ -50,18 +54,20 @@ const readExcelFile = async (file) => {
     if (rowNumber > 1) {
       const rowData = {
         projectCode: row.getCell(1).text.trim(),
-        student1Name: row.getCell(2).text.trim(),
-        student1Id: row.getCell(3).text.trim(),
-        student1Email: row.getCell(4).text.trim(),
-        student2Name: row.getCell(5).text.trim() || '',
-        student2Id: row.getCell(6).text.trim() || '',
-        student2Email: row.getCell(7).text.trim() || '',
-        supervisor1: row.getCell(8).text.trim(),
-        supervisor2: row.getCell(9).text.trim() || '',
-        title: row.getCell(10).text.trim(),
-        description: row.getCell(11).text.trim() || '',
-        part: row.getCell(12).text.trim(),
-        type: row.getCell(13).text.trim()
+        student1firstName: row.getCell(2).text.trim(),
+        student1lastName: row.getCell(3).text.trim(),
+        student1Id: row.getCell(4).text.trim(),
+        student1Email: row.getCell(5).text.trim(),
+        student2firstName: row.getCell(6).text.trim(),
+        student2lastName: row.getCell(7).text.trim(),
+        student2Id: row.getCell(8).text.trim() || '',
+        student2Email: row.getCell(9).text.trim() || '',
+        supervisor1: row.getCell(10).text.trim(),
+        supervisor2: row.getCell(11).text.trim() || '',
+        title: row.getCell(12).text.trim(),
+        description: row.getCell(13).text.trim() || '',
+        part: row.getCell(14).text.trim(),
+        type: row.getCell(15).text.trim()
       };
       data.push(rowData);
     }
@@ -78,7 +84,8 @@ const validateData = (data) => {
   return data.map((row, index) => {
     if (
       !row.projectCode ||
-      !row.student1Name ||
+      !row.student1firstName ||
+      !row.student1lastName ||
       !row.student1Id ||
       !row.student1Email ||
       !row.supervisor1 ||
