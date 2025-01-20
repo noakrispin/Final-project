@@ -61,7 +61,12 @@ const ProjectsTable = ({
 
   return (
     <Card className="p-6">
-      <Table columns={projectColumns} data={projects} />
+      <Table 
+      columns={projectColumns} 
+      data={projects}
+      showTabs={false}
+       />
+      
     </Card>
   );
 };

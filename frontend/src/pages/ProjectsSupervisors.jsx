@@ -147,6 +147,7 @@ const ProjectsSupervisors = () => {
             onFilterChange={setProjectsFilter}
             onRowClick={(row) => handleProjectClick(row)}
             rowClassName="cursor-pointer hover:bg-gray-300 transition-colors duration-150"
+            showTabs={true}
           />
         </div>
       </div>
