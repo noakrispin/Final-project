@@ -58,7 +58,7 @@ export const evaluatorsApi = {
    */
   getProjectsByEvaluator: async (evaluatorID) => {
     try {
-      const response = await api.get(`/evaluators/${evaluatorID}/projects`);
+      const response = await api.get(`/evaluators/projects/${evaluatorID}`);
       return response.data;
     } catch (error) {
       console.error("Error fetching projects for evaluator:", error);

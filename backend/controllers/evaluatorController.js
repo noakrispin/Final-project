@@ -99,7 +99,7 @@ exports.getProjectsByEvaluator = async (req, res) => {
       .get();
 
     if (evaluatorsSnapshot.empty) {
-      return res.status(404).json({ success: false, error: "No projects found for this evaluator" });
+      return res.status(200).json({ success: true, data: [] }); // Return an empty array instead of 404
     }
 
     const projects = evaluatorsSnapshot.docs.map((doc) => ({
@@ -113,6 +113,7 @@ exports.getProjectsByEvaluator = async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch projects for evaluator" });
   }
 };
+
 
 // Get evaluators assigned to a specific project
 exports.getEvaluatorsByProject = async (req, res) => {
