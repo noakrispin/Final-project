@@ -21,7 +21,7 @@ const AdminGradesPage = () => {
 
         console.log("Fetching final grades...");
         const gradesResponse = await gradesApi.getAllGrades();
-        const grades = gradesResponse || []; // Fixed grades processing
+        const grades = gradesResponse || [];
         console.log("Final grades fetched:", grades);
 
         console.log("Fetching all projects...");
@@ -54,14 +54,14 @@ const AdminGradesPage = () => {
       console.log("Grades:", grades);
       console.log("Projects:", projects);
       console.log("Users:", users);
-  
+
       // Filter out placeholder grades
       const filteredGrades = grades.filter(
         (grade) =>
           grade.projectCode && grade.projectCode !== "placeholderProject"
       );
       console.log("Filtered Grades:", filteredGrades);
-  
+
       // Map grades to project and user details
       return filteredGrades.map((grade) => {
         const project = projects.find(
@@ -72,20 +72,19 @@ const AdminGradesPage = () => {
               (s) => s && s.ID === grade.studentID
             )
           : null;
-  
+
         // Ensure student object has a fullName fallback
-        const studentData = student
-          ? {
-              id: student.ID,
-              fullName: student.fullName || `${student.firstName} ${student.lastName}`,
-              email: student.Email,
-            }
-          : {
-              id: grade.studentID || "Unknown ID",
-              fullName: "Unknown Student",
-              email: "Unknown Email",
-            };
-  
+        // Find the student name dynamically
+        const studentName = project
+          ? [project.Student1, project.Student2]
+              .filter((student) => student && student.ID === grade.studentID)
+              .map(
+                (student) =>
+                  student.fullName || `${student.firstName} ${student.lastName}`
+              )
+              .join(", ") || "Unknown Student"
+          : "Unknown Student";
+
         // Map supervisor IDs to full names from the `users` collection
         const supervisors = project
           ? [project.supervisor1, project.supervisor2]
@@ -95,20 +94,26 @@ const AdminGradesPage = () => {
                 return supervisor ? supervisor.fullName : `Supervisor ID ${id}`;
               })
           : [];
-        console.log("studentData:", studentData);
-        console.log("student.fullName:",student.fullName);
+        const projectSupervisors =
+          supervisors.length > 0 ? supervisors.join(", ") : "No Supervisors";
+        const deadline =
+          project.deadline && project.deadline._seconds
+            ? new Date(project.deadline._seconds * 1000).toLocaleDateString()
+            : "No Deadline";
+
+        console.log("Rendering status(in preprocess):", grade.status);
+
         return {
+          ...project, // Include project details
           projectCode: grade.projectCode,
-          title: project ? project.title : "Unknown Project",
-          part: project ? project.part : "Unknown Part",
-          student: studentData,
-          supervisors:
-            supervisors.length > 0 ? supervisors.join(", ") : "No Supervisors",
+          studentName,
+          supervisors: projectSupervisors,
           presentationGrade: grade.CalculatedPresentationGrade || "N/A",
           bookGrade: grade.CalculatedBookGrade || "N/A",
           supervisorGrade: grade.CalculatedSupervisorGrade || "N/A",
           finalGrade: grade.finalGrade || "N/A",
           status: grade.status || "Not graded",
+          deadline: deadline,
         };
       });
     } catch (error) {
@@ -116,7 +121,45 @@ const AdminGradesPage = () => {
       throw new Error("Failed to preprocess project data.");
     }
   };
-  
+
+  const renderGradeStatus = (project) => {
+    if (!project || !project.status) {
+      return (
+        <span
+          className="inline-block px-3 py-1 text-sm rounded-full text-center bg-gray-100 text-gray-500"
+          style={{
+            minWidth: "80px",
+            whiteSpace: "nowrap",
+            lineHeight: "1.5",
+          }}
+        >
+          Unknown Status
+        </span>
+      );
+    }
+
+    const statusClasses = {
+      "Fully graded": "bg-green-100 text-green-700",
+      "Partially graded": "bg-yellow-100 text-yellow-700",
+      "Not graded": "bg-red-100 text-red-700",
+    };
+
+    const statusClass =
+      statusClasses[project.status] || "bg-gray-100 text-gray-500";
+    console.log("Rendering status:", project.status);
+    return (
+      <span
+        className={`inline-block px-3 py-1 text-sm rounded-full text-center ${statusClass}`}
+        style={{
+          minWidth: "80px",
+          whiteSpace: "nowrap",
+          lineHeight: "1.5",
+        }}
+      >
+        {project.status}
+      </span>
+    );
+  };
 
   const projectColumns = useMemo(
     () => [
@@ -134,23 +177,26 @@ const AdminGradesPage = () => {
       },
       { key: "part", header: "Part", className: "text-base" },
       {
-        key: "student.fullName",
+        key: "studentName",
         header: "Student Name",
         className: "text-base",
-        //render: (project) => project.student.fullName || "N/A",
       },
       {
         key: "supervisors",
         header: "Supervisors",
         className: "text-base",
-        render: (project) => project.supervisors || "N/A",
+        render: (_, project) => {
+          console.log("Rendering supervisors:", project.supervisors);
+          return project.supervisors || "N/A";
+        },
       },
+
       {
         key: "bookGrade",
         header: "Book Grade",
         className: "text-base",
         render: (project) =>
-          project.bookGrade !== undefined ? project.bookGrade : "N/A",
+          project.bookGrade !== undefined ? project.bookGrade : " ",
       },
       {
         key: "presentationGrade",
@@ -159,39 +205,20 @@ const AdminGradesPage = () => {
         render: (project) =>
           project.presentationGrade !== undefined
             ? project.presentationGrade
-            : "N/A",
+            : " ",
       },
       {
         key: "supervisorGrade",
         header: "Supervisor Grade",
         className: "text-base",
         render: (project) =>
-          project.supervisorGrade !== undefined
-            ? project.supervisorGrade
-            : "N/A",
+          project.supervisorGrade !== undefined ? project.supervisorGrade : " ",
       },
       {
-        key: "gradingStatus",
-        header: "Status",
+        key: "status",
+        header: "Grade Status",
         className: "text-base",
-        render: (project) => (
-          <span
-            className={`inline-block px-3 py-1 text-sm rounded-full text-center ${
-              project.gradingStatus === "Fully graded"
-                ? "bg-green-100 text-green-700"
-                : project.gradingStatus === "Partially graded"
-                ? "bg-yellow-100 text-yellow-700"
-                : "bg-red-100 text-red-700"
-            }`}
-            style={{
-              minWidth: "80px",
-              whiteSpace: "wrap",
-              lineHeight: "1.5",
-            }}
-          >
-            {project.gradingStatus}
-          </span>
-        ),
+        render: (project) => renderGradeStatus(project),
       },
       {
         key: "deadline",
@@ -228,16 +255,11 @@ const AdminGradesPage = () => {
     return <div className="text-center text-red-500 mt-10">{error}</div>;
   }
 
-  const calculateGradingStatus = (project) => {
-    return project.status || "Not graded";
-  };
-
   const tableData = projects.map((project) => ({
     ...project,
-    "student.fullName": project.student.fullName, 
-    gradingStatus: calculateGradingStatus(project),
+    studentName: project.studentName,
+    supervisors: project.supervisors,
   }));
-  
 
   return (
     <div className="bg-gray-50 min-h-screen p-6">
@@ -265,6 +287,7 @@ const AdminGradesPage = () => {
             columns={projectColumns}
             rowClassName="hover:bg-gray-50 transition duration-200"
             onRowClick={(row) => setSelectedProject(row)}
+            useCustomColumns={false}
           />
         </div>
       </div>

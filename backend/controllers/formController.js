@@ -66,6 +66,34 @@ module.exports = {
     }
   },
 
+  getAllForms: async (req, res) => {
+    try {
+      console.log("Fetching all forms...");
+
+      // Fetch all documents in the "forms" collection
+      const formsSnapshot = await db.collection("forms").get();
+
+      // If the collection is empty, return an empty array
+      if (formsSnapshot.empty) {
+        console.log("No forms found in the database.");
+        return res.status(200).json([]);
+      }
+
+      // Map through the documents to extract their data
+      const forms = formsSnapshot.docs.map((doc) => ({
+        formID: doc.id, // Include the document ID
+        ...doc.data(), // Include the form's fields
+      }));
+
+      console.log("Fetched forms:", forms); 
+      res.status(200).json(forms); 
+    } catch (error) {
+      console.error("Error fetching forms:", error.message); 
+      res.status(500).json({ message: "Failed to fetch forms." }); 
+    }
+  },
+
+
   // Delete a form along with its subcollections
   deleteForm: async (req, res) => {
     const { formID } = req.params;

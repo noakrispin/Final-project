@@ -5,6 +5,9 @@ const formController = require("../controllers/formController");
 // Fetch a specific form
 router.get("/:formID", formController.getForm);
 
+// Fetch all forms
+router.get("/", formController.getAllForms);
+
 // Update a specific form
 router.put("/:formID", formController.updateForm);
 

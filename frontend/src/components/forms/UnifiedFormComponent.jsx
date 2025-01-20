@@ -13,6 +13,7 @@ export default function UnifiedFormComponent({
   projectCode,
   projectName,
   formID,
+  isAdmin = false,
 }) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -142,77 +143,77 @@ export default function UnifiedFormComponent({
           initialData[fieldName] = ""; // Initialize empty string
         });
     });
-    
 
     setFormData(initialData);
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  if (!isFormValid()) {
-    alert("Please fill in all required fields. Text areas must have at least 5 words.");
-    return;
-  }
+    if (!isFormValid()) {
+      alert(
+        "Please fill in all required fields. Text areas must have at least 5 words."
+      );
+      return;
+    }
 
-  const responses = {
-    evaluatorID: user.id,
-    projectCode,
-    general: {},
-    students: {},
-  };
-
-  // Populate general responses
-  generalQuestions.forEach((field) => {
-    responses.general[field.name] = formData[field.name];
-  });
-
-  // Populate student-specific responses
-  students.forEach((student) => {
-    responses.students[student.id] = {
-      ...formData[`student${student.id}`], // Preserve existing responses for this student
-    };
-
-    studentQuestions.forEach((field) => {
-      const fieldName = `student${student.id}_${field.name}`;
-      responses.students[student.id][field.name] =
-        formData[fieldName] || responses.students[student.id][field.name] || ""; // Merge existing and new responses
-    });
-  });
-
-  try {
-    console.log("Submitting form data:", responses); // Debug log
-    // Submit the form responses
-    await formsApi.submitForm(formID, responses); // Pass formID and the complete responses object
-    console.log("Form submitted successfully");
-
-    // Add or update evaluator status in Evaluators collection
-    const evaluatorData = {
+    const responses = {
       evaluatorID: user.id,
-      formID,
       projectCode,
-      status: "Submitted",
+      general: {},
+      students: {},
     };
 
-    const evaluatorId = `${user.id}-${formID}-${projectCode}`; // Unique ID for evaluator
-    console.log("Updating evaluator status:", evaluatorData);
+    // Populate general responses
+    generalQuestions.forEach((field) => {
+      responses.general[field.name] = formData[field.name];
+    });
 
-    await evaluatorsApi.addOrUpdateEvaluator(evaluatorId, evaluatorData); 
-    console.log("Evaluator status updated successfully");
+    // Populate student-specific responses
+    students.forEach((student) => {
+      responses.students[student.id] = {
+        ...formData[`student${student.id}`], // Preserve existing responses for this student
+      };
 
-    // Redirect after successful submission
-    navigate("/MyProjectsReview");
-  } catch (error) {
-    console.error("Error submitting form or updating evaluator:", error);
-  }
-};
+      studentQuestions.forEach((field) => {
+        const fieldName = `student${student.id}_${field.name}`;
+        responses.students[student.id][field.name] =
+          formData[fieldName] ||
+          responses.students[student.id][field.name] ||
+          ""; // Merge existing and new responses
+      });
+    });
 
-  
-  
+    try {
+      console.log("Submitting form data:", responses); // Debug log
+      // Submit the form responses
+      await formsApi.submitForm(formID, responses); // Pass formID and the complete responses object
+      console.log("Form submitted successfully");
+
+      // Add or update evaluator status in Evaluators collection
+      const evaluatorData = {
+        evaluatorID: user.id,
+        formID,
+        projectCode,
+        status: "Submitted",
+      };
+
+      const evaluatorId = `${user.id}-${formID}-${projectCode}`; // Unique ID for evaluator
+      console.log("Updating evaluator status:", evaluatorData);
+
+      await evaluatorsApi.addOrUpdateEvaluator(evaluatorId, evaluatorData);
+      console.log("Evaluator status updated successfully");
+
+      // Redirect after successful submission
+      navigate("/MyProjectsReview");
+    } catch (error) {
+      console.error("Error submitting form or updating evaluator:", error);
+    }
+  };
 
   const updateProgress = () => {
     const staticFields = ["projectCode", "title", "evaluatorName"];
-  
+
     // Combine general and student questions
     const editableQuestions = [
       ...generalQuestions.filter(
@@ -227,23 +228,23 @@ const handleSubmit = async (e) => {
         )
         .filter((field) => field.required), // Include only required student questions
     ];
-  
+
     const totalEditableFields = editableQuestions.length;
-  
+
     const filledEditableFields = editableQuestions.filter((field) => {
       const key = field.dynamicKey || field.name;
       const value = formData[key];
       if (!value || value.toString().trim() === "") return false;
-  
+
       // Validate text area with at least 5 words
       if (field.type === "textarea") {
         const wordCount = value.trim().split(/\s+/).length;
         return wordCount >= 5;
       }
-  
+
       return true; // All other types are valid as long as they're not empty
     }).length;
-  
+
     // If the form is pre-filled, set progress to 100%
     if (filledEditableFields === totalEditableFields) {
       setProgress(100);
@@ -255,7 +256,6 @@ const handleSubmit = async (e) => {
       );
     }
   };
-  
 
   const isFormValid = () => {
     return progress === 100;
@@ -395,7 +395,32 @@ const handleSubmit = async (e) => {
         </div>
 
         {/* Student Evaluation */}
-        {students.length > 0 &&
+        {isAdmin ? (
+          <div className="p-6 bg-slate-200 border border-blue-100 rounded-lg shadow-sm mb-6">
+            <h3 className="text-lg font-bold text-blue-900 mb-4">
+              Student Evaluation
+            </h3>
+            {studentQuestions?.map((field) => {
+              const fieldName = `anonymousStudent_${field.name}`;
+              return (
+                <FormField
+                  key={fieldName}
+                  {...field}
+                  name={fieldName}
+                  value={formData[fieldName] || ""}
+                  onChange={(e) =>
+                    setFormData((prevData) => ({
+                      ...prevData,
+                      [fieldName]: e.target.value,
+                    }))
+                  }
+                  disabled={isEditMode}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          students.length > 0 &&
           students.map((student) => (
             <div
               key={`student-${student.id}`}
@@ -409,14 +434,20 @@ const handleSubmit = async (e) => {
                     key={fieldName}
                     {...field}
                     name={fieldName}
-                    value={formData[fieldName]}
-                    onChange={handleChange}
-                    disabled={isEditMode && user?.role === "Admin"}
+                    value={formData[fieldName] || ""}
+                    onChange={(e) =>
+                      setFormData((prevData) => ({
+                        ...prevData,
+                        [fieldName]: e.target.value,
+                      }))
+                    }
+                    disabled={isEditMode}
                   />
                 );
               })}
             </div>
-          ))}
+          ))
+        )}
 
         {/* Submit Button */}
         <div className="flex justify-center mt-6">

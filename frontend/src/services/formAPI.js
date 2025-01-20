@@ -9,6 +9,19 @@ export const formsApi = {
   },
 
   /**
+   * Fetch all forms from the database.
+   */
+  getAllForms: async () => {
+    try {
+      const response = await api.get(`/forms`); // Call the backend endpoint
+      return response; // Return the forms data
+    } catch (error) {
+      console.error("Error fetching all forms:", error.message);
+      throw error; // Rethrow the error to handle it in calling code
+    }
+  },
+
+  /**
    * Update a specific form by ID.
    */
   updateForm: async (formID, updatedData) => {
