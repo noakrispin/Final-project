@@ -15,13 +15,6 @@ export const Table = ({
   className = "",
   onRowClick,
   userId,
-<<<<<<< HEAD
-  showTabs = true, 
-  useCustomColumns = true,
-=======
-  showTabs = true, // New prop with a default value
->>>>>>> d307815 (Update Table Tabs)
-  showTabs = true, // New prop with a default value
 }) => {
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
