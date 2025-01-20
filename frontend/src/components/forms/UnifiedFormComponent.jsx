@@ -25,6 +25,10 @@ export default function UnifiedFormComponent({
   const [isVisible, setIsVisible] = useState(true);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false); // Admin edit mode toggle
+  const [editedFormName, setEditedFormName] = useState(formTitle || "");
+  const [editedFormDescription, setEditedFormDescription] = useState(
+    formDescription || ""
+  );
 
   useEffect(() => {
     if (!user) {
@@ -145,6 +149,21 @@ export default function UnifiedFormComponent({
     });
 
     setFormData(initialData);
+  };
+
+  const handleSave = async () => {
+    try {
+      const updatedQuestions = [...generalQuestions, ...studentQuestions];
+      await formsApi.updateForm(formID, {
+        formName: editedFormName,
+        description: editedFormDescription,
+        questions: updatedQuestions,
+      });
+      alert("Form updated successfully!");
+      setIsEditMode(false);
+    } catch (error) {
+      console.error("Error saving form updates:", error);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -280,11 +299,33 @@ export default function UnifiedFormComponent({
     updateProgress(); // Recalculate progress
   };
 
+  const handleAddQuestion = (reference) => {
+    const newQuestion = {
+      id: `new_${Date.now()}`,
+      label: "New Question",
+      description: "",
+      type: "text",
+      required: false,
+      weight: 0,
+      order:
+        reference === "general"
+          ? generalQuestions.length + 1
+          : studentQuestions.length + 1,
+      reference,
+    };
+
+    if (reference === "general") {
+      setGeneralQuestions((prev) => [...prev, newQuestion]);
+    } else {
+      setStudentQuestions((prev) => [...prev, newQuestion]);
+    }
+  };
+
   return (
     <div className="relative p-6">
       {/* Edit Mode Toggle for Admins */}
       {user?.role === "Admin" && (
-        <div className="mb-4 flex justify-end">
+        <div className="flex justify-center mb-6">
           <Button onClick={handleEditToggle} className="bg-blue-500 text-white">
             {isEditMode ? "Exit Edit Mode" : "Edit Form"}
           </Button>
@@ -332,21 +373,39 @@ export default function UnifiedFormComponent({
               />
             </svg>
           )}
-          <p className="text-sm font-semibold mt-1">{`Form Progress: ${progress}%`}</p>
+          <p className="text-base font-semibold mt-1">{`Form Progress: ${progress}%`}</p>
         </div>
       )}
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="p-6 bg-slate-200 border border-blue-100 rounded-lg shadow-sm mb-6">
-          <div className="mb-6 text-center">
-            <h2 className="text-2xl text-blue-900 font-bold mb-2">
-              {formTitle}
-            </h2>
-            {formDescription && (
-              <p className="text-gray-600 mb-4 max-w-3xl mx-auto break-words leading-relaxed text-center">
-                {formDescription}
-              </p>
+          <div className="mb-6 text-base text-center">
+            {isEditMode ? (
+              <>
+                <input
+                  type="text"
+                  className="w-full p-2 mb-4 border rounded"
+                  value={editedFormName}
+                  onChange={(e) => setEditedFormName(e.target.value)}
+                  placeholder="Form Name"
+                />
+                <textarea
+                  className="w-full p-2 mb-4 border rounded"
+                  value={editedFormDescription}
+                  onChange={(e) => setEditedFormDescription(e.target.value)}
+                  placeholder="Form Description"
+                />
+              </>
+            ) : (
+              <>
+                <h2 className="text-2xl text-blue-900 font-bold mb-2">
+                  {editedFormName}
+                </h2>
+                <p className="text-gray-600 text-base mb-4 max-w-3xl mx-auto break-words leading-relaxed text-center">
+                  {editedFormDescription}
+                </p>
+              </>
             )}
           </div>
 
@@ -383,15 +442,76 @@ export default function UnifiedFormComponent({
           <h3 className="text-lg font-bold text-blue-900 mb-4">
             Overall Project Evaluation
           </h3>
-          {generalQuestions?.map((field) => (
-            <FormField
-              key={field.name}
-              {...field}
-              value={formData[field.name]}
-              onChange={handleChange}
-              disabled={isEditMode && user?.role === "Admin"}
-            />
+          {generalQuestions?.map((field, index) => (
+            <div key={field.name} className="mb-4">
+              {isEditMode ? (
+                <>
+                  {/* Editable Label */}
+                  <input
+                    type="text"
+                    className="w-full p-2 mb-2 border rounded"
+                    value={field.label}
+                    onChange={(e) =>
+                      setGeneralQuestions((prev) =>
+                        prev.map((q, i) =>
+                          i === index ? { ...q, label: e.target.value } : q
+                        )
+                      )
+                    }
+                    placeholder="Question Label"
+                  />
+
+                  {/* Editable Description */}
+                  <textarea
+                    className="w-full p-2 mb-2 border rounded"
+                    value={field.description}
+                    onChange={(e) =>
+                      setGeneralQuestions((prev) =>
+                        prev.map((q, i) =>
+                          i === index
+                            ? { ...q, description: e.target.value }
+                            : q
+                        )
+                      )
+                    }
+                    placeholder="Question Description"
+                  />
+
+                  {/* Delete Question Button */}
+                  <Button
+                    onClick={() =>
+                      setGeneralQuestions((prev) =>
+                        prev.filter((_, i) => i !== index)
+                      )
+                    }
+                    className="bg-red-500 text-white"
+                  >
+                    Delete
+                  </Button>
+                </>
+              ) : (
+                <>
+                  {/* Static Display */}
+                  <FormField
+                    key={field.name}
+                    {...field}
+                    value={formData[field.name]}
+                    onChange={handleChange}
+                    disabled={isEditMode && user?.role === "Admin"}
+                  />
+                </>
+              )}
+            </div>
           ))}
+
+          {isEditMode && (
+            <Button
+              onClick={() => handleAddQuestion("general")}
+              className="bg-green-500 text-white"
+            >
+              Add General Question
+            </Button>
+          )}
         </div>
 
         {/* Student Evaluation */}
@@ -400,24 +520,77 @@ export default function UnifiedFormComponent({
             <h3 className="text-lg font-bold text-blue-900 mb-4">
               Student Evaluation
             </h3>
-            {studentQuestions?.map((field) => {
-              const fieldName = `anonymousStudent_${field.name}`;
-              return (
-                <FormField
-                  key={fieldName}
-                  {...field}
-                  name={fieldName}
-                  value={formData[fieldName] || ""}
-                  onChange={(e) =>
-                    setFormData((prevData) => ({
-                      ...prevData,
-                      [fieldName]: e.target.value,
-                    }))
-                  }
-                  disabled={isEditMode}
-                />
-              );
-            })}
+            {studentQuestions?.map((field, index) => (
+              <div key={field.name} className="mb-4">
+                {isEditMode ? (
+                  <>
+                    {/* Editable Label */}
+                    <input
+                      type="text"
+                      className="w-full p-2 mb-2 border rounded"
+                      value={field.label}
+                      onChange={(e) =>
+                        setStudentQuestions((prev) =>
+                          prev.map((q, i) =>
+                            i === index ? { ...q, label: e.target.value } : q
+                          )
+                        )
+                      }
+                      placeholder="Student Question Label"
+                    />
+
+                    {/* Editable Description */}
+                    <textarea
+                      className="w-full p-2 mb-2 border rounded"
+                      value={field.description}
+                      onChange={(e) =>
+                        setStudentQuestions((prev) =>
+                          prev.map((q, i) =>
+                            i === index
+                              ? { ...q, description: e.target.value }
+                              : q
+                          )
+                        )
+                      }
+                      placeholder="Student Question Description"
+                    />
+
+                    {/* Delete Question Button */}
+                    <Button
+                      onClick={() =>
+                        setStudentQuestions((prev) =>
+                          prev.filter((_, i) => i !== index)
+                        )
+                      }
+                      className="bg-red-500 text-white"
+                    >
+                      Delete
+                    </Button>
+                  </>
+                ) 
+                : (
+                  <>
+                    {/* Static Display */}
+                    <FormField
+                      key={field.name}
+                      {...field}
+                      value={formData[field.name]}
+                      onChange={handleChange}
+                      disabled={isEditMode && user?.role === "Admin"}
+                    />
+                  </>
+                )}
+              </div>
+            ))}
+
+            {isEditMode && (
+              <Button
+                onClick={() => handleAddQuestion("student")}
+                className="bg-green-500 text-white"
+              >
+                Add Student Question
+              </Button>
+            )}
           </div>
         ) : (
           students.length > 0 &&
@@ -449,11 +622,19 @@ export default function UnifiedFormComponent({
           ))
         )}
 
+        {isEditMode && (
+          <Button onClick={handleSave} className="bg-blue-500 text-white">
+            Save Changes
+          </Button>
+        )}
+
         {/* Submit Button */}
         <div className="flex justify-center mt-6">
-          <Button type="submit" className="w-64" disabled={!isFormValid()}>
-            Submit Evaluation
-          </Button>
+          {!isEditMode && (
+            <Button type="submit" className="w-64" disabled={!isFormValid()}>
+              Submit Evaluation
+            </Button>
+          )}
         </div>
       </form>
     </div>
