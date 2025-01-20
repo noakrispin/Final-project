@@ -45,7 +45,7 @@ const AdminNavbar = () => {
             <NavLink to='/admin-reminders'>REMINDERS</NavLink>
             <NavLink to='/admin-grades'>GRADES</NavLink>
             <NavLink to='/admin-upload'>UPLOAD FILES</NavLink>
-            <NavLink to='/admin/forms'>FORMS</NavLink>
+            <NavLink to='/admin-management'>MANAGEMENT</NavLink>
           </ul>
         </MobileMenu>
 

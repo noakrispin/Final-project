@@ -26,6 +26,8 @@ import AdminGrades from "./pages/admin/AdminGrades";
 import ProjectDetailsPage from "./pages/ProjectDetailsPage";
 import SupervisorGradesFeedback from "./pages/SupervisorGradesFeedback";
 import ForgotPassword from "./pages/ForgotPassword";
+import UserManagement from "./pages/admin/UserManagement"
+
 
 // Component imports
 import Navbar from "./components/layout/Navbar";
@@ -135,7 +137,15 @@ const AppContent = () => {
           }
         />
         <Route
-          path="/admin/forms"
+          path="/admin-management"
+          element={
+            <ProtectedRoute allowedRoles={["Admin"]}>
+              <UserManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin-forms"
           element={
             <ProtectedRoute allowedRoles={["Admin"]}>
               <AdminForms />
