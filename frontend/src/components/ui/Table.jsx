@@ -4,12 +4,13 @@ import { Button } from "./Button";
 import { ColumnManagementDialog } from "./ColumnManagementDialog";
 import { sortData } from "../../utils/sortData";
 import SearchBar from "../shared/SearchBar";
+import { getGrade } from "../../utils/getGrade";
 
 const FILTERS = ["All", "Part A", "Part B"];
 
 export const Table = ({
   data,
-  evaluationsMapped,
+  apiResponse , // Pass API response directly
   columns,
   className = "",
   onRowClick,
@@ -59,123 +60,101 @@ export const Table = ({
     setVisibleColumns(columns.map((col) => col.key));
   };
 
-  const renderGradeCell = (project, gradeType, userId) => {
+  const renderGradeCell = (project, gradeType) => {
     const isUserSupervisor = project.isSupervisor;
-
-    console.log(
-      `Rendering grades for project: ${project.projectCode}`,
-      project.students
+  
+    console.log(`Rendering grades for project: ${project.projectCode}`, project.students);
+  
+    // Determine the formID based on the grade type
+    let formID;
+    if (gradeType === "supervisor") {
+      formID = "SupervisorForm";
+    } else if (gradeType === "presentation") {
+      formID = project.part === "A" ? "PresentationFormA" : "PresentationFormB";
+    } else if (gradeType === "book") {
+      formID = project.part === "A" ? "BookReviewerFormA" : "BookReviewerFormB";
+    }
+  
+    const isDeadlinePassed = project.deadline && new Date(project.deadline) < new Date();
+  
+    // Check if there are grades for the project
+    const hasGrades = project.students.some((student) =>
+      getGrade(apiResponse, formID, project.projectCode, student.id) !== null
     );
-    console.log("Evaluations Mapped:", evaluationsMapped);
-
+  
+    if (!hasGrades) {
+      // No grades found, display placeholder for the entire project if the deadline has not passed
+      if (
+        (isUserSupervisor && gradeType === "supervisor") ||
+        (!isUserSupervisor && gradeType === "presentation") ||
+        gradeType === "book"
+      ) {
+        return isDeadlinePassed ? (
+          <span className="text-gray-500">Grade {gradeType.charAt(0).toUpperCase() + gradeType.slice(1)}</span>
+        ) : (
+          <div
+            className="text-blue-500 underline cursor-pointer"
+            data-grade-action={JSON.stringify({ gradeType, project, formID })}
+          >
+            Grade {gradeType.charAt(0).toUpperCase() + gradeType.slice(1)}
+          </div>
+        );
+      }
+  
+      return null;
+    }
+  
+    // Render grades for students with grades
     return (
       <div>
-        {project.students &&
-          project.students.map((student) => {
-            const grade =
-              evaluationsMapped?.[project.projectCode]?.[student.id];
-
-            console.log(
-              `Rendering grade for student: ${student.name}, projectCode: ${project.projectCode}, grade: ${grade}`
+        {project.students.map((student) => {
+          const grade = getGrade(apiResponse, formID, project.projectCode, student.id);
+  
+          if (grade === null) return null; // Skip students without grades
+  
+          console.log(
+            `Rendering grade for student: ${student.name}, formID: ${formID}, projectCode: ${project.projectCode}, gradeType: ${gradeType}, grade: ${grade}`
+          );
+  
+          const metadata = {
+            gradeType,
+            project,
+            studentName: student.name,
+            formID,
+          };
+  
+          // Render cell content based on grade type and user role
+          if (
+            (isUserSupervisor && gradeType === "supervisor") ||
+            (!isUserSupervisor && gradeType === "presentation") ||
+            gradeType === "book"
+          ) {
+            return (
+              <div key={`${project.id}-${student.id}`} className="flex flex-col">
+                <span>{student.name}</span>
+                <span>
+                  {isDeadlinePassed ? (
+                    <span className="text-gray-500">{grade}</span>
+                  ) : (
+                    <span
+                      data-grade-action={JSON.stringify(metadata)}
+                      className="text-blue-500 underline cursor-pointer"
+                    >
+                      {grade}
+                    </span>
+                  )}
+                </span>
+              </div>
             );
-
-            let formID;
-            if (gradeType === "supervisor") {
-              formID = "SupervisorForm";
-            } else if (gradeType === "presentation") {
-              formID =
-                project.part === "A"
-                  ? "PresentationFormA"
-                  : "PresentationFormB";
-            } else if (gradeType === "book") {
-              formID =
-                project.part === "A"
-                  ? "bookReviewerFormA"
-                  : "bookReviewerFormB";
-            }
-
-            const metadata = {
-              gradeType,
-              project,
-              studentName: student.name,
-              formID,
-            };
-
-            if (isUserSupervisor && gradeType === "supervisor") {
-              return (
-                <div
-                  key={`${project.id}-${student.id}`}
-                  className="flex flex-col"
-                >
-                  <span>{student.name}</span>
-                  <span>
-                    {grade !== undefined ? (
-                      grade
-                    ) : (
-                      <div
-                        data-grade-action={JSON.stringify(metadata)}
-                        className="text-blue-500 underline cursor-pointer"
-                      >
-                        Grade Supervisor
-                      </div>
-                    )}
-                  </span>
-                </div>
-              );
-            }
-
-            if (!isUserSupervisor && gradeType === "presentation") {
-              return (
-                <div
-                  key={`${project.id}-${student.id}`}
-                  className="flex flex-col"
-                >
-                  <span>{student.name}</span>
-                  <span>
-                    {grade !== undefined ? (
-                      grade
-                    ) : (
-                      <div
-                        data-grade-action={JSON.stringify(metadata)}
-                        className="text-blue-500 underline cursor-pointer"
-                      >
-                        Grade Presentation
-                      </div>
-                    )}
-                  </span>
-                </div>
-              );
-            }
-
-            if (gradeType === "book") {
-              return (
-                <div
-                  key={`${project.id}-${student.id}`}
-                  className="flex flex-col"
-                >
-                  <span>{student.name}</span>
-                  <span>
-                    {grade !== undefined ? (
-                      grade
-                    ) : (
-                      <div
-                        data-grade-action={JSON.stringify(metadata)}
-                        className="text-blue-500 underline cursor-pointer"
-                      >
-                        Grade Book
-                      </div>
-                    )}
-                  </span>
-                </div>
-              );
-            }
-
-            return null;
-          })}
+          }
+  
+          return null;
+        })}
       </div>
     );
   };
-
+  
+  
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-4 px-6">
@@ -269,8 +248,7 @@ export const Table = ({
                       {column.key.includes("Grade")
                         ? renderGradeCell(
                             project,
-                            column.key.replace("Grade", "").toLowerCase(),
-                            userId
+                            column.key.replace("Grade", "").toLowerCase()
                           )
                         : column.render
                         ? column.render(project[column.key], project)

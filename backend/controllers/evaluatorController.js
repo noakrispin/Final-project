@@ -2,23 +2,45 @@ const admin = require("firebase-admin");
 
 // Add or update an evaluator
 exports.addOrUpdateEvaluator = async (req, res) => {
-  const { id, formID, projectCode, status, evaluatorID } = req.body;
+  const { formID, projectCode, status, evaluatorID } = req.body;
 
   try {
-    const evaluatorData = {
-      evaluatorID,
-      formID,
-      projectCode,
-      status,
-    };
+    const evaluatorsRef = admin.firestore().collection("evaluators");
 
-    await admin.firestore().collection("evaluators").doc(id).set(evaluatorData, { merge: true });
-    res.status(201).json({ success: true, message: "Evaluator added/updated successfully" });
+    // Query Firestore for an existing evaluator with the same evaluatorID, projectCode, and formID
+    const querySnapshot = await evaluatorsRef
+      .where("evaluatorID", "==", evaluatorID)
+      .where("projectCode", "==", projectCode)
+      .where("formID", "==", formID)
+      .get();
+
+    if (!querySnapshot.empty) {
+      // Update the existing document
+      const docId = querySnapshot.docs[0].id; // Get the document ID of the first matching record
+      await evaluatorsRef.doc(docId).set(
+        { evaluatorID, formID, projectCode, status },
+        { merge: true } // Merge to avoid overwriting other fields
+      );
+
+      res.status(200).json({ success: true, message: "Evaluator record updated successfully" });
+    } else {
+      // Create a new document if no matching record exists
+      const newDocRef = evaluatorsRef.doc(); // Generate a new document ID
+      await newDocRef.set({
+        evaluatorID,
+        formID,
+        projectCode,
+        status,
+      });
+
+      res.status(201).json({ success: true, message: "New evaluator record created successfully" });
+    }
   } catch (error) {
     console.error("Error adding/updating evaluator:", error.message);
     res.status(500).json({ success: false, error: "Failed to add/update evaluator" });
   }
 };
+
 
 // Get a specific evaluator by ID
 exports.getEvaluator = async (req, res) => {
@@ -36,40 +58,6 @@ exports.getEvaluator = async (req, res) => {
   }
 };
 
-// Get all projects associated with a specific evaluator ID
-exports.getEvaluatorProjects = async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const evaluatorsSnapshot = await admin
-      .firestore()
-      .collection("evaluators")
-      .where("evaluatorID", "==", id)
-      .get();
-
-    if (evaluatorsSnapshot.empty) {
-      return res.status(404).json({ success: false, error: "No projects found for this evaluator" });
-    }
-
-    const projectCodes = evaluatorsSnapshot.docs.map((doc) => doc.data().projectCode);
-
-    const projectsSnapshot = await admin
-      .firestore()
-      .collection("projects")
-      .where(admin.firestore.FieldPath.documentId(), "in", projectCodes)
-      .get();
-
-    const projects = projectsSnapshot.docs.map((doc) => ({
-      projectCode: doc.id,
-      ...doc.data(),
-    }));
-
-    res.status(200).json({ success: true, data: projects });
-  } catch (error) {
-    console.error("Error fetching evaluator projects:", error.message);
-    res.status(500).json({ success: false, error: "Failed to fetch evaluator projects" });
-  }
-};
 
 // Get all evaluators
 exports.getAllEvaluators = async (req, res) => {

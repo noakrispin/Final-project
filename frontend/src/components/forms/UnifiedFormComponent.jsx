@@ -4,11 +4,11 @@ import { useNavigate } from "react-router-dom";
 import FormField from "./FormField";
 import { Button } from "../ui/Button";
 import { formsApi } from "../../services/formAPI";
+import { evaluatorsApi } from "../../services/evaluatorsAPI";
 
 export default function UnifiedFormComponent({
   formTitle,
   formDescription,
-  submitEndpoint,
   students = [],
   projectCode,
   projectName,
@@ -147,47 +147,67 @@ export default function UnifiedFormComponent({
     setFormData(initialData);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-  
-    if (!isFormValid()) {
-      alert("Please fill in all required fields. Text areas must have at least 5 words.");
-      return;
-    }
-  
-    const responses = {
-      evaluatorID: user.id, // Include evaluatorID here
-      projectCode, // Include the projectCode
-      general: {},
-      students: {},
-    };
-  
-    // Populate general responses
-    generalQuestions.forEach((field) => {
-      responses.general[field.name] = formData[field.name];
-    });
-  
-    // Populate student-specific responses
-    students.forEach((student) => {
-      responses.students[student.id] = {
-        ...formData[`student${student.id}`], // Preserve existing responses for this student
-      };
-  
-      studentQuestions.forEach((field) => {
-        const fieldName = `student${student.id}_${field.name}`;
-        responses.students[student.id][field.name] = formData[fieldName] || responses.students[student.id][field.name] || ""; // Merge existing and new responses
-      });
-    });
-  
-    try {
-      console.log("Submitting form data:", responses); // Debug log
-      await formsApi.submitForm(formID, responses); // Pass formID and the complete responses object
-      console.log("Form submitted successfully");
-      navigate("/MyProjectsReview"); // Redirect after successful submission
-    } catch (error) {
-      console.error("Error submitting form:", error);
-    }
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  if (!isFormValid()) {
+    alert("Please fill in all required fields. Text areas must have at least 5 words.");
+    return;
+  }
+
+  const responses = {
+    evaluatorID: user.id,
+    projectCode,
+    general: {},
+    students: {},
   };
+
+  // Populate general responses
+  generalQuestions.forEach((field) => {
+    responses.general[field.name] = formData[field.name];
+  });
+
+  // Populate student-specific responses
+  students.forEach((student) => {
+    responses.students[student.id] = {
+      ...formData[`student${student.id}`], // Preserve existing responses for this student
+    };
+
+    studentQuestions.forEach((field) => {
+      const fieldName = `student${student.id}_${field.name}`;
+      responses.students[student.id][field.name] =
+        formData[fieldName] || responses.students[student.id][field.name] || ""; // Merge existing and new responses
+    });
+  });
+
+  try {
+    console.log("Submitting form data:", responses); // Debug log
+    // Submit the form responses
+    await formsApi.submitForm(formID, responses); // Pass formID and the complete responses object
+    console.log("Form submitted successfully");
+
+    // Add or update evaluator status in Evaluators collection
+    const evaluatorData = {
+      evaluatorID: user.id,
+      formID,
+      projectCode,
+      status: "Submitted",
+    };
+
+    const evaluatorId = `${user.id}-${formID}-${projectCode}`; // Unique ID for evaluator
+    console.log("Updating evaluator status:", evaluatorData);
+
+    await evaluatorsApi.addOrUpdateEvaluator(evaluatorId, evaluatorData); 
+    console.log("Evaluator status updated successfully");
+
+    // Redirect after successful submission
+    navigate("/MyProjectsReview");
+  } catch (error) {
+    console.error("Error submitting form or updating evaluator:", error);
+  }
+};
+
+  
   
 
   const updateProgress = () => {

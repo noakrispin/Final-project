@@ -41,11 +41,16 @@ const addUser = async (req, res) => {
 // Fetch user details along with subcollections
 const getUser = async (req, res) => {
   try {
+    console.log("Fetching user with ID:", req.params.id);
+
     // Fetch main user details
     const userResponse = await getDocument("users", req.params.id);
     if (!userResponse.success) {
+      console.error("User not found in the main collection:", req.params.id);
       return res.status(404).json({ success: false, error: "User not found." });
     }
+
+    console.log("User found:", userResponse.data);
 
     // Extract the necessary fields
     const { fullName, role } = userResponse.data;
@@ -53,14 +58,18 @@ const getUser = async (req, res) => {
     // Fetch supervisorDetails subcollection (if exists)
     let supervisorDetails = null;
     if (role === "Supervisor") {
+      console.log(`Fetching supervisorDetails for user ID ${req.params.id}`);
       const supervisorData = await getSubcollection("users", req.params.id, "supervisorDetails");
+      console.log("SupervisorDetails response:", supervisorData);
       supervisorDetails = supervisorData.success ? supervisorData.data : null;
     }
 
     // Fetch adminDetails subcollection (if exists)
     let adminDetails = null;
     if (role === "Admin") {
+      console.log(`Fetching adminDetails for user ID ${req.params.id}`);
       const adminData = await getSubcollection("users", req.params.id, "adminDetails");
+      console.log("AdminDetails response:", adminData);
       adminDetails = adminData.success ? adminData.data : null;
     }
 
@@ -70,7 +79,7 @@ const getUser = async (req, res) => {
       data: {
         id: req.params.id,
         fullName,
-        email,
+        email: userResponse.data.email,
         role,
         supervisorDetails,
         adminDetails,
@@ -81,6 +90,7 @@ const getUser = async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch user." });
   }
 };
+
 
 
 module.exports = { addUser, getUser };
