@@ -11,24 +11,24 @@ export const processExcelFile = async (file) => {
       description: row.description || '',
       deadline: null,
       specialNotes: null,
+      personalNotes: null,
       gitLink: null, // Explicitly set null for fields to be edited later
-      student1: {
-        name: row.student1Name,
-        id: row.student1Id,
-        email: row.student1Email,
+      Student1: {
+        fullName: row.student1Name,
+        ID: row.student1Id,
+        Email: row.student1Email,
       },
-      student2: row.student2Name
+      Student2: row.student2Name
         ? {
-            name: row.student2Name,
-            id: row.student2Id,
-            email: row.student2Email,
+          fullName: row.student2Name,
+          ID: row.student2Id,
+            Email: row.student2Email,
           }
         : null,
       supervisor1: row.supervisor1,
       supervisor2: row.supervisor2 || '',
       part: row.part,
       type: row.type,
-      status: 'pending',
       createdAt: new Date().toISOString(),
     }));
   } catch (error) {
@@ -103,6 +103,12 @@ const validateData = (data) => {
     }
     if (row.student2Id && !idRegex.test(row.student2Id)) {
       throw new Error(`Invalid student ID format for Student 2 in row ${index + 1}`);
+    }
+    if (!idRegex.test(row.supervisor1)) {
+      throw new Error(`Invalid supervisor ID format for supervisor 1 in row ${index + 1}`);
+    }
+    if (row.supervisor2 && !idRegex.test(row.supervisor2)) {
+      throw new Error(`Invalid supervisor ID format for supervisor 2 in row ${index + 1}`);
     }
 
     return row;

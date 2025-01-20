@@ -26,11 +26,11 @@ const StudentDetailsModal = ({ isOpen, onClose, student }) => {
             </div>
             <div>
               <label className="text-sm text-gray-500">Student ID</label>
-              <p className="text-base font-medium">{student?.ID|| "N/A"}</p>
+              <p className="text-base font-medium">{student?.ID||student?.id|| "Missing ID"}</p>
             </div>
             <div>
               <label className="text-sm text-gray-500">Email</label>
-              <p className="text-base font-medium">{student?.Email|| "N/A"}</p>
+              <p className="text-base font-medium">{student?.Email||student?.email|| "Missing Email"}</p>
             </div>
           </div>
 
