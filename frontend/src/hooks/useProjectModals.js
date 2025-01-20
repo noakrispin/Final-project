@@ -57,9 +57,10 @@ export const useProjectModals = (projects, setProjects) => {
   };
 
   const handleStudentClick = (student) => {
+    console.log("Student clicked:", student);
     setStudentModal({
       isOpen: true,
-      student,
+      student, 
     });
   };
 

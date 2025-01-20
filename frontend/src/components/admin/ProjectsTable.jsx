@@ -28,25 +28,30 @@ const ProjectsTable = ({
 
   const renderStudentCell = (students) => (
     <div className="space-y-1">
-      {students
-        .filter(student => student && student.name)
-        .map((student, index) => (
+      {students && students.length > 0 ? (
+        students.map((student, index) => (
           <div key={index} className="group relative">
             <button
-              onClick={() => onStudentClick(student)}
+              onClick={() => onStudentClick(student)} 
               className="text-blue-600 hover:text-blue-700 transition-colors group-hover:bg-gray-50 p-2 rounded w-full text-left flex items-center"
             >
-              <span>{student.name}</span>
+              <span>{student.fullName || "Unknown Student"}</span>
             </button>
           </div>
-        ))}
+        ))
+      ) : (
+        <span>No Students</span>
+      )}
     </div>
   );
+  
+  
+  
 
   const projectColumns = [
     { key: 'projectCode', header: 'Project Code', sortable: true, render: (value, row) => renderEditableCell(value, row, 'projectCode', 'Project Code') },
     { key: 'title', header: 'Project Title', sortable: true, render: (value, row) => renderEditableCell(value, row, 'title', 'Project Title') },
-    { key: 'students', header: 'Students', sortable: false, render: (_, row) => renderStudentCell([row.student1, row.student2].filter(Boolean)) },
+    { key: 'students', header: 'Students', sortable: false, render: (_, row) => renderStudentCell(row.students || []) },
     { key: 'supervisor1', header: 'Supervisor', sortable: true, render: (value, row) => renderEditableCell(value, row, 'supervisor1', 'Supervisor') },
     { key: 'part', header: 'Part', sortable: true, render: (value, row) => renderEditableCell(value, row, 'part', 'Part', 'select', ['A', 'B']) },
     { key: 'type', header: 'Type', sortable: true, render: (value, row) => renderEditableCell(value, row, 'type', 'Type', 'select', ['Development', 'Research']) },
