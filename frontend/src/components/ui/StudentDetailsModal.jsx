@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 
 const StudentDetailsModal = ({ isOpen, onClose, student }) => {
   if (!isOpen || !student) return null;
-
+  console.log("Student Details Modal:", student);
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={onClose} />
@@ -22,15 +22,15 @@ const StudentDetailsModal = ({ isOpen, onClose, student }) => {
           <div className="p-4 space-y-4">
             <div>
               <label className="text-sm text-gray-500">Name</label>
-              <p className="text-base font-medium">{student.name}</p>
+              <p className="text-base font-medium">{student?.fullName|| "N/A"}</p>
             </div>
             <div>
               <label className="text-sm text-gray-500">Student ID</label>
-              <p className="text-base font-medium">{student.id}</p>
+              <p className="text-base font-medium">{student?.ID|| "N/A"}</p>
             </div>
             <div>
               <label className="text-sm text-gray-500">Email</label>
-              <p className="text-base font-medium">{student.email}</p>
+              <p className="text-base font-medium">{student?.Email|| "N/A"}</p>
             </div>
           </div>
 
