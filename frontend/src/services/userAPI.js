@@ -41,5 +41,19 @@ export const userApi = {
       throw new Error(`Failed to fetch user with ID: ${userId}`);
     }
   },
+
+    /**
+   * Fetch all users from the database.
+   */
+    getAllUsers: async () => {
+      try {
+        const response = await api.get("/users");
+        console.log("API Response for getAllUsers:", response.data);
+        return response.data; // Assuming response.data contains the user list
+      } catch (error) {
+        console.error("Error fetching all users:", error);
+        throw new Error("Failed to fetch users.");
+      }
+    },
   
 };
