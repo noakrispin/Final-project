@@ -43,22 +43,36 @@ exports.getGrade = async (req, res) => {
 // Get all grades
 exports.getAllGrades = async (req, res) => {
   try {
+    console.log("Fetching all grades from Firestore...");
     const gradesSnapshot = await admin.firestore().collection("finalGrades").get();
+
+    // Check if there are no documents in the collection
     if (gradesSnapshot.empty) {
-      return res.status(404).json({ success: false, error: "No grades found" });
+      console.warn("No grades found in the finalGrades collection.");
+      return res.status(200).json({ success: true, data: [] }); // Return empty data array with success: true
     }
 
+    // Map through documents to extract grade data
     const grades = gradesSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
+      id: doc.id, 
+      ...doc.data(), 
     }));
 
+    console.log("Grades fetched successfully:", grades);
+
+    // Return grades with success flag
     res.status(200).json({ success: true, data: grades });
   } catch (error) {
     console.error("Error fetching grades:", error.message);
-    res.status(500).json({ success: false, error: "Failed to fetch grades" });
+
+    // Return error response
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch grades. Please try again later.",
+    });
   }
 };
+
 
 // Delete a grade
 exports.deleteGrade = async (req, res) => {

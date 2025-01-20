@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Table } from "../../components/ui/Table";
-import { mockApi } from "../../services/mockApi";
 // import { exportToExcelFile } from "../../services/fileProcessingService";
 import ProjectDetailsPopup from "../../components/shared/ProjectDetailsPopup";
 import ProjectAssessmentPopup from "../../components/ui/ProjectAssessmentPopup";
+import { gradesApi } from "../../services/finalGradesAPI";
+import { projectsApi } from "../../services/projectsAPI";
+import { userApi } from "../../services/userAPI";
 
 const AdminGradesPage = () => {
   const [projects, setProjects] = useState([]);
@@ -13,28 +15,108 @@ const AdminGradesPage = () => {
   const [selectedGrade, setSelectedGrade] = useState(null);
 
   useEffect(() => {
-    const fetchProjects = async () => {
+    const fetchAndProcessGrades = async () => {
       try {
-        setIsLoading(true);
-        const projectsData = await mockApi.getProjects();
-        const preprocessedProjects = preprocessProjects(projectsData);
-        setProjects(preprocessedProjects);
-      } catch (err) {
-        console.error("Error fetching projects:", err);
-        setError("Failed to fetch projects. Please try again later.");
+        console.log("Starting data fetch and preprocessing...");
+
+        console.log("Fetching final grades...");
+        const gradesResponse = await gradesApi.getAllGrades();
+        const grades = gradesResponse || []; // Fixed grades processing
+        console.log("Final grades fetched:", grades);
+
+        console.log("Fetching all projects...");
+        const projects = await projectsApi.getAllProjects();
+        console.log("All projects fetched:", projects);
+
+        console.log("Fetching all users...");
+        const users = await userApi.getAllUsers();
+        console.log("All users fetched:", users);
+
+        console.log("Processing final grades...");
+        const processedData = preprocessProjects(grades, projects, users);
+        console.log("Processed Data:", processedData);
+
+        setProjects(processedData);
+      } catch (error) {
+        console.error("Error during preprocessing:", error);
+        setError("Failed to preprocess project data.");
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchProjects();
+    fetchAndProcessGrades();
   }, []);
 
-  const preprocessProjects = (projects) =>
-    projects.map((project) => ({
-      ...project,
-      supervisors: project.supervisor ? [project.supervisor] : [],
-    }));
+  const preprocessProjects = (grades, projects, users) => {
+    try {
+      console.log("Preprocessing projects with grades, projects, and users...");
+      console.log("Grades:", grades);
+      console.log("Projects:", projects);
+      console.log("Users:", users);
+  
+      // Filter out placeholder grades
+      const filteredGrades = grades.filter(
+        (grade) =>
+          grade.projectCode && grade.projectCode !== "placeholderProject"
+      );
+      console.log("Filtered Grades:", filteredGrades);
+  
+      // Map grades to project and user details
+      return filteredGrades.map((grade) => {
+        const project = projects.find(
+          (proj) => proj.projectCode === grade.projectCode
+        );
+        const student = project
+          ? [project.Student1, project.Student2].find(
+              (s) => s && s.ID === grade.studentID
+            )
+          : null;
+  
+        // Ensure student object has a fullName fallback
+        const studentData = student
+          ? {
+              id: student.ID,
+              fullName: student.fullName || `${student.firstName} ${student.lastName}`,
+              email: student.Email,
+            }
+          : {
+              id: grade.studentID || "Unknown ID",
+              fullName: "Unknown Student",
+              email: "Unknown Email",
+            };
+  
+        // Map supervisor IDs to full names from the `users` collection
+        const supervisors = project
+          ? [project.supervisor1, project.supervisor2]
+              .filter((id) => id) // Exclude null or empty supervisor IDs
+              .map((id) => {
+                const supervisor = users.find((user) => user.id === id);
+                return supervisor ? supervisor.fullName : `Supervisor ID ${id}`;
+              })
+          : [];
+        console.log("studentData:", studentData);
+        console.log("student.fullName:",student.fullName);
+        return {
+          projectCode: grade.projectCode,
+          title: project ? project.title : "Unknown Project",
+          part: project ? project.part : "Unknown Part",
+          student: studentData,
+          supervisors:
+            supervisors.length > 0 ? supervisors.join(", ") : "No Supervisors",
+          presentationGrade: grade.CalculatedPresentationGrade || "N/A",
+          bookGrade: grade.CalculatedBookGrade || "N/A",
+          supervisorGrade: grade.CalculatedSupervisorGrade || "N/A",
+          finalGrade: grade.finalGrade || "N/A",
+          status: grade.status || "Not graded",
+        };
+      });
+    } catch (error) {
+      console.error("Error preprocessing projects:", error.message);
+      throw new Error("Failed to preprocess project data.");
+    }
+  };
+  
 
   const projectColumns = useMemo(
     () => [
@@ -52,86 +134,52 @@ const AdminGradesPage = () => {
       },
       { key: "part", header: "Part", className: "text-base" },
       {
-        key: "students",
-        header: "Students",
+        key: "student.fullName",
+        header: "Student Name",
         className: "text-base",
-        render: (students) =>
-          students?.map((student) => student?.name || "N/A").join(", ") ||
-          "N/A",
+        //render: (project) => project.student.fullName || "N/A",
       },
       {
         key: "supervisors",
         header: "Supervisors",
         className: "text-base",
-        render: (supervisors) =>
-          supervisors && supervisors.length > 0
-            ? supervisors.join(", ")
-            : "N/A",
-      },
-      {
-        key: "presentationGrade",
-        header: "Presentation Grade",
-        className: "text-base",
-        render: (grade, project) => (
-          <span
-            className="cursor-pointer text-blue-500 hover:underline"
-            onClick={(e) => {
-              e.stopPropagation(); // Prevent row click event
-              setSelectedGrade({ project, type: "Presentation Grade", grade });
-            }}
-          >
-            {grade || "N/A"}
-          </span>
-        ),
+        render: (project) => project.supervisors || "N/A",
       },
       {
         key: "bookGrade",
         header: "Book Grade",
         className: "text-base",
-        render: (grade, project) => (
-          <span
-            className="cursor-pointer text-blue-500 hover:underline"
-            onClick={(e) => {
-              e.stopPropagation(); // Prevent row click event
-              setSelectedGrade({ project, type: "Book Grade", grade });
-            }}
-          >
-            {grade || "N/A"}
-          </span>
-        ),
+        render: (project) =>
+          project.bookGrade !== undefined ? project.bookGrade : "N/A",
+      },
+      {
+        key: "presentationGrade",
+        header: "Presentation Grade",
+        className: "text-base",
+        render: (project) =>
+          project.presentationGrade !== undefined
+            ? project.presentationGrade
+            : "N/A",
       },
       {
         key: "supervisorGrade",
         header: "Supervisor Grade",
         className: "text-base",
-        render: (grade, project) => (
-          <span
-            className="cursor-pointer text-blue-500 hover:underline"
-            onClick={(e) => {
-              e.stopPropagation(); // Prevent row click event
-              setSelectedGrade({ project, type: "Supervisor Grade", grade });
-            }}
-          >
-            {grade || "N/A"}
-          </span>
-        ),
-      },
-      {
-        key: "deadline",
-        header: "Deadline",
-        className: "text-base",
-        sortable: true,
+        render: (project) =>
+          project.supervisorGrade !== undefined
+            ? project.supervisorGrade
+            : "N/A",
       },
       {
         key: "gradingStatus",
         header: "Status",
         className: "text-base",
-        render: (gradingStatus) => (
+        render: (project) => (
           <span
             className={`inline-block px-3 py-1 text-sm rounded-full text-center ${
-              gradingStatus === "Fully graded"
+              project.gradingStatus === "Fully graded"
                 ? "bg-green-100 text-green-700"
-                : gradingStatus === "Partially graded"
+                : project.gradingStatus === "Partially graded"
                 ? "bg-yellow-100 text-yellow-700"
                 : "bg-red-100 text-red-700"
             }`}
@@ -141,45 +189,28 @@ const AdminGradesPage = () => {
               lineHeight: "1.5",
             }}
           >
-            {gradingStatus}
+            {project.gradingStatus}
           </span>
         ),
+      },
+      {
+        key: "deadline",
+        header: "Deadline",
+        className: "text-base",
+        sortable: true,
       },
     ],
     []
   );
 
-  const calculateGradingStatus = (project) => {
-    const grades = [
-      project.presentationGrade,
-      project.bookGrade,
-      project.supervisorGrade,
-    ];
-    if (grades.every((grade) => grade !== null && grade !== undefined)) {
-      return "Fully graded";
-    }
-    if (grades.some((grade) => grade !== null && grade !== undefined)) {
-      return "Partially graded";
-    }
-    return "Not yet graded";
-  };
-/*
+  //
+  /*
   const handleExport = () => {
     const dataToExport = projects.map((project) => ({
-      "Project Code": project.projectCode,
-      "Project Title": project.title,
-      Part: project.part || "N/A",
-      "Presentation Grade": project.presentationGrade || "N/A",
-      "Book Grade": project.bookGrade || "N/A",
-      "Supervisor Grade": project.supervisorGrade || "N/A",
-      "Supervisor 1 Name": project.supervisors?.[0] || "N/A",
-    "Supervisor 1 ID": project.supervisors?.[0]?.id || "N/A",
-    "Supervisor 2 Name": project.supervisors?.[1] || "N/A",
-    "Supervisor 2 ID": project.supervisors?.[1]?.id || "N/A",
-      "Student 1 Name": project.students?.[0]?.name || "N/A",
-      "Student 1 ID": project.students?.[0]?.id || "N/A",
-      "Student 2 Name": project.students?.[1]?.name || "N/A",
-      "Student 2 ID": project.students?.[1]?.id || "N/A",
+      "ID":project.students?.[0]?.id,
+      "Student 1 first Name": project.students?.[0]?.name
+      "Student 1 Last Name": project.students?.[0]?.name
+      "final Grade": ,
     }));
 
     exportToExcelFile(dataToExport, "Project_Grades.xlsx");
@@ -197,10 +228,16 @@ const AdminGradesPage = () => {
     return <div className="text-center text-red-500 mt-10">{error}</div>;
   }
 
+  const calculateGradingStatus = (project) => {
+    return project.status || "Not graded";
+  };
+
   const tableData = projects.map((project) => ({
     ...project,
+    "student.fullName": project.student.fullName, 
     gradingStatus: calculateGradingStatus(project),
   }));
+  
 
   return (
     <div className="bg-gray-50 min-h-screen p-6">
@@ -214,12 +251,12 @@ const AdminGradesPage = () => {
               View and manage grades for all ongoing projects.
             </p>
           </div>
-          <button
+          {/* <button
             onClick={handleExport}
             className="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg shadow hover:bg-blue-600 transition"
           >
             Export to Excel
-          </button>
+          </button> */}
         </div>
 
         <div className="overflow-auto p-6">
