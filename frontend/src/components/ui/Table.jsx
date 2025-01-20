@@ -21,6 +21,7 @@ export const Table = ({
 =======
   showTabs = true, // New prop with a default value
 >>>>>>> d307815 (Update Table Tabs)
+  showTabs = true, // New prop with a default value
 }) => {
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
