@@ -15,6 +15,7 @@ export const Table = ({
   className = "",
   onRowClick,
   userId,
+  showTabs = true, // New prop with a default value
 }) => {
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
@@ -157,29 +158,30 @@ export const Table = ({
   
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between mb-4 px-6">
-        <div className="flex space-x-2">
-          {FILTERS.map((filter) => (
-            <button
-              key={filter}
-              onClick={() => setSelectedFilter(filter)}
-              className={`px-4 py-2 rounded-full text-base font-medium ${
-                selectedFilter === filter
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-600 hover:bg-gray-300"
-              }`}
-            >
-              {filter}
-            </button>
-          ))}
+      {showTabs && ( // Conditionally render the tabs
+        <div className="flex items-center justify-between mb-4 px-6">
+          <div className="flex space-x-2">
+            {FILTERS.map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setSelectedFilter(filter)}
+                className={`px-4 py-2 rounded-full text-base font-medium ${
+                  selectedFilter === filter
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                }`}
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
+          <SearchBar
+            value={searchTerm}
+            onChange={setSearchTerm}
+            placeholder="Search"
+          />
         </div>
-        <SearchBar
-          value={searchTerm}
-          onChange={setSearchTerm}
-          placeholder="Search"
-        />
-      </div>
-
+      )}
       <div
         className={`w-full overflow-auto rounded-lg border border-[#e5e7eb] bg-white ${className}`}
         onClick={(e) => {

@@ -349,6 +349,7 @@ const MyProjectsReview = () => {
             isDeadlinePassed={isDeadlinePassed}
             columns={myProjectColumns}
             onRowClick={handleRowClick}
+            showTabs={true}
           />
         </div>
       </div>

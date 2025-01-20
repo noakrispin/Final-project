@@ -213,6 +213,7 @@ const OtherProjectsReview = () => {
             data={projects}
             columns={otherProjectColumns}
             onRowClick={setSelectedProject}
+            showTabs={true}
           />
         </div>
       </div>
