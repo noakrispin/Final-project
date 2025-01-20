@@ -1,3 +1,4 @@
+const admin = require("firebase-admin");
 const { addDocument, getDocument, addSubcollection, getSubcollection } = require("../utils/firebaseHelper");
 
 // Helper function to handle subcollections
@@ -91,6 +92,29 @@ const getUser = async (req, res) => {
   }
 };
 
+const getAllUsers = async (req, res) => {
+  try {
+    console.log("Fetching all users from Firestore...");
+    const usersSnapshot = await admin.firestore().collection("users").get();
+
+    if (usersSnapshot.empty) {
+      console.log("No users found in Firestore.");
+      return res.status(404).json({ success: false, message: "No users found" });
+    }
+
+    console.log("Users snapshot fetched successfully.");
+    const users = usersSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    console.log("Processed users data:", users);
+    res.status(200).json({ success: true, data: users });
+  } catch (error) {
+    console.error("Error fetching users:", error.message, error.stack);
+    res.status(500).json({ success: false, message: "Failed to fetch users" });
+  }
+};
 
 
-module.exports = { addUser, getUser };
+module.exports = { addUser, getUser, getAllUsers };
