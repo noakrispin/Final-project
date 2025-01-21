@@ -350,6 +350,7 @@ const MyProjectsReview = () => {
             columns={myProjectColumns}
             onRowClick={handleRowClick}
             showTabs={true}
+            useCustomColumns={true}
           />
         </div>
       </div>
