@@ -5,6 +5,8 @@ const {
   getAllProjects,
   updateProject,
   deleteProject,
+  setGlobalDeadlineAndNotify, // Import the new function
+  scheduleRemindersForAll, // New function for all supervisors
 } = require("../controllers/projectController");
 
 const router = express.Router();
@@ -23,5 +25,11 @@ router.put("/:projectCode", updateProject);
 
 // Delete a project
 router.delete("/:projectCode", deleteProject);
+
+// Set global deadline and notify supervisors
+router.post("/global-deadline", setGlobalDeadlineAndNotify);
+
+// Route for scheduling reminders for all supervisors
+router.post("/schedule-reminders-to-all", scheduleRemindersForAll);
 
 module.exports = router;
