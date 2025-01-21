@@ -1,4 +1,6 @@
 const admin = require("firebase-admin");
+const { sendEmail } = require("../utils/emailService");
+const mustache = require("mustache");
 
 // Add a new project
 exports.addProject = async (req, res) => {
@@ -108,5 +110,129 @@ exports.deleteProject = async (req, res) => {
   } catch (error) {
     console.error("Error deleting project:", error);
     res.status(500).json({ error: "Failed to delete project" });
+  }
+};
+
+
+// Email template for notifying about global deadlines
+const emailTemplate = "A new deadline has been set for project submissions. Please log in to the system to view the details.";
+
+exports.setGlobalDeadlineAndNotify = async (req, res) => {
+  const { deadline, emailMessage } = req.body;
+
+  if (!deadline) {
+    return res.status(400).json({ error: "Deadline is required" });
+  }
+
+  try {
+    // Update all project deadlines
+    const projectsRef = admin.firestore().collection("projects");
+    const snapshot = await projectsRef.get();
+    const batch = admin.firestore().batch();
+    snapshot.forEach(doc => {
+      batch.update(doc.ref, { deadline: new admin.firestore.Timestamp(Math.floor(deadline / 1000), 0) });
+    });
+    await batch.commit();
+
+    // Get all supervisor emails
+    const usersSnapshot = await admin.firestore().collection("users").where("role", "==", "Supervisor").get();
+    const recipientEmails = usersSnapshot.docs.map(doc => doc.data().email).filter(Boolean);
+
+    // Use the updated email template or the provided custom message
+    const emailBody = emailMessage || emailTemplate;
+
+    // Send emails
+    await Promise.all(
+      recipientEmails.map(email => sendEmail(email, "New Deadline Notification", emailBody))
+    );
+
+    res.status(200).json({ message: "Global deadline set and emails sent successfully." });
+  } catch (error) {
+    console.error("Error:", error.message);
+    res.status(500).json({ error: "Failed to set global deadline and notify supervisors." });
+  }
+};
+
+exports.scheduleRemindersForAll = async (req, res) => {
+  const { scheduleDate, message } = req.body;
+
+  if (!scheduleDate) {
+    return res.status(400).json({ error: "Schedule date is required to send reminders." });
+  }
+
+  const defaultTemplate =
+    "This is a reminder to review the project's status. Please log in to the system to take action.";
+  const finalMessage = message || defaultTemplate;
+
+  try {
+    const usersSnapshot = await admin
+      .firestore()
+      .collection("users")
+      .where("role", "==", "Supervisor")
+      .get();
+
+    const supervisorEmails = usersSnapshot.docs.map((doc) => doc.data().email).filter(Boolean);
+
+    if (supervisorEmails.length === 0) {
+      return res.status(400).json({ error: "No supervisors found to send reminders." });
+    }
+
+    const remindersCollection = admin.firestore().collection("scheduled_reminders");
+    const reminderData = {
+      supervisorEmails,
+      scheduleDate: new Date(scheduleDate),
+      message: finalMessage,
+      status: "pending",
+      createdAt: new Date(),
+    };
+
+    await remindersCollection.add(reminderData);
+    res.status(201).json({ message: "Reminders scheduled successfully for all supervisors." });
+  } catch (error) {
+    console.error("Error scheduling reminders:", error.message);
+    res.status(500).json({ error: "Failed to schedule reminders for all supervisors." });
+  }
+};
+
+// Process scheduled reminders
+exports.processScheduledReminders = async () => {
+  try {
+    const remindersSnapshot = await admin
+      .firestore()
+      .collection("scheduled_reminders")
+      .where("status", "==", "pending")
+      .where("scheduleDate", "<=", new Date())
+      .get();
+
+    if (remindersSnapshot.empty) {
+      console.log("No reminders to process.");
+      return;
+    }
+
+    const reminders = remindersSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+    for (const reminder of reminders) {
+      const { supervisorEmails, message } = reminder;
+
+      if (!supervisorEmails || supervisorEmails.length === 0) {
+        console.log(`No emails found for reminder ${reminder.id}. Skipping.`);
+        continue;
+      }
+
+      // Send reminder emails
+      await Promise.all(
+        supervisorEmails.map((email) =>
+          sendEmail(email, "Reminder Notification", message)
+        )
+      );
+
+      // Mark reminder as sent
+      await admin.firestore().collection("scheduled_reminders").doc(reminder.id).update({
+        status: "sent",
+        sentAt: new Date(),
+      });
+    }
+  } catch (error) {
+    console.error("Error processing reminders:", error.message);
   }
 };
