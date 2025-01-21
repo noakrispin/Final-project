@@ -137,7 +137,7 @@ const FormField = ({
       </label>
 
       {/* Description */}
-      {description && <p className="text-gray-600 text-sm mb-1">{description}</p>}
+      {description && <p className="text-gray-700 text-base mb-1">{description}</p>}
 
       {/* Input Field */}
       {renderInputField()}

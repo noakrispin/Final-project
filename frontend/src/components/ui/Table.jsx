@@ -15,7 +15,8 @@ export const Table = ({
   className = "",
   onRowClick,
   userId,
-  showTabs = true, // New prop with a default value
+  showTabs = true, 
+  useCustomColumns = true,
 }) => {
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
@@ -201,7 +202,7 @@ export const Table = ({
                   <th
                     key={column.key}
                     scope="col"
-                    className={`relative px-6 py-4 text-left text-base font-medium text-[#313131] ${
+                    className={`relative px-6 py-4 text-center text-base font-medium text-[#313131] ${
                       column.sortable ? "cursor-pointer select-none" : ""
                     } group`}
                   >
@@ -247,7 +248,7 @@ export const Table = ({
                       key={column.key}
                       className="px-6 py-4 text-base text-[#686b80]"
                     >
-                      {column.key.includes("Grade")
+                      {useCustomColumns && column.key.includes("Grade")
                         ? renderGradeCell(
                             project,
                             column.key.replace("Grade", "").toLowerCase()
