@@ -241,7 +241,7 @@ export const Table = ({
                 <tr
                   key={rowIndex}
                   className="hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => onRowClick(project, false)}
+                  onClick={() => onRowClick(project)}
                 >
                   {visibleColumnsList.map((column) => (
                     <td
