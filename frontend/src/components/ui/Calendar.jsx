@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-export const Calendar = ({ tasks, selectedDate, setSelectedDate }) => {
+export const Calendar = ({ tasks = [], selectedDate, setSelectedDate }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const daysInMonth = (date) => {
@@ -26,14 +26,15 @@ export const Calendar = ({ tasks, selectedDate, setSelectedDate }) => {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
       const isToday = date.toDateString() === new Date().toDateString();
       const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
-      const hasTasks = tasks.some(task => new Date(task.deadline).toDateString() === date.toDateString());
+      const hasTasks = tasks.some(
+        (task) => new Date(task.deadline).toDateString() === date.toDateString()
+      );
 
       week.push(
         <td
           key={day}
           className={`p-2 text-center cursor-pointer relative ${
-            isToday ? 'bg-blue-500 text-white' :
-              isSelected ? 'bg-blue-200' : ''
+            isToday ? 'bg-blue-500 text-white' : isSelected ? 'bg-blue-200' : ''
           } hover:bg-blue-100 rounded-full`}
           onClick={() => setSelectedDate(date)}
         >
@@ -61,21 +62,27 @@ export const Calendar = ({ tasks, selectedDate, setSelectedDate }) => {
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-xl font-semibold mb-4 text-primary">Calendar</h2>
       <div className="flex justify-between items-center mb-4">
-        <button onClick={() => changeMonth(-1)} className="p-1"><ChevronLeft /></button>
-        <h3 className="text-lg font-medium">{currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h3>
-        <button onClick={() => changeMonth(1)} className="p-1"><ChevronRight /></button>
+        <button onClick={() => changeMonth(-1)} className="p-1">
+          <ChevronLeft />
+        </button>
+        <h3 className="text-lg font-medium">
+          {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+        </h3>
+        <button onClick={() => changeMonth(1)} className="p-1">
+          <ChevronRight />
+        </button>
       </div>
       <table className="w-full">
         <thead>
           <tr>
-            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
-              <th key={day} className="p-2">{day}</th>
+            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
+              <th key={day} className="p-2">
+                {day}
+              </th>
             ))}
           </tr>
         </thead>
-        <tbody>
-          {renderCalendar()}
-        </tbody>
+        <tbody>{renderCalendar()}</tbody>
       </table>
     </div>
   );
