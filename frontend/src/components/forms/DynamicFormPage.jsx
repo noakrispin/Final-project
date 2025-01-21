@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import UnifiedFormComponent from "./UnifiedFormComponent";
+import EditFormComponent from "./editFormComponent";
 import { formsApi } from "../../services/formAPI";
 
 const DynamicFormPage = () => {
@@ -33,7 +34,7 @@ const DynamicFormPage = () => {
       return;
     }
 
-    setIsAdmin(user.role === "Admin");
+    setIsAdmin(user.isAdmin === true);
 
     const fetchFormDetailsAndQuestions = async () => {
       setIsLoading(true);
@@ -116,21 +117,30 @@ const DynamicFormPage = () => {
     );
   }
 
-  return (
-    <UnifiedFormComponent
-      formID={formID}
-      formTitle={formDetails.title || ""}
-      formDescription={formDetails.description || ""}
-      formFields={generalQuestions}
-      studentQuestions={studentQuestions}
-      submitEndpoint={formID}
-      projectCode={projectCode}
-      projectName={projectName}
-      students={students}
-      isAdmin={isAdmin}
-      onEdit={handleEdit}
-    />
-  );
+  if (isAdmin) {
+    return (
+      <EditFormComponent
+        formID={formID}
+        formTitle={formDetails.title || ""}
+        formDescription={formDetails.description || ""}
+        questions={formQuestions}
+        onEdit={handleEdit}
+      />
+    );
+  } else {
+    return (
+      <UnifiedFormComponent
+        formID={formID}
+        formTitle={formDetails.title || ""}
+        formDescription={formDetails.description || ""}
+        questions={formQuestions}
+        projectCode={projectCode}
+        projectName={projectName}
+        students={students}
+        //isAdmin={isAdmin}
+      />
+    );
+  }
 };
 
 export default DynamicFormPage;
