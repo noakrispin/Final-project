@@ -78,16 +78,18 @@ export const userApi = {
     /**
      * Update the role of a user in the database.
      * @param {string} userId - The ID of the user to update.
-     * @param {string} newRole - The new role to assign (e.g., 'Admin', 'Supervisor').
+     * @param {boolean} isAdmin - Whether the user should be an admin.
      */
-    updateUserRole: async (userId, newRole) => {
+    updateUserRole: async (userId, { role, isAdmin }) => {
       try {
-        console.log(`Sending PUT request to update role for user ID: ${userId} to ${newRole}`);
-        const response = await api.put(`/users/${userId}/role`, { role: newRole });
+        console.log(
+          `Sending PUT request to update user ID: ${userId} with role: ${role}, isAdmin: ${isAdmin}`
+        );
+        const response = await api.put(`/users/${userId}/role`, { role, isAdmin });
         console.log("API Response for updateUserRole:", response);
         return response.data;
       } catch (error) {
-        console.error("Error updating user role:", error.message);
+        console.error("Error updating user role:", error.response?.data || error.message);
         throw new Error(`Failed to update role for user with ID: ${userId}`);
       }
     },

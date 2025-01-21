@@ -19,7 +19,7 @@
     "fullName": "Bob Admin",
     "email": "bob.admin@e.braude.ac.il",
     "role": "Admin",
-    "password": "adminPass123",
+    "password": "adminPass123!",
     "supervisorTopics": [
       "search engine",
       "data classification"

@@ -5,7 +5,6 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  
 
   useEffect(() => {
     try {
@@ -13,7 +12,13 @@ export const AuthProvider = ({ children }) => {
       if (storedUser && storedUser !== "undefined") {
         const parsedUser = JSON.parse(storedUser);
         console.log("User found in localStorage:", parsedUser);
-        setUser(parsedUser);
+
+        // Ensure isAdmin is boolean
+        const processedUser = {
+          ...parsedUser,
+          isAdmin: !!parsedUser.isAdmin,
+        };
+        setUser(processedUser);
       } else {
         console.log("No valid user found in localStorage, clearing...");
         localStorage.removeItem("user");
@@ -31,15 +36,21 @@ export const AuthProvider = ({ children }) => {
 
       const { user, token } = response;
 
+      // Ensure isAdmin is boolean
+      const processedUser = {
+        ...user,
+        isAdmin: !!user.isAdmin,
+      };
+
       // Save user and token in localStorage
-      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("user", JSON.stringify(processedUser));
       localStorage.setItem("token", token);
 
       // Update user in context
-      setUser(user);
+      setUser(processedUser);
 
       // Return success with user data
-      return { success: true, user };
+      return { success: true, user: processedUser };
     } catch (error) {
       console.error("Login error:", error.message); // Debugging log
       return {
