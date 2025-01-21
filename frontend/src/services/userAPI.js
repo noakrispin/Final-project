@@ -30,6 +30,7 @@ export const userApi = {
           fullName: response.data.fullName, // Correct extraction
           role: response.data.role,
           email: response.data.email || null,
+          isAdmin: response.data.isAdmin || false, // Explicitly include isAdmin
           supervisorDetails: response.data.supervisorDetails || null,
           adminDetails: response.data.adminDetails || null,
         };
@@ -42,20 +43,6 @@ export const userApi = {
     }
   },
 
-    /**
-   * Fetch all users from the database.
-   */
-    getAllUsers: async () => {
-      try {
-        const response = await api.get("/users");
-        console.log("API Response for getAllUsers:", response.data);
-        return response.data; // Assuming response.data contains the user list
-      } catch (error) {
-        console.error("Error fetching all users:", error);
-        throw new Error("Failed to fetch users.");
-      }
-    },
-  
   /**
    * Fetch all users from the database.
    */
@@ -71,4 +58,37 @@ export const userApi = {
     }
   },
 
+  /**
+   * Delete a user by ID from the database.
+   * @param {string} userId - The ID of the user to delete.
+   */
+  deleteUser: async (userId) => {
+    try {
+      console.log(`Sending DELETE request for user ID: ${userId}`); // Debugging log
+      const response = await api.delete(`/users/${userId}`);
+      console.log("API Response for deleteUser:", response);
+      return response; // Return the API response
+    } catch (error) {
+      console.error("Error deleting user:", error.message);
+      throw new Error(`Failed to delete user with ID: ${userId}`);
+    }
+  },
+
+
+    /**
+     * Update the role of a user in the database.
+     * @param {string} userId - The ID of the user to update.
+     * @param {string} newRole - The new role to assign (e.g., 'Admin', 'Supervisor').
+     */
+    updateUserRole: async (userId, newRole) => {
+      try {
+        console.log(`Sending PUT request to update role for user ID: ${userId} to ${newRole}`);
+        const response = await api.put(`/users/${userId}/role`, { role: newRole });
+        console.log("API Response for updateUserRole:", response);
+        return response.data;
+      } catch (error) {
+        console.error("Error updating user role:", error.message);
+        throw new Error(`Failed to update role for user with ID: ${userId}`);
+      }
+    },
 };

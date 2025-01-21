@@ -1,34 +1,32 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Table } from "../../components/ui/Table";
 import { BlurElements } from "../../components/shared/BlurElements";
-import { api } from "../../services/api";
+import { userApi } from "../../services/userAPI";
+import UserTable from "../../components/admin/UserTable";
 
 const UserManagement = () => {
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState("All");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [roleFilter, setRoleFilter] = useState("All");
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, user: null });
-  
-  // Tabs configuration
-  const tabs = ["User Management", "Forms Management"];
+  const [editRoleModal, setEditRoleModal] = useState({ isOpen: false, user: null });
+  const [selectedRole, setSelectedRole] = useState(""); // State for the selected role
+
+  const tabs = ["User Management", "Form Management"];
   const [activeTab, setActiveTab] = useState("User Management");
 
+  // Fetch users from the API on component mount
   useEffect(() => {
     const fetchAllUsers = async () => {
       try {
         setLoading(true);
-        const response = await api.get("/users");
-        if (response.success) {
-          setUsers(response.data || []);
-          setFilteredUsers(response.data || []);
-        } else {
-          setError("Failed to fetch users.");
-        }
+        const response = await userApi.getAllUsers();
+        console.log("Fetched users:", response);
+        setUsers(response || []);
+        setFilteredUsers(response || []); // Initially show all users
       } catch (err) {
         console.error("Error fetching users:", err.message);
         setError("An error occurred while fetching users.");
@@ -36,54 +34,111 @@ const UserManagement = () => {
         setLoading(false);
       }
     };
-
     fetchAllUsers();
   }, []);
 
+  // Filter users whenever `users` or `roleFilter` changes
   useEffect(() => {
-    let updatedUsers = users;
-    if (roleFilter !== "All") {
-      updatedUsers = updatedUsers.filter(
-        (user) => user && user.role === roleFilter
-      );
-    }
-    if (searchTerm) {
-      updatedUsers = updatedUsers.filter(
-        (user) =>
-          user &&
-          (user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.email?.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-    }
-    setFilteredUsers(updatedUsers.filter((user) => user && user.id));
-  }, [searchTerm, roleFilter, users]);
+    const updatedUsers = users
+      .filter((user) => user && user.id) // Ensure valid users
+      .filter((user) => {
+        if (roleFilter === "All") return true; // No filtering for "All"
+        return user.role === roleFilter; // Filter by role
+      });
+    setFilteredUsers(updatedUsers);
+  }, [users, roleFilter]);
 
-  const handleRowClick = (user) => {
-    if (!user) {
-      console.error("No user data available for row click.");
+  // Open the delete modal
+  const openDeleteModal = (user) => {
+    if (!user || typeof user !== "object") {
+      console.error("Invalid user passed to openDeleteModal:", user);
       return;
     }
-    console.log("Row clicked:", user);
+    setDeleteModal({ isOpen: true, user });
   };
 
-  const columns = [
-    { key: "id", header: "ID", sortable: true },
-    { key: "fullName", header: "Full Name", sortable: true },
-    { key: "email", header: "Email", sortable: true },
-    { key: "role", header: "Role", sortable: true },
-    {
-      key: "actions",
-      header: "Actions",
-      render: (user) => (
-        <button
-          className="text-red-600 hover:underline"
-          onClick={() => console.log("Delete user:", user)}
-        >
-          Delete
-        </button>
-      ),
-    },
-  ];
+  // Close the delete modal
+  const closeDeleteModal = () => {
+    setDeleteModal({ isOpen: false, user: null });
+  };
+
+  // Handle user deletion
+  const handleDeleteUser = async () => {
+    if (!deleteModal.user) {
+      console.error("No user is selected for deletion.");
+      return;
+    }
+
+    const userId = deleteModal.user.id;
+    console.log(`Deleting user with ID: ${userId}`);
+
+    try {
+      const response = await userApi.deleteUser(userId);
+      if (response) {
+        setUsers((currentUsers) =>
+          currentUsers.filter((user) => user.id !== userId)
+        );
+        closeDeleteModal();
+        console.log("User deleted successfully.");
+      } else {
+        console.error("Failed to delete user.");
+      }
+    } catch (err) {
+      console.error("Error deleting user:", err.message);
+      alert("An error occurred while deleting the user.");
+    }
+  };
+
+  // Open the edit role modal
+  const openEditRoleModal = (user) => {
+    if (!user || typeof user !== "object") {
+      console.error("Invalid user passed to openEditRoleModal:", user);
+      return;
+    }
+    setEditRoleModal({ isOpen: true, user });
+    setSelectedRole(user.role); // Initialize with the current role
+  };
+
+  // Close the edit role modal
+  const closeEditRoleModal = () => {
+    console.log("Closing Edit Role Modal...");
+    setEditRoleModal({ isOpen: false, user: null });
+    setSelectedRole(""); // Reset selected role
+  };
+
+  // Save role change
+  const handleSaveRoleChange = async () => {
+    if (!editRoleModal.user) {
+      console.error("No user is selected for role editing.");
+      return;
+    }
+
+    const userId = editRoleModal.user.id;
+    console.log(`Updating role for user ID: ${userId} to ${selectedRole}`);
+
+    try {
+      const response = await userApi.updateUserRole(userId, selectedRole);
+      if (response) {
+        setUsers((currentUsers) =>
+          currentUsers.map((user) =>
+            user.id === userId ? { ...user, role: selectedRole } : user
+          )
+        );
+        setFilteredUsers((currentFilteredUsers) =>
+          currentFilteredUsers.map((user) =>
+            user.id === userId ? { ...user, role: selectedRole } : user
+          )
+        );
+        closeEditRoleModal();
+        console.log("User role updated successfully.");
+      } else {
+        console.error("Failed to update user role.");
+      }
+    } catch (err) {
+      console.error("Error updating user role:", err.message);
+      alert("An error occurred while updating the user role.");
+    }
+  };
 
   if (loading) return <div>Loading users...</div>;
   if (error) return <div className="text-red-600">{error}</div>;
@@ -91,7 +146,6 @@ const UserManagement = () => {
   return (
     <div className="relative bg-white min-h-screen">
       <BlurElements />
-
       <div className="relative z-10">
         <div className="bg-white shadow">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -106,7 +160,7 @@ const UserManagement = () => {
                   }`}
                   onClick={() => {
                     setActiveTab(tab);
-                    if (tab === "Forms Management") {
+                    if (tab === "Form Management") {
                       navigate("/admin-forms");
                     }
                   }}
@@ -123,13 +177,6 @@ const UserManagement = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <h1 className="text-2xl font-bold mb-4">User Management</h1>
           <div className="mb-4 flex space-x-4">
-            <input
-              type="text"
-              placeholder="Search by name or email..."
-              className="border p-2 rounded-md"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
             <select
               className="border p-2 rounded-md"
               value={roleFilter}
@@ -140,11 +187,69 @@ const UserManagement = () => {
               <option value="Supervisor">Supervisor</option>
             </select>
           </div>
-          <Table
-            data={filteredUsers}
-            columns={columns}
-            onRowClick={handleRowClick}
+          <UserTable
+            users={filteredUsers}
+            onDelete={openDeleteModal}
+            onEditRole={openEditRoleModal} // Pass the role editing function
           />
+        </div>
+      )}
+
+      {deleteModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h2 className="text-lg font-bold mb-4">Confirm Deletion</h2>
+            <p>
+              Are you sure you want to delete{" "}
+              {deleteModal.user?.fullName || "this user"}?
+            </p>
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={closeDeleteModal}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteUser}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editRoleModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h2 className="text-lg font-bold mb-4">Edit Role</h2>
+            <p>Change the role for {editRoleModal.user?.fullName}:</p>
+            <select
+              className="border p-2 rounded-md w-full mt-4"
+              value={selectedRole}
+              onChange={(e) => setSelectedRole(e.target.value)}
+            >
+              <option value="">Select Role</option>
+              <option value="Admin">Admin</option>
+              <option value="Supervisor">Supervisor</option>
+            </select>
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={closeEditRoleModal}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveRoleChange}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 ml-2"
+              >
+                Save
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

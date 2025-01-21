@@ -19,12 +19,13 @@ function SignUp() {
     if (!/^\d{9}$/.test(cleanValue)) return "ID card must contain only numbers";
     return true;
   };
-  
+
   const validateEmail = (email) => {
     if (!email) return "Email is required";
     if (!email.endsWith("@e.braude.ac.il")) return "Email must end with @e.braude.ac.il";
     return true;
   };
+
   const { register, handleSubmit, control, formState: { errors } } = useForm();
 
   const onSubmit = async (data) => {
@@ -35,15 +36,16 @@ function SignUp() {
         email: data.email,
         password: data.password,
         role: data.role,
+        isAdmin: false, // Ensure isAdmin is always false
       });
-  
+
       if (response.success) {
-        toast.success("Account created successfully! A confirmation email has been sent.",{
-          duration: 3000, // Keep the toast visible for 3 seconds
-        })
+        toast.success("Account created successfully! A confirmation email has been sent.", {
+          duration: 3000,
+        });
         setTimeout(() => {
           navigate("/login");
-        }, 1000); // 1-second delay
+        }, 1000);
       } else {
         toast.error(response.message || "Failed to create account.");
       }
@@ -176,7 +178,7 @@ const RoleDropdown = ({ isOpen, onSelect, toggle, selectedRole, error }) => (
       </button>
       {isOpen && (
         <div className="absolute top-full left-0 w-full mt-1 bg-white border border-[#dadada] rounded-md shadow-lg z-10">
-          {['Student', 'Supervisor'].map((option) => (
+          {['Supervisor'].map((option) => (
             <button
               key={option}
               type="button"
@@ -225,4 +227,3 @@ const PasswordInput = ({ register, showPassword, toggleShowPassword, error }) =>
     </p>
   </div>
 );
-

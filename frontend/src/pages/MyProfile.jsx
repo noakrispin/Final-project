@@ -85,7 +85,8 @@ export default function MyProfile() {
             {`${user.fullName}'s Profile`}
           </h1>
           <p className="text-gray-500 text-lg">
-            {user.role && `${user.role.charAt(0).toUpperCase() + user.role.slice(1)} | `}
+            {/* Updated role display logic */}
+            {user.isAdmin ? "Admin" : user.role} |{" "}
             <a href={`mailto:${user.email}`} className="text-blue-600 underline">
               {user.email}
             </a>
