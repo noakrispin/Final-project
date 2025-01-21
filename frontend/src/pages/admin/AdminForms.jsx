@@ -5,6 +5,8 @@ import { Table } from "../../components/ui/Table";
 import { mockApi } from "../../services/mockApi";
 import DynamicEditModal from "../../components/admin/DynamicEditModal";
 
+const TABS = ["User Management", "Forms Management"];
+
 export default function AdminForms() {
   const { user } = useAuth();
   const navigate = useNavigate();
