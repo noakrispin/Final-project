@@ -7,13 +7,9 @@ import ErrorMessage from '../components/shared/ErrorMessage';
 import toast, { Toaster } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
-
-// Import mock user data for testing
-import usersData from '../data/mockUsers.json';
-
 function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login } = useAuth(); // Use the login function from AuthContext
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm();
@@ -21,17 +17,21 @@ function Login() {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      const result = await login(data.email, data.password);
-      console.log("Login result:", result); // Debugging log
-      if (result.success) {
+      const result = await login(data.email, data.password); // Perform login
+      if (result?.success) {
+        const { isAdmin } = result.user; // Check if the user is an admin
         toast.success("Welcome back!", {
-          duration: 3000, // Keep the toast visible for 3 seconds
+          duration: 3000,
         });
-  
-        // Introduce a short delay to ensure the toast renders before navigating
+
+        // Delay navigation to show the toast
         setTimeout(() => {
-          navigate("/profile");
-        }, 1000); // 1-second delay
+          if (isAdmin) {
+            navigate("/profile"); // Redirect Admins
+          } else {
+            navigate("/profile"); // Redirect Supervisors
+          }
+        }, 1000);
       } else {
         toast.error("Login failed: " + result.message);
       }
@@ -40,23 +40,6 @@ function Login() {
       toast.error("An error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleForgotPassword = () => {
-    const email = document.getElementById('email').value;
-    const user = usersData.find((u) => u.email === email);
-
-    if (user) {
-      toast.success('Password sent to your email!', {
-        duration: 3000,
-        position: 'top-center',
-      });
-    } else {
-      toast.error('No account found with this email.', {
-        duration: 5000,
-        position: 'top-center',
-      });
     }
   };
 
@@ -143,4 +126,3 @@ function Login() {
 }
 
 export default Login;
-

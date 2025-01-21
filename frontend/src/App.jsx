@@ -27,6 +27,7 @@ import ProjectDetailsPage from "./pages/ProjectDetailsPage";
 import SupervisorGradesFeedback from "./pages/SupervisorGradesFeedback";
 import ForgotPassword from "./pages/ForgotPassword";
 import UserManagement from "./pages/admin/UserManagement"
+import AdminReminders from "./pages/admin/AdminReminders"
 
 
 // Component imports
@@ -55,7 +56,7 @@ const AppContent = () => {
         <Route
           path="/projectsSupervisors"
           element={
-            <ProtectedRoute allowedRoles={["Supervisor", "Admin"]}>
+            <ProtectedRoute allowedRoles={["Supervisor"]}>
               <ProjectsSupervisors />
             </ProtectedRoute>
           }
@@ -63,7 +64,7 @@ const AppContent = () => {
         <Route
           path="/MyProjectsReview"
           element={
-            <ProtectedRoute allowedRoles={["Supervisor", "Admin"]}>
+            <ProtectedRoute allowedRoles={["Supervisor"]}>
               <MyProjectsReview />
             </ProtectedRoute>
           }
@@ -71,7 +72,7 @@ const AppContent = () => {
         <Route
           path="/OtherProjectsReview"
           element={
-            <ProtectedRoute allowedRoles={["Supervisor", "Admin"]}>
+            <ProtectedRoute allowedRoles={["Supervisor"]}>
               <OtherProjectsReview />
             </ProtectedRoute>
           }
@@ -80,7 +81,7 @@ const AppContent = () => {
         <Route
           path="/project/:projectId"
           element={
-            <ProtectedRoute allowedRoles={["Student", "Supervisor", "Admin"]}>
+            <ProtectedRoute allowedRoles={[ "Supervisor"]}>
               <ProjectDetailsPage />
             </ProtectedRoute>
           }
@@ -89,23 +90,15 @@ const AppContent = () => {
         <Route
           path="/profile"
           element={
-            <ProtectedRoute allowedRoles={["Student", "Supervisor", "Admin"]}>
+            <ProtectedRoute allowedRoles={["Supervisor"]}>
               <MyProfile />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/supervisorsStatus"
-          element={
-            <ProtectedRoute allowedRoles={["Admin"]}>
-              <Supervisors />
             </ProtectedRoute>
           }
         />
         <Route
           path="/evaluation-forms/*"
           element={
-            <ProtectedRoute allowedRoles={["Supervisor", "Admin"]}>
+            <ProtectedRoute adminOnly>
               <EvaluationForms />
             </ProtectedRoute>
           }
@@ -113,7 +106,7 @@ const AppContent = () => {
         <Route
           path="/SupervisorGradesFeedback"
           element={
-            <ProtectedRoute allowedRoles={["Supervisor", "Admin"]}>
+            <ProtectedRoute adminOnly>
               <SupervisorGradesFeedback />
             </ProtectedRoute>
           }
@@ -123,7 +116,7 @@ const AppContent = () => {
         <Route
           path="/admin-projects"
           element={
-            <ProtectedRoute allowedRoles={["Admin"]}>
+            <ProtectedRoute adminOnly>
               <AdminProjects />
             </ProtectedRoute>
           }
@@ -131,7 +124,7 @@ const AppContent = () => {
         <Route
           path="/admin-upload"
           element={
-            <ProtectedRoute allowedRoles={["Admin"]}>
+            <ProtectedRoute adminOnly>
               <AdminFileUpload />
             </ProtectedRoute>
           }
@@ -139,7 +132,7 @@ const AppContent = () => {
         <Route
           path="/admin-management"
           element={
-            <ProtectedRoute allowedRoles={["Admin"]}>
+            <ProtectedRoute adminOnly>
               <UserManagement />
             </ProtectedRoute>
           }
@@ -147,7 +140,7 @@ const AppContent = () => {
         <Route
           path="/admin-forms"
           element={
-            <ProtectedRoute allowedRoles={["Admin"]}>
+            <ProtectedRoute adminOnly>
               <AdminForms />
             </ProtectedRoute>
           }
@@ -155,8 +148,17 @@ const AppContent = () => {
         <Route
           path="/admin-grades"
           element={
-            <ProtectedRoute allowedRoles={["Admin"]}>
+            <ProtectedRoute hasAccess={["Admin"]}>
               <AdminGrades />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin-Reminders"
+          element={
+            <ProtectedRoute hasAccess={["Admin"]}>
+              <AdminReminders />
             </ProtectedRoute>
           }
         />
