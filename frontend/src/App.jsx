@@ -28,7 +28,7 @@ import SupervisorGradesFeedback from "./pages/SupervisorGradesFeedback";
 import ForgotPassword from "./pages/ForgotPassword";
 import UserManagement from "./pages/admin/UserManagement"
 import AdminReminders from "./pages/admin/AdminReminders"
-
+import AdminEditForm from "./pages/admin/AdminEditForm";
 
 // Component imports
 import Navbar from "./components/layout/Navbar";
@@ -159,6 +159,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute hasAccess={["Admin"]}>
               <AdminReminders />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin-edit-forms/*"
+          element={
+            <ProtectedRoute hasAccess={["Admin"]}>
+              <AdminEditForm />
             </ProtectedRoute>
           }
         />

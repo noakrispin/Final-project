@@ -171,7 +171,7 @@ const MyProjectsReview = () => {
         studentName: studentName || "",
       }).toString();
 
-      navigate(`/evaluation-forms/${formID}?${queryParams}`);
+      navigate(`/evaluation-forms/${formID}?${queryParams}&source=evaluation`);
     } else {
       // Open project details
       setSelectedProject(data);

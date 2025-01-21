@@ -16,7 +16,7 @@ const AdminForms = () => {
   useEffect(() => {
     const fetchForms = async () => {
       try {
-        const fetchedForms = await formsApi.getAllForms(); 
+        const fetchedForms = await formsApi.getAllForms();
         console.log("Fetched forms:", fetchedForms);
         setForms(fetchedForms);
       } catch (error) {
@@ -29,10 +29,11 @@ const AdminForms = () => {
     fetchForms();
   }, []);
 
-  // Navigate to the evaluation form page
+  // Navigate to the admin edit form page
   const handleRowClick = (form) => {
-    navigate(`/evaluation-forms/${form.formID}?formID=${form.formID}`); // Navigate to the form's evaluation page
+    navigate(`/admin-edit-forms/${form.formID}?formID=${form.formID}&source=admin`);
   };
+  
 
   // Define columns for the table
   const columns = [

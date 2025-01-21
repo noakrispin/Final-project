@@ -3,7 +3,7 @@ import { Button } from "../ui/Button";
 import { X, Edit3 } from "lucide-react";
 import { userApi } from "../../services/userAPI.js";
 import { useAuth } from "../../context/AuthContext";
-  
+
 const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
   const { user } = useAuth();
   const [personalNotes, setPersonalNotes] = useState(
@@ -141,7 +141,6 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
                 <div className="space-y-4">
                   {[project.Student1, project.Student2].map(
                     (student, index) =>
-                      
                       student && (
                         <div
                           key={index}
@@ -154,12 +153,12 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
                             ID: {student.ID}
                           </p>
                           <div>
-                          <p className="text-base text-gray-700">
-                            Email:{" "}
-                            {student.Email ||
-                              student.email ||
-                              "No email provided"}
-                          </p>
+                            <p className="text-base text-gray-700">
+                              Email:{" "}
+                              {student.Email ||
+                                student.email ||
+                                "No email provided"}
+                            </p>
                           </div>
                         </div>
                       )
@@ -174,29 +173,28 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
               </div>
 
               {/* Personal Notes */}
-              {(userRole === "Admin" ||
-                (userRole === "Supervisor" &&
-                  (project.supervisor1 === user?.id ||
-                    project.supervisor2 === user?.id))) && (
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                    Personal Notes
-                  </h3>
-                  <textarea
-                    value={personalNotes}
-                    onChange={(e) => setPersonalNotes(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md p-3 text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-                    rows={4}
-                    placeholder="Add your personal notes here..."
-                  />
-                  <Button
-                    onClick={handleSaveNotes}
-                    className="mt-3 w-full lg:w-auto bg-green-500 hover:bg-green-600 text-white text-base font-medium rounded-md px-4 py-2 shadow-sm transition"
-                  >
-                    Submit Notes
-                  </Button>
-                </div>
-              )}
+              {userRole === "Supervisor" &&
+                (project.supervisor1 === user?.id ||
+                  project.supervisor2 === user?.id) && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                      Personal Notes
+                    </h3>
+                    <textarea
+                      value={personalNotes}
+                      onChange={(e) => setPersonalNotes(e.target.value)}
+                      className="w-full border border-gray-300 rounded-md p-3 text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+                      rows={4}
+                      placeholder="Add your personal notes here..."
+                    />
+                    <Button
+                      onClick={handleSaveNotes}
+                      className="mt-3 w-full lg:w-auto bg-green-500 hover:bg-green-600 text-white text-base font-medium rounded-md px-4 py-2 shadow-sm transition"
+                    >
+                      Save My Notes
+                    </Button>
+                  </div>
+                )}
             </div>
 
             {/* Right Column */}
@@ -246,14 +244,22 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
                         </Button>
                       </div>
                     ) : gitLink ? (
-                      <a
-                        href={gitLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline font-medium"
-                      >
-                        View Repository
-                      </a>
+                      <div>
+                        <a
+                          href={gitLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:underline font-medium"
+                        >
+                          View Repository
+                        </a>
+                        <button
+                          onClick={() => setIsEditingGitLink(true)}
+                          className="text-blue-500 hover:underline text-sm font-medium flex items-center"
+                        >
+                          <Edit3 className="h-4 w-4 mr-1" /> Edit Link
+                        </button>
+                      </div>
                     ) : (
                       <div className="flex items-center gap-2">
                         <span className="text-gray-600">Missing</span>
@@ -261,7 +267,7 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
                           onClick={() => setIsEditingGitLink(true)}
                           className="text-blue-500 hover:underline text-sm font-medium flex items-center"
                         >
-                          <Edit3 className="h-4 w-4 mr-1" /> Edit
+                          <Edit3 className="h-4 w-4 mr-1" /> Add Link
                         </button>
                       </div>
                     )}
