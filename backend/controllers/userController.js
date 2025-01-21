@@ -18,20 +18,19 @@ const handleSubcollections = async (id, role, supervisorTopics) => {
 
 // Add a new user
 const addUser = async (req, res) => {
-  const { id, fullName, email, role, password, supervisorTopics, isAdmin } = req.body;
+  const { id, fullName, email, role, password, supervisorTopics, isAdmin = false } = req.body; // Default to false if not provided
 
   try {
-    // Add user to the main collection
-    const response = await addDocument("users", id, { id, fullName, email, role, password, isAdmin });
+    const isAdminValue = !!isAdmin; // Ensure `isAdmin` is always a boolean
+    const response = await addDocument("users", id, { id, fullName, email, role, password, isAdmin: isAdminValue });
     if (!response.success) {
       return res.status(400).json({ success: false, error: "Failed to add user to main collection." });
     }
 
-    // Handle subcollections
-    if (role === "Supervisor" || isAdmin) {
+    if (role === "Supervisor" || isAdminValue) {
       await addSubcollection("users", id, "supervisorDetails", "details", { supervisorTopics: supervisorTopics || [] });
     }
-    if (isAdmin) {
+    if (isAdminValue) {
       await addSubcollection("users", id, "adminDetails", "details", { permissions: "All admin permissions" });
     }
 
@@ -128,9 +127,7 @@ const updateUserRole = async (req, res) => {
   const { userId } = req.params;
   const { role, isAdmin } = req.body;
 
-  if (!role) {
-    return res.status(400).json({ message: "Role is required." });
-  }
+  console.log(`Updating user role: ${userId}, role: ${role}, isAdmin: ${isAdmin}`);
 
   try {
     const userRef = admin.firestore().collection("users").doc(userId);
@@ -140,18 +137,16 @@ const updateUserRole = async (req, res) => {
       return res.status(404).json({ message: "User not found." });
     }
 
-    const userData = userDoc.data();
-    const updatedData = { ...userData, role, isAdmin };
+    const updatedData = { ...userDoc.data(), role, isAdmin: !!isAdmin };
 
-    // Add or remove adminDetails based on isAdmin
-    if (isAdmin) {
+    if (updatedData.isAdmin) {
       await addSubcollection("users", userId, "adminDetails", "details", { permissions: "All admin permissions" });
     } else {
-      const adminDetailsRef = userRef.collection("adminDetails").doc("details");
-      await adminDetailsRef.delete();
+      await admin.firestore().collection("users").doc(userId).collection("adminDetails").doc("details").delete();
     }
 
     await userRef.update(updatedData);
+    console.log("User role updated successfully:", updatedData);
     res.status(200).json({ success: true, data: updatedData });
   } catch (error) {
     console.error("Error updating user role:", error.message);

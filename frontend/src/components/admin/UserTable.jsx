@@ -12,7 +12,12 @@ const UserTable = ({ users, onDelete, onEditRole }) => {
     { key: "id", header: "ID", sortable: true },
     { key: "fullName", header: "Full Name", sortable: true },
     { key: "email", header: "Email", sortable: true },
-    { key: "role", header: "Role", sortable: true },
+    {
+      key: "role",
+      header: "Role",
+      render: (value, user) => (user.isAdmin === true ? "Admin" : "Supervisor"), // Ensure boolean check for isAdmin
+      sortable: true,
+    },
     {
       key: "actions",
       header: "Actions",
@@ -21,12 +26,16 @@ const UserTable = ({ users, onDelete, onEditRole }) => {
           <button
             className="text-blue-600 hover:text-blue-700"
             onClick={() => onEditRole(user)} // Pass user to onEditRole
+            aria-label="Edit Role"
+            title="Edit Role"
           >
             <FaRegEdit />
           </button>
           <button
             className="text-red-600 hover:text-red-700"
             onClick={() => onDelete(user)}
+            aria-label="Delete User"
+            title="Delete User"
           >
             <MdDeleteForever />
           </button>
@@ -37,7 +46,11 @@ const UserTable = ({ users, onDelete, onEditRole }) => {
 
   if (!users || users.length === 0) {
     console.error("No valid user data provided to UserTable:", users);
-    return <div>No users available</div>;
+    return (
+      <div className="text-center text-gray-600">
+        No users available. Add new users to get started.
+      </div>
+    );
   }
 
   return (
@@ -53,9 +66,17 @@ const UserTable = ({ users, onDelete, onEditRole }) => {
 };
 
 UserTable.propTypes = {
-  users: PropTypes.array.isRequired,
+  users: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      fullName: PropTypes.string.isRequired,
+      email: PropTypes.string.isRequired,
+      isAdmin: PropTypes.bool, // Explicitly expect boolean for isAdmin
+      role: PropTypes.string,
+    })
+  ).isRequired,
   onDelete: PropTypes.func.isRequired,
-  onEditRole: PropTypes.func.isRequired, // Ensure onEditRole is defined as required
+  onEditRole: PropTypes.func.isRequired,
 };
 
 export default UserTable;

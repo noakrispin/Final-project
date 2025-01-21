@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext"; // Correctly import useAuth
 import { api } from "../services/api";
 import { projectsApi } from "../services/projectsAPI";
 
 export default function MyProfile() {
-  const { user: authUser } = useAuth();
+  const { user: authUser } = useAuth(); // Use the useAuth hook
   const [user, setUser] = useState(null);
   const [supervisedProjectsCount, setSupervisedProjectsCount] = useState(0);
   const [pendingReviewsCount, setPendingReviewsCount] = useState(0);
@@ -24,7 +24,9 @@ export default function MyProfile() {
         // Fetch user details
         const userResponse = await api.get(`/users/${authUser.id}`);
         if (userResponse.success) {
-          setUser(userResponse.data);
+          const fetchedUser = userResponse.data;
+          console.log("Fetched user data in MyProfile:", fetchedUser);
+          setUser(fetchedUser);
         } else {
           setError("Failed to load profile data.");
           return;
@@ -43,14 +45,10 @@ export default function MyProfile() {
         // Fetch evaluator projects for pending reviews
         const evaluatorsResponse = await api.get(`/evaluators/projects/${authUser.id}`);
         if (evaluatorsResponse.success) {
-          console.log("Evaluator Projects:", evaluatorsResponse.data); // Debugging log
           const pendingReviews = evaluatorsResponse.data.filter(
-            (project) => project.status == "Not Submitted"
+            (project) => project.status === "Not Submitted"
           );
-          console.log("Pending Reviews Count:", pendingReviews.length); // Debugging log
           setPendingReviewsCount(pendingReviews.length);
-        } else {
-          console.error("Failed to load evaluator projects.");
         }
       } catch (err) {
         console.error("Error fetching profile or projects:", err.message);
@@ -85,7 +83,6 @@ export default function MyProfile() {
             {`${user.fullName}'s Profile`}
           </h1>
           <p className="text-gray-500 text-lg">
-            {/* Updated role display logic */}
             {user.isAdmin ? "Admin" : user.role} |{" "}
             <a href={`mailto:${user.email}`} className="text-blue-600 underline">
               {user.email}

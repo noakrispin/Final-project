@@ -112,25 +112,28 @@ const UserManagement = () => {
       console.error("No user is selected for role editing.");
       return;
     }
-
+  
     const userId = editRoleModal.user.id;
-    console.log(`Updating role for user ID: ${userId} to ${selectedRole}`);
-
+    const isAdmin = selectedRole === "Admin"; // Check if Admin is selected
+    const role = "Supervisor"; // Admins retain 'Supervisor' as their role
+  
+    console.log(`Updating user: ID: ${userId}, Role: ${role}, isAdmin: ${isAdmin}`);
+  
     try {
-      const response = await userApi.updateUserRole(userId, selectedRole);
+      const response = await userApi.updateUserRole(userId, { role, isAdmin });
       if (response) {
         setUsers((currentUsers) =>
           currentUsers.map((user) =>
-            user.id === userId ? { ...user, role: selectedRole } : user
+            user.id === userId ? { ...user, role, isAdmin } : user
           )
         );
         setFilteredUsers((currentFilteredUsers) =>
           currentFilteredUsers.map((user) =>
-            user.id === userId ? { ...user, role: selectedRole } : user
+            user.id === userId ? { ...user, role, isAdmin } : user
           )
         );
         closeEditRoleModal();
-        console.log("User role updated successfully.");
+        console.log("User role and isAdmin status updated successfully.");
       } else {
         console.error("Failed to update user role.");
       }
@@ -139,7 +142,6 @@ const UserManagement = () => {
       alert("An error occurred while updating the user role.");
     }
   };
-
   if (loading) return <div>Loading users...</div>;
   if (error) return <div className="text-red-600">{error}</div>;
 
@@ -177,15 +179,15 @@ const UserManagement = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <h1 className="text-2xl font-bold mb-4">User Management</h1>
           <div className="mb-4 flex space-x-4">
-            <select
-              className="border p-2 rounded-md"
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-            >
-              <option value="All">All Roles</option>
-              <option value="Admin">Admin</option>
-              <option value="Supervisor">Supervisor</option>
-            </select>
+          <select
+            className="border p-2 rounded-md w-full mt-4"
+            value={selectedRole}
+            onChange={(e) => setSelectedRole(e.target.value)}
+          >
+            <option value="">Select Role</option>
+            <option value="Admin">Admin</option>
+            <option value="Supervisor">Supervisor</option>
+          </select>
           </div>
           <UserTable
             users={filteredUsers}
