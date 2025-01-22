@@ -13,7 +13,7 @@ export default function UnifiedFormComponent({
   projectCode,
   projectName,
   formID,
-  isAdmin = false,
+  questions, //questions from DynamicFormPage
 }) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -24,38 +24,15 @@ export default function UnifiedFormComponent({
   const [progress, setProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false); // Admin edit mode toggle
-  const [editedFormName, setEditedFormName] = useState(formTitle || "");
-  const [editedFormDescription, setEditedFormDescription] = useState(
-    formDescription || ""
-  );
 
   useEffect(() => {
     if (!user) {
       navigate("/login");
-    } else if (formID) {
-      console.log("UnifiedFormComponent received formID:", formID); // Debug log
-      fetchFormData();
-    } else {
-      console.error("Missing formID for fetching form data.");
+      return;
     }
-  }, [user, formID]);
-
-  const fetchFormData = async () => {
-    try {
-      if (!formID) {
-        throw new Error("formID is undefined!");
-      }
-
-      console.log("Fetching questions for formID:", formID);
-      const questions = await formsApi.getQuestions(formID);
-      console.log("Fetched questions:", questions);
-
-      if (!questions || questions.length === 0) {
-        console.error(`No questions found for this formID: ${formID}`);
-        return;
-      }
-
+  
+    if (questions && questions.length > 0) {
+      // Format the questions prop
       const formattedQuestions = questions
         .map((q) => ({
           name: q.questionID,
@@ -68,103 +45,87 @@ export default function UnifiedFormComponent({
           reference: q.reference,
         }))
         .sort((a, b) => a.order - b.order); // Sort by order property
-
+  
+      // Separate formatted questions into general and student-specific
       setGeneralQuestions(
         formattedQuestions.filter((q) => q.reference === "general")
       );
       setStudentQuestions(
         formattedQuestions.filter((q) => q.reference === "student")
       );
-
-      await fetchLastResponse(formattedQuestions);
-    } catch (error) {
-      console.error("Error fetching form data:", error);
+      
+      // Set the general and student questions
+      initializeFormData(); // Pass all formatted questions for formData initialization
     }
-  };
+  }, [user, questions]);
+  
+  
+  useEffect(() => {
+    if (user && questions.length > 0) {
+     fetchLastResponse(questions);
+    } else {
+      initializeFormData(); 
+    }
+  }, [user, questions]);
 
-  const fetchLastResponse = async (questions) => {
+  
+  const fetchLastResponse = async () => {
     try {
-      console.log(
-        `Fetching last response for formID: ${formID}, evaluatorID: ${user?.id}, projectCode: ${projectCode}`
-      );
       const lastResponse = await formsApi.getLastResponse(
         formID,
         user?.id,
         projectCode
       );
-
+  
       if (!lastResponse || !lastResponse.general || !lastResponse.students) {
         console.log("No last response found for the evaluator and project.");
-        initializeFormData(questions);
         return;
       }
-
-      console.log("Fetched last response:", lastResponse);
-
+  
       const initialData = {};
-
+  
       // Populate general questions
-      questions
-        .filter((q) => q.reference === "general")
-        .forEach((field) => {
+      generalQuestions.forEach((field) => {
           initialData[field.name] = lastResponse.general[field.name] || "";
         });
-
+  
       // Populate student-specific questions
       students.forEach((student) => {
-        questions
-          .filter((q) => q.reference === "student")
-          .forEach((field) => {
+        studentQuestions.forEach((field) => {
             const fieldName = `student${student.id}_${field.name}`;
             initialData[fieldName] =
               lastResponse.students[student.id]?.[field.name] || "";
           });
       });
-
-      console.log("Populated initialData:", initialData);
-      setFormData(initialData); // Update the state with fetched data
-      updateProgress(); // Update the progress bar
+  
+      setFormData(initialData);
+      updateProgress(initialData);
     } catch (error) {
       console.error("Error fetching last response:", error);
     }
   };
-
-  useEffect(() => {
-    console.log("Form Data State:", formData);
-  }, [formData]);
-
-  const initializeFormData = (questions) => {
-    const initialData = questions.reduce((acc, field) => {
-      acc[field.name] = ""; // Initialize empty string for general questions
-      return acc;
-    }, {});
-
-    students.forEach((student) => {
-      questions
-        .filter((q) => q.reference === "student")
-        .forEach((q) => {
-          const fieldName = `student${student.id}_${q.name}`;
-          initialData[fieldName] = ""; // Initialize empty string
-        });
+  
+  const initializeFormData = () => {
+    const initialData = {};
+  
+    // Initialize general questions
+    generalQuestions.forEach((field) => {
+      initialData[field.name] = ""; // Initialize with empty string
     });
-
-    setFormData(initialData);
-  };
-
-  const handleSave = async () => {
-    try {
-      const updatedQuestions = [...generalQuestions, ...studentQuestions];
-      await formsApi.updateForm(formID, {
-        formName: editedFormName,
-        description: editedFormDescription,
-        questions: updatedQuestions,
+  
+    // Initialize student-specific questions
+    students.forEach((student) => {
+      studentQuestions.forEach((field) => {
+        const fieldName = `student${student.id}_${field.name}`;
+        initialData[fieldName] = ""; // Initialize with empty string
       });
-      alert("Form updated successfully!");
-      setIsEditMode(false);
-    } catch (error) {
-      console.error("Error saving form updates:", error);
-    }
+    });
+  
+    setFormData(initialData);
+    updateProgress(initialData); // Ensure progress is updated after initialization
   };
+  
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -224,57 +185,58 @@ export default function UnifiedFormComponent({
       console.log("Evaluator status updated successfully");
 
       // Redirect after successful submission
-      navigate("/MyProjectsReview");
+      navigate(-1); // Go back to the previous page
     } catch (error) {
       console.error("Error submitting form or updating evaluator:", error);
     }
   };
 
-  const updateProgress = () => {
-    const staticFields = ["projectCode", "title", "evaluatorName"];
-
+  const updateProgress = (updatedFormData = formData) => {
+    const staticFields = ["projectCode", "title", "evaluatorName"]; // Non-editable fields
+  
     // Combine general and student questions
     const editableQuestions = [
       ...generalQuestions.filter(
         (field) => !staticFields.includes(field.name) && field.required // Include only required general questions
       ),
-      ...students
-        .flatMap((student) =>
-          studentQuestions.map((field) => ({
-            ...field,
-            dynamicKey: `student${student.id}_${field.name}`, // Generate dynamic keys for student questions
-          }))
-        )
-        .filter((field) => field.required), // Include only required student questions
+      ...students.flatMap((student) =>
+        studentQuestions.map((field) => ({
+          ...field,
+          dynamicKey: `student${student.id}_${field.name}`, // Generate dynamic keys for student questions
+        }))
+      ).filter((field) => field.required), // Include only required student questions
     ];
-
+  
     const totalEditableFields = editableQuestions.length;
-
+  
     const filledEditableFields = editableQuestions.filter((field) => {
       const key = field.dynamicKey || field.name;
-      const value = formData[key];
+      const value = updatedFormData[key]; // Use updated formData to check
       if (!value || value.toString().trim() === "") return false;
-
-      // Validate text area with at least 5 words
+  
+      // Validate textarea with at least 5 words
       if (field.type === "textarea") {
         const wordCount = value.trim().split(/\s+/).length;
         return wordCount >= 5;
       }
-
-      return true; // All other types are valid as long as they're not empty
+  
+      return true; // All other field types are valid if not empty
     }).length;
-
-    // If the form is pre-filled, set progress to 100%
-    if (filledEditableFields === totalEditableFields) {
-      setProgress(100);
-    } else {
-      setProgress(
-        totalEditableFields > 0
-          ? Math.round((filledEditableFields / totalEditableFields) * 100)
-          : 0
-      );
-    }
+  
+    // Debugging logs
+    console.log("Editable Questions:", editableQuestions);
+    console.log("Updated Form Data:", updatedFormData);
+    console.log("Total Editable Fields:", totalEditableFields);
+    console.log("Filled Editable Fields:", filledEditableFields);
+  
+    setProgress(
+      totalEditableFields > 0
+        ? Math.round((filledEditableFields / totalEditableFields) * 100)
+        : 0
+    );
   };
+  
+  
 
   const isFormValid = () => {
     return progress === 100;
@@ -286,52 +248,25 @@ export default function UnifiedFormComponent({
     return "stroke-green-500";
   };
 
-  const handleEditToggle = () => {
-    setIsEditMode((prev) => !prev);
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value, // Update specific field
-    }));
-    updateProgress(); // Recalculate progress
+  
+    setFormData((prevData) => {
+      const updatedData = {
+        ...prevData,
+        [name]: value, // Update the specific field
+      };
+  
+      updateProgress(updatedData); // Recalculate progress using updated formData
+      return updatedData;
+    });
   };
-
-  const handleAddQuestion = (reference) => {
-    const newQuestion = {
-      id: `new_${Date.now()}`,
-      label: "New Question",
-      description: "",
-      type: "text",
-      required: false,
-      weight: 0,
-      order:
-        reference === "general"
-          ? generalQuestions.length + 1
-          : studentQuestions.length + 1,
-      reference,
-    };
-
-    if (reference === "general") {
-      setGeneralQuestions((prev) => [...prev, newQuestion]);
-    } else {
-      setStudentQuestions((prev) => [...prev, newQuestion]);
-    }
-  };
+  
+  
+  
 
   return (
     <div className="relative p-6">
-      {/* Edit Mode Toggle for Admins */}
-      {user?.role === "Admin" && (
-        <div className="flex justify-center mb-6">
-          <Button onClick={handleEditToggle} className="bg-blue-500 text-white">
-            {isEditMode ? "Exit Edit Mode" : "Edit Form"}
-          </Button>
-        </div>
-      )}
-
       {/* Interactive Progress Circle */}
       {isVisible && (
         <div className="fixed bottom-4 right-4 bg-white shadow-lg rounded-lg p-3 flex flex-col items-center">
@@ -381,32 +316,14 @@ export default function UnifiedFormComponent({
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="p-6 bg-slate-200 border border-blue-100 rounded-lg shadow-sm mb-6">
           <div className="mb-6 text-base text-center">
-            {isEditMode ? (
-              <>
-                <input
-                  type="text"
-                  className="w-full p-2 mb-4 border rounded"
-                  value={editedFormName}
-                  onChange={(e) => setEditedFormName(e.target.value)}
-                  placeholder="Form Name"
-                />
-                <textarea
-                  className="w-full p-2 mb-4 border rounded"
-                  value={editedFormDescription}
-                  onChange={(e) => setEditedFormDescription(e.target.value)}
-                  placeholder="Form Description"
-                />
-              </>
-            ) : (
-              <>
-                <h2 className="text-2xl text-blue-900 font-bold mb-2">
-                  {editedFormName}
-                </h2>
-                <p className="text-gray-600 text-base mb-4 max-w-3xl mx-auto break-words leading-relaxed text-center">
-                  {editedFormDescription}
-                </p>
-              </>
-            )}
+            <>
+              <h2 className="text-2xl text-blue-900 font-bold mb-2">
+                {formTitle}
+              </h2>
+              <p className="text-gray-600 text-base mb-4 max-w-3xl mx-auto break-words leading-relaxed text-center">
+                {formDescription}
+              </p>
+            </>
           </div>
 
           {/* Project Code and Name */}
@@ -444,197 +361,49 @@ export default function UnifiedFormComponent({
           </h3>
           {generalQuestions?.map((field, index) => (
             <div key={field.name} className="mb-4">
-              {isEditMode ? (
-                <>
-                  {/* Editable Label */}
-                  <input
-                    type="text"
-                    className="w-full p-2 mb-2 border rounded"
-                    value={field.label}
-                    onChange={(e) =>
-                      setGeneralQuestions((prev) =>
-                        prev.map((q, i) =>
-                          i === index ? { ...q, label: e.target.value } : q
-                        )
-                      )
-                    }
-                    placeholder="Question Label"
-                  />
-
-                  {/* Editable Description */}
-                  <textarea
-                    className="w-full p-2 mb-2 border rounded"
-                    value={field.description}
-                    onChange={(e) =>
-                      setGeneralQuestions((prev) =>
-                        prev.map((q, i) =>
-                          i === index
-                            ? { ...q, description: e.target.value }
-                            : q
-                        )
-                      )
-                    }
-                    placeholder="Question Description"
-                  />
-
-                  {/* Delete Question Button */}
-                  <Button
-                    onClick={() =>
-                      setGeneralQuestions((prev) =>
-                        prev.filter((_, i) => i !== index)
-                      )
-                    }
-                    className="bg-red-500 text-white"
-                  >
-                    Delete
-                  </Button>
-                </>
-              ) : (
-                <>
-                  {/* Static Display */}
-                  <FormField
-                    key={field.name}
-                    {...field}
-                    value={formData[field.name]}
-                    onChange={handleChange}
-                    disabled={isEditMode && user?.role === "Admin"}
-                  />
-                </>
-              )}
+              <>
+                {/* Static Display */}
+                <FormField
+                
+                  key={field.name}
+                  {...field}
+                  value={formData[field.name]}
+                  onChange={handleChange}
+                />
+              </>
             </div>
           ))}
-
-          {isEditMode && (
-            <Button
-              onClick={() => handleAddQuestion("general")}
-              className="bg-green-500 text-white"
-            >
-              Add General Question
-            </Button>
-          )}
         </div>
-
         {/* Student Evaluation */}
-        {isAdmin ? (
-          <div className="p-6 bg-slate-200 border border-blue-100 rounded-lg shadow-sm mb-6">
-            <h3 className="text-lg font-bold text-blue-900 mb-4">
-              Student Evaluation
-            </h3>
-            {studentQuestions?.map((field, index) => (
-              <div key={field.name} className="mb-4">
-                {isEditMode ? (
-                  <>
-                    {/* Editable Label */}
-                    <input
-                      type="text"
-                      className="w-full p-2 mb-2 border rounded"
-                      value={field.label}
-                      onChange={(e) =>
-                        setStudentQuestions((prev) =>
-                          prev.map((q, i) =>
-                            i === index ? { ...q, label: e.target.value } : q
-                          )
-                        )
-                      }
-                      placeholder="Student Question Label"
-                    />
-
-                    {/* Editable Description */}
-                    <textarea
-                      className="w-full p-2 mb-2 border rounded"
-                      value={field.description}
-                      onChange={(e) =>
-                        setStudentQuestions((prev) =>
-                          prev.map((q, i) =>
-                            i === index
-                              ? { ...q, description: e.target.value }
-                              : q
-                          )
-                        )
-                      }
-                      placeholder="Student Question Description"
-                    />
-
-                    {/* Delete Question Button */}
-                    <Button
-                      onClick={() =>
-                        setStudentQuestions((prev) =>
-                          prev.filter((_, i) => i !== index)
-                        )
-                      }
-                      className="bg-red-500 text-white"
-                    >
-                      Delete
-                    </Button>
-                  </>
-                ) 
-                : (
-                  <>
-                    {/* Static Display */}
+        
+          {students.length > 0 &&
+            students.map((student) => (
+              <div
+                key={`student-${student.id}`}
+                className="p-6 bg-slate-200 border border-blue-100 rounded-lg shadow-sm mb-6"
+              >
+                <h3 className="text-lg font-bold text-blue-900 mb-4">{`Evaluation for ${student.name}`}</h3>
+                {studentQuestions?.map((field) => {
+                  const fieldName = `student${student.id}_${field.name}`;
+                  return (
                     <FormField
-                      key={field.name}
+                      key={fieldName}
                       {...field}
-                      value={formData[field.name]}
-                      onChange={handleChange}
-                      disabled={isEditMode && user?.role === "Admin"}
+                      name={fieldName}
+                      value={formData[fieldName] || ""}
+                      onChange={(e) => handleChange(e)}
+
                     />
-                  </>
-                )}
+                  );
+                })}
               </div>
             ))}
-
-            {isEditMode && (
-              <Button
-                onClick={() => handleAddQuestion("student")}
-                className="bg-green-500 text-white"
-              >
-                Add Student Question
-              </Button>
-            )}
-          </div>
-        ) : (
-          students.length > 0 &&
-          students.map((student) => (
-            <div
-              key={`student-${student.id}`}
-              className="p-6 bg-slate-200 border border-blue-100 rounded-lg shadow-sm mb-6"
-            >
-              <h3 className="text-lg font-bold text-blue-900 mb-4">{`Evaluation for ${student.name}`}</h3>
-              {studentQuestions?.map((field) => {
-                const fieldName = `student${student.id}_${field.name}`;
-                return (
-                  <FormField
-                    key={fieldName}
-                    {...field}
-                    name={fieldName}
-                    value={formData[fieldName] || ""}
-                    onChange={(e) =>
-                      setFormData((prevData) => ({
-                        ...prevData,
-                        [fieldName]: e.target.value,
-                      }))
-                    }
-                    disabled={isEditMode}
-                  />
-                );
-              })}
-            </div>
-          ))
-        )}
-
-        {isEditMode && (
-          <Button onClick={handleSave} className="bg-blue-500 text-white">
-            Save Changes
-          </Button>
-        )}
-
+        
         {/* Submit Button */}
         <div className="flex justify-center mt-6">
-          {!isEditMode && (
-            <Button type="submit" className="w-64" disabled={!isFormValid()}>
-              Submit Evaluation
-            </Button>
-          )}
+          <Button type="submit" className="w-64" disabled={!isFormValid()}>
+            Submit Evaluation
+          </Button>
         </div>
       </form>
     </div>
