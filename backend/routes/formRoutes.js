@@ -2,46 +2,113 @@ const express = require("express");
 const router = express.Router();
 const formController = require("../controllers/formController");
 
-// Fetch a specific form
-router.get("/:formID", formController.getForm);
+// Async handler wrapper for consistent error handling
+const asyncHandler = (fn) => (req, res, next) => {
+  return Promise.resolve(fn(req, res, next)).catch(next);
+};
 
-// Fetch all forms
-router.get("/", formController.getAllForms);
+// Form Routes
+router.get("/:formID", asyncHandler(async (req, res) => {
+  const result = await formController.getForm(req, res);
+  return result;
+}));
 
-// Update a specific form
-router.put("/:formID", formController.updateForm);
+router.get("/", asyncHandler(async (req, res) => {
+  const result = await formController.getAllForms(req, res);
+  return result;
+}));
 
-// Fetch questions for a specific form
-router.get("/:formID/questions", formController.getQuestions);
+router.put("/:formID", asyncHandler(async (req, res) => {
+  const result = await formController.updateForm(req, res);
+  return result;
+}));
 
-// Submit form data (for general and student-specific responses)
-router.post("/:formID/submit", formController.submitForm);
+// Question Routes
+router.get("/:formID/questions", asyncHandler(async (req, res) => {
+  const result = await formController.getQuestions(req, res);
+  return result;
+}));
 
-// Update a specific question in a form
-router.put("/:formID/questions/:questionId", formController.updateQuestion);
+router.put("/:formID/questions/:questionId", asyncHandler(async (req, res) => {
+  const result = await formController.updateQuestion(req, res);
+  return result;
+}));
 
-// Add a new question to a form
-router.post("/:formID/questions", formController.addQuestion);
+router.post("/:formID/questions", asyncHandler(async (req, res) => {
+  const result = await formController.addQuestion(req, res);
+  return result;
+}));
 
-// Delete a specific question from a form
-router.delete("/:formID/questions/:questionId", formController.deleteQuestion);
+router.delete("/:formID/questions/:questionId", asyncHandler(async (req, res) => {
+  const result = await formController.deleteQuestion(req, res);
+  return result;
+}));
 
+// Submission Routes
+router.post("/:formID/submit", asyncHandler(async (req, res) => {
+  const result = await formController.submitForm(req, res);
+  return result;
+}));
 
-// Fetch form evaluations
-router.get("/:formID/evaluations", formController.getEvaluations);
+// Evaluation Routes
+router.get("/:formID/evaluations", asyncHandler(async (req, res) => {
+  const result = await formController.getEvaluations(req, res);
+  return result;
+}));
 
-// Create a new form
-router.post("/", formController.createForm);
+router.get("/evaluations/all", asyncHandler(async (req, res) => {
+  const result = await formController.getEvaluationsByEvaluator(req, res);
+  return result;
+}));
 
-// Delete a specific form along with its subcollections
-router.delete("/:formID", formController.deleteForm);
+router.get("/:formID/last-response", asyncHandler(async (req, res) => {
+  const result = await formController.getLastResponse(req, res);
+  return result;
+}));
 
-// Fetch all evaluations for an evaluator
-router.get("/evaluations/all", formController.getEvaluationsByEvaluator);
+// Form Management Routes
+router.post("/", asyncHandler(async (req, res) => {
+  const result = await formController.createForm(req, res);
+  return result;
+}));
 
-// Fetch the last response for an evaluator and optionally for a specific student
-router.get("/:formID/last-response", formController.getLastResponse);
+router.delete("/:formID", asyncHandler(async (req, res) => {
+  const result = await formController.deleteForm(req, res);
+  return result;
+}));
 
+// Error handling middleware specific to form routes
+router.use((err, req, res, next) => {
+  console.error('Form route error:', err);
 
+  // Handle specific form-related errors
+  if (err.code === 'form/not-found') {
+    return res.status(404).json({
+      error: {
+        message: 'Form not found',
+        status: 404
+      }
+    });
+  }
+
+  if (err.code === 'form/invalid-submission') {
+    return res.status(400).json({
+      error: {
+        message: 'Invalid form submission',
+        status: 400
+      }
+    });
+  }
+
+  // Default error response
+  res.status(err.status || 500).json({
+    error: {
+      message: process.env.NODE_ENV === 'production' 
+        ? 'Internal Server Error' 
+        : err.message,
+      status: err.status || 500
+    }
+  });
+});
 
 module.exports = router;
