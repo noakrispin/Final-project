@@ -5,18 +5,21 @@ import { ColumnManagementDialog } from "./ColumnManagementDialog";
 import { sortData } from "../../utils/sortData";
 import SearchBar from "../shared/SearchBar";
 import { getGrade } from "../../utils/getGrade";
+import { Info } from "lucide-react";
 
 const FILTERS = ["All", "Part A", "Part B"];
 
 export const Table = ({
   data,
-  apiResponse , // Pass API response directly
+  apiResponse, // Pass API response directly
   columns,
   className = "",
   onRowClick,
   userId,
-  showTabs = true, // New prop with a default value
-  useCustomColumns = false, // New prop with a default value
+  showTabs = true,
+  useCustomColumns = false,
+  showDescription = false,
+  description = "",
 }) => {
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
@@ -64,9 +67,12 @@ export const Table = ({
 
   const renderGradeCell = (project, gradeType) => {
     const isUserSupervisor = project.isSupervisor;
-  
-    console.log(`Rendering grades for project: ${project.projectCode}`, project.students);
-  
+
+    console.log(
+      `Rendering grades for project: ${project.projectCode}`,
+      project.students
+    );
+
     // Determine the formID based on the grade type
     let formID;
     if (gradeType === "supervisor") {
@@ -76,14 +82,16 @@ export const Table = ({
     } else if (gradeType === "book") {
       formID = project.part === "A" ? "BookReviewerFormA" : "BookReviewerFormB";
     }
-  
-    const isDeadlinePassed = project.deadline && new Date(project.deadline) < new Date();
-  
+
+    const isDeadlinePassed =
+      project.deadline && new Date(project.deadline) < new Date();
+
     // Check if there are grades for the project
-    const hasGrades = project.students.some((student) =>
-      getGrade(apiResponse, formID, project.projectCode, student.id) !== null
+    const hasGrades = project.students.some(
+      (student) =>
+        getGrade(apiResponse, formID, project.projectCode, student.id) !== null
     );
-  
+
     if (!hasGrades) {
       // No grades found, display placeholder for the entire project if the deadline has not passed
       if (
@@ -92,7 +100,9 @@ export const Table = ({
         gradeType === "book"
       ) {
         return isDeadlinePassed ? (
-          <span className="text-gray-500">Grade {gradeType.charAt(0).toUpperCase() + gradeType.slice(1)}</span>
+          <span className="text-gray-500">
+            Grade {gradeType.charAt(0).toUpperCase() + gradeType.slice(1)}
+          </span>
         ) : (
           <div
             className="text-blue-500 underline cursor-pointer"
@@ -102,29 +112,34 @@ export const Table = ({
           </div>
         );
       }
-  
+
       return null;
     }
-  
+
     // Render grades for students with grades
     return (
       <div>
         {project.students.map((student) => {
-          const grade = getGrade(apiResponse, formID, project.projectCode, student.id);
-  
+          const grade = getGrade(
+            apiResponse,
+            formID,
+            project.projectCode,
+            student.id
+          );
+
           if (grade === null) return null; // Skip students without grades
-  
+
           console.log(
             `Rendering grade for student: ${student.name}, formID: ${formID}, projectCode: ${project.projectCode}, gradeType: ${gradeType}, grade: ${grade}`
           );
-  
+
           const metadata = {
             gradeType,
             project,
             studentName: student.name,
             formID,
           };
-  
+
           // Render cell content based on grade type and user role
           if (
             (isUserSupervisor && gradeType === "supervisor") ||
@@ -132,7 +147,10 @@ export const Table = ({
             gradeType === "book"
           ) {
             return (
-              <div key={`${project.id}-${student.id}`} className="flex flex-col">
+              <div
+                key={`${project.id}-${student.id}`}
+                className="flex flex-col"
+              >
                 <span>{student.name}</span>
                 <span>
                   {isDeadlinePassed ? (
@@ -149,38 +167,53 @@ export const Table = ({
               </div>
             );
           }
-  
+
           return null;
         })}
       </div>
     );
   };
-  
-  
+
   return (
     <div className="space-y-4">
       {showTabs && ( // Conditionally render the tabs
-        <div className="flex items-center justify-between mb-4 px-6">
-          <div className="flex space-x-2">
-            {FILTERS.map((filter) => (
-              <button
-                key={filter}
-                onClick={() => setSelectedFilter(filter)}
-                className={`px-4 py-2 rounded-full text-base font-medium ${
-                  selectedFilter === filter
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-600 hover:bg-gray-300"
-                }`}
-              >
-                {filter}
-              </button>
-            ))}
+        <div className="flex items-center justify-start mb-4 px-6">
+          {/* Filters */}
+          <div className="flex-grow justify-start">
+            <div className="flex items-center space-x-2">
+              {FILTERS.map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => setSelectedFilter(filter)}
+                  className={`px-4 py-2 rounded-full text-base font-medium ${
+                    selectedFilter === filter
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                  }`}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
           </div>
-          <SearchBar
-            value={searchTerm}
-            onChange={setSearchTerm}
-            placeholder="Search"
-          />
+
+          {/* Search Bar */}
+          <div className="flex-shrink-0">
+            <SearchBar
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Search"
+            />
+          </div>
+        </div>
+      )}
+      {/* Description */}
+      {showDescription && description && (
+        <div className="flex-grow flex justify-normal">
+          <div className="flex items-center space-x-2  text-green-600">
+            <Info className="w-4 h-4" />
+            <span className="text-base">{description}</span>
+          </div>
         </div>
       )}
       <div

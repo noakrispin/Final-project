@@ -8,6 +8,7 @@ import ProjectDetailsPopup from "../components/shared/ProjectDetailsPopup";
 import { Table } from "../components/ui/Table";
 import { getGrade } from "../utils/getGrade";
 import { formatDate } from "../utils/dateUtils";
+import { Card } from "../components/ui/Card";
 
 const TABS = ["My Projects", "Other Projects"];
 
@@ -341,7 +342,7 @@ const MyProjectsReview = () => {
               </p>
             </div>
           </div>
-
+          <Card className="p-6">
           <Table
             data={projects}
             apiResponse={grades} // Pass the full evaluationsData array
@@ -351,7 +352,10 @@ const MyProjectsReview = () => {
             onRowClick={handleRowClick}
             showTabs={true}
             useCustomColumns={true}
+            showDescription = {true}
+            description = "Click on a row to view project details and on a grade to add or edit evaluations."
           />
+          </Card>
         </div>
       </div>
 

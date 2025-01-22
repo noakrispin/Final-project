@@ -12,7 +12,6 @@ import ProjectsSupervisors from "./pages/ProjectsSupervisors";
 import MyProjectsReview from "./pages/MyProjectsReview";
 import OtherProjectsReview from "./pages/OtherProjectsReview";
 import MyProfile from "./pages/MyProfile";
-import Supervisors from "./pages/SupervisorsStatus";
 import Login from "./pages/Login";
 import Contact from "./pages/Contact";
 import SignUp from "./pages/SignUp";

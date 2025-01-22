@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Table } from "../../components/ui/Table";
 import { formsApi } from "../../services/formAPI";
+import { Card } from "../../components/ui/Card";
 
 const AdminForms = () => {
   const [forms, setForms] = useState([]);
@@ -72,16 +73,24 @@ const AdminForms = () => {
 
       {activeTab === "Forms Management" && (
         <div className="p-6">
+          <div className="p-6 border-b border-gray-200">
           <h1 className="text-2xl font-bold mb-4">Forms Management</h1>
+          <p className="text-gray-600 mt-1">Manage and edit all forms in the system.</p>
+          </div>
           {loading ? (
             <p>Loading forms...</p>
           ) : (
+            <Card className="p-6">
             <Table
               data={forms}
               columns={columns}
               onRowClick={handleRowClick}
               className="bg-white shadow rounded-lg"
+              showTabs={false}
+              showDescription = {true}
+              description = "Click on a row to view or edit form details."
             />
+            </Card>
           )}
         </div>
       )}

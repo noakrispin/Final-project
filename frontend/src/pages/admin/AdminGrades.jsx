@@ -288,6 +288,8 @@ const AdminGradesPage = () => {
             rowClassName="hover:bg-gray-50 transition duration-200"
             onRowClick={(row) => setSelectedProject(row)}
             useCustomColumns={false}
+            showDescription = {true}
+            description = "Weighted grades for each student. Click on a row to view detailed project information."
           />
         </div>
       </div>
