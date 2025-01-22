@@ -59,61 +59,118 @@ export const ExcelDatabaseService = {
 
 
   //Inserting evaluators by evaluators excel file (for presentation and book evaluators)
-  insertEvaluators: async (file) => {
+  insertEvaluators: async (processedData) => {
     try {
-      const data = await readExcelFile(file);
-
+      if (!Array.isArray(processedData) || processedData.length === 0) {
+        throw new Error('No valid data found in the processed data.');
+      }
+  
+      // Fetch all projects once and map them by projectCode
+      const projectsSnapshot = await getDocs(collection(db, 'projects'));
+      const projectsMap = new Map(
+        projectsSnapshot.docs.map((doc) => [doc.data().projectCode, doc.data()])
+      );
+  
+      // Fetch all existing evaluators once and map by unique combination of fields
+      const evaluatorsSnapshot = await getDocs(collection(db, 'evaluators'));
+      const existingEvaluatorsSet = new Set(
+        evaluatorsSnapshot.docs.map((doc) =>
+          JSON.stringify({
+            evaluatorID: doc.data().evaluatorID,
+            formID: doc.data().formID,
+            projectCode: doc.data().projectCode,
+          })
+        )
+      );
+  
+      // Create a local Set to track unique evaluator records in the current batch
+      const localEvaluatorSet = new Set();
+  
       const batch = writeBatch(db);
-
-      for (const row of data) {
-        const { projectCode, presentationEvaluator, bookEvaluator } = row;
-
-        // Fetch project to determine its part (A or B)
-        const projectQuery = query(
-          collection(db, 'projects'),
-          where('projectCode', '==', projectCode)
-        );
-        const projectSnapshot = await getDocs(projectQuery);
-        if (projectSnapshot.empty) {
-          console.warn(`Project with code ${projectCode} not found.`);
-          continue;
-        }
-
-        const project = projectSnapshot.docs[0].data();
-        const projectPart = project.part; // Get the part (A or B)
-
-        // Add Presentation Evaluator
-        if (presentationEvaluator) {
-          const evaluatorRef = doc(collection(db, 'evaluators'));
-          batch.set(evaluatorRef, {
-            evaluatorID: presentationEvaluator,
-            formID: `PresentationForm${projectPart}`,
-            projectCode,
-            status: 'Not Submitted',
-          });
-        }
-
-        // Add Book Evaluator
-        if (bookEvaluator) {
-          const evaluatorRef = doc(collection(db, 'evaluators'));
-          batch.set(evaluatorRef, {
-            evaluatorID: bookEvaluator,
-            formID: `bookReviewerForm${projectPart}`,
-            projectCode,
-            status: 'Not Submitted',
-          });
+      const failedRows = []; // Collect failed rows for debugging
+  
+      for (const [index, row] of processedData.entries()) {
+        try {
+          const { projectCode, presentationEvaluator, bookEvaluator } = row;
+  
+          if (!projectCode) {
+            throw new Error(`Missing projectCode in row ${index + 1}`);
+          }
+  
+          const project = projectsMap.get(projectCode);
+          if (!project) {
+            throw new Error(`Project with code ${projectCode} not found`);
+          }
+  
+          const projectPart = project.part; // Get the part (A or B)
+  
+          // Add Presentation Evaluator
+          if (presentationEvaluator) {
+            const evaluatorRecord = {
+              evaluatorID: presentationEvaluator,
+              formID: `PresentationForm${projectPart}`,
+              projectCode,
+            };
+  
+            const evaluatorKey = JSON.stringify(evaluatorRecord);
+  
+            if (
+              !existingEvaluatorsSet.has(evaluatorKey) &&
+              !localEvaluatorSet.has(evaluatorKey)
+            ) {
+              const evaluatorRef = doc(collection(db, 'evaluators'));
+              batch.set(evaluatorRef, {
+                ...evaluatorRecord,
+                status: 'Not Submitted',
+              });
+              localEvaluatorSet.add(evaluatorKey); // Add to local Set to prevent duplicates in the batch
+            }
+          }
+  
+          // Add Book Evaluator
+          if (bookEvaluator) {
+            const evaluatorRecord = {
+              evaluatorID: bookEvaluator,
+              formID: `bookReviewerForm${projectPart}`,
+              projectCode,
+            };
+  
+            const evaluatorKey = JSON.stringify(evaluatorRecord);
+  
+            if (
+              !existingEvaluatorsSet.has(evaluatorKey) &&
+              !localEvaluatorSet.has(evaluatorKey)
+            ) {
+              const evaluatorRef = doc(collection(db, 'evaluators'));
+              batch.set(evaluatorRef, {
+                ...evaluatorRecord,
+                status: 'Not Submitted',
+              });
+              localEvaluatorSet.add(evaluatorKey); // Add to local Set to prevent duplicates in the batch
+            }
+          }
+        } catch (error) {
+          failedRows.push({ row: index + 1, error: error.message });
+          console.error(`Error processing row ${index + 1}:`, error.message);
         }
       }
-
+  
       await batch.commit();
-      console.log('Evaluators successfully inserted.');
+  
+      if (failedRows.length > 0) {
+        console.warn(
+          `${failedRows.length} rows failed to process. Details:`,
+          failedRows
+        );
+      }
+  
+      console.log('Evaluators successfully inserted (excluding duplicates).');
     } catch (error) {
       console.error('Error inserting evaluators:', error.message);
       throw new Error('Database error: ' + error.message);
     }
   },
-
-
+  
   getProjects: async () => {
     const snapshot = await getDocs(collection(db, "projects"));
     return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));

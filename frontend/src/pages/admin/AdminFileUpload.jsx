@@ -4,7 +4,7 @@ import ExcelUploader from "../../components/admin/ExcelUploader";
 import { Button } from "../../components/ui/Button";
 import { processExcelFile } from "../../services/fileProcessingService";
 import { ExcelDatabaseService } from "../../services/ExcelDatabaseService";
-import { getAuth } from "firebase/auth";
+
 
 const AdminFileUpload = () => {
   const navigate = useNavigate();
@@ -14,8 +14,7 @@ const AdminFileUpload = () => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("Projects");
 
-  const auth = getAuth();
-  console.log("Authenticated user:", auth.currentUser);
+
 
   const tabs = ["Projects", "Evaluators"];
 
@@ -76,7 +75,7 @@ const AdminFileUpload = () => {
           <div className="p-6 bg-slate-200 border border-blue-100 rounded-lg shadow-sm">
             <div className="mb-6 text-center">
               <h2 className="text-2xl text-blue-900 font-bold mb-2">
-                Required File Format
+              Project Upload Instructions
               </h2>
               <p className="text-gray-600 mb-4 max-w-3xl mx-auto break-words leading-relaxed text-center">
                 Please ensure your Excel file follows the format below before uploading.
