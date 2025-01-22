@@ -5,19 +5,17 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div>Loading...</div>; // Show a loading spinner or placeholder
+    return <div>Loading...</div>; // Placeholder during session restoration
   }
 
   if (!user) {
     return <Navigate to="/login" />;
   }
 
-  // Admin-only routes
   if (adminOnly && !user.isAdmin) {
     return <Navigate to="/unauthorized" />;
   }
 
-  // All other routes (default for Supervisor role)
   return children;
 };
 
