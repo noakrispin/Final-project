@@ -15,6 +15,7 @@ const DynamicFormPage = () => {
   const source = searchParams.get("source");
   const projectCode = searchParams.get("projectCode");
   const projectName = searchParams.get("projectName");
+  const readOnly = searchParams.get("readOnly") === "true";
   const students = JSON.parse(searchParams.get("students") || "[]");
 
   const [formDetails, setFormDetails] = useState({
@@ -28,10 +29,12 @@ const DynamicFormPage = () => {
 
   useEffect(() => {
     console.log("Extracted formID:", formID); // Debug log
-    if (!user) {
-      navigate("/login");
-      return;
-    }
+    console.log("User role:", user?.role); // Debug user role
+  if (!user || user.role !== "Supervisor") {
+    console.error("Unauthorized access attempt detected!");
+    navigate(-1); // Redirect to unauthorized page
+    return;
+  }
 
     
     const fetchFormDetailsAndQuestions = async () => {
@@ -48,6 +51,7 @@ const DynamicFormPage = () => {
         if (!formMetadata) {
           throw new Error(`No form metadata found for formID: ${formID}`);
         }
+        console.log("Form Metadata Response:", formMetadata);
 
         // Set form metadata
         setFormDetails({
@@ -60,6 +64,7 @@ const DynamicFormPage = () => {
         if (!questions || questions.length === 0) {
           throw new Error(`No questions found for formID: ${formID}`);
         }
+        console.log("Form Questions Response:", questions);
 
         // Separate general and student questions
         setFormQuestions(questions);
@@ -108,6 +113,7 @@ const DynamicFormPage = () => {
         projectCode={projectCode}
         projectName={projectName}
         students={students}
+        readOnly={readOnly}
        
       />
     );

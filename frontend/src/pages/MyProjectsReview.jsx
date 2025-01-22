@@ -47,31 +47,56 @@ const MyProjectsReview = () => {
         setIsLoading(true);
         console.log("Fetching data...");
 
-        const formID = "SupervisorForm"; 
-      // Fetch all projects and evaluations in parallel
-      const [projectsData, evaluationsData] = await Promise.all([
-        evaluatorsApi.getProjectsForEvaluatorByForm(user.id, formID),
-        formsApi.getEvaluationsByEvaluator(user.id),
+        const formID = "SupervisorForm";
+        // Fetch all projects and evaluations in parallel
+        const [projectsData, evaluationsData] = await Promise.all([
+          evaluatorsApi.getProjectsForEvaluatorByForm(user.id, formID),
+          formsApi.getEvaluationsByEvaluator(user.id),
         ]);
         console.log("Evaluations Data from API:", evaluationsData);
-        console.log("Projects Data:", projectsData);
-        
-        // Ensure evaluationsData is an array
-        const evaluationsArray = Array.isArray(evaluationsData) ? evaluationsData : [];
+        console.log("Projects Data (before formatting):", projectsData);
 
-        // Format project data with fallback logic for missing fields
-        const formattedProjects = projectsData.map((project) => ({
-          ...project,
-          deadline: project.deadline?._seconds
-            ? new Date(project.deadline._seconds * 1000)
-            : project.deadline,
-          isSupervisor:
-            project.supervisor1 === user.id || project.supervisor2 === user.id,
-          students: project.students.map((student) => ({
-            ...student,
-            id: String(student.id), // Ensure student ID is a string
-          })),
-        }));
+        const uniqueProjects = Array.from(
+          new Map(projectsData.map((item) => [item.projectCode, item])).values()
+        );
+
+        console.log("unique projects:", uniqueProjects);
+
+        // Ensure evaluationsData is an array
+        const evaluationsArray = Array.isArray(evaluationsData)
+          ? evaluationsData
+          : [];
+
+        const formattedProjects = uniqueProjects.map((project) => {
+          // Extract students dynamically from the project
+          const students = Object.keys(project)
+            .filter(
+              (key) => key.startsWith("Student") && project[key]?.fullName
+            ) // Ensure Student and fullName exist
+            .map((key) => ({
+              id: String(project[key]?.ID || ""), // Ensure ID is a string
+              fullName:
+                project[key]?.fullName ||
+                `${project[key]?.firstName || ""} ${
+                  project[key]?.lastName || ""
+                }`.trim(),
+              email: project[key]?.Email || "",
+            }))
+            .filter((student) => student.id); // Remove students with missing IDs
+
+          console.log("Extracted students for project:", students);
+
+          return {
+            ...project,
+            deadline: project.deadline?._seconds
+              ? new Date(project.deadline._seconds * 1000)
+              : project.deadline,
+            isSupervisor:
+              project.supervisor1 === user.id ||
+              project.supervisor2 === user.id,
+            students, // Use the extracted and formatted students
+          };
+        });
 
         console.log("Formatted Projects:", formattedProjects);
 
@@ -116,27 +141,25 @@ const MyProjectsReview = () => {
   };
 
   const progressStats = useMemo(() => {
-    // Filter projects where the evaluator is the supervisor
-    const supervisedProjects = projects.filter(
-      (project) =>
-        project.supervisor1 === user.id || project.supervisor2 === user.id
-    );
-
-    // Total projects to be graded
-    const total = supervisedProjects.length;
-
-    // Count projects with a submitted supervisor grade
-    const graded = supervisedProjects.filter((project) => {
-      const supervisorGrade = getGrade(
-        grades,
-        project.projectCode,
-        "supervisor"
-      );
-      return supervisorGrade !== null; // Consider it graded if a grade exists
+    console.log("Projects data (progressStats):", projects);
+  
+    // Total projects to evaluate
+    const total = projects.length;
+    console.log("Total projects to evaluate:", total);
+  
+    // Projects already submitted (check evaluatorDetails for "status: Submitted")
+    const graded = projects.filter((project) => {
+      const evaluatorDetails = project.evaluatorDetails || {};
+      return evaluatorDetails.status === "Submitted";
     }).length;
-
+  
+    console.log("Projects already graded:", graded);
+  
     return { graded, total };
-  }, [projects, grades, user]);
+  }, [projects]);
+  
+  
+  
 
   const getProgressBarColor = (progress) => {
     if (progress === 100) return "bg-green-500";
@@ -166,13 +189,25 @@ const MyProjectsReview = () => {
         return; // Prevent navigation if formID is not valid
       }
 
+      const readOnly = isDeadlinePassed(project.deadline);
+
       const queryParams = new URLSearchParams({
         formID, // Pass the resolved formID
         projectCode: project.projectCode,
         projectName: project.title,
         students: JSON.stringify(project.students),
         studentName: studentName || "",
+        readOnly: readOnly.toString(),
       }).toString();
+      
+      //debug log
+      console.log("Navigating to evaluation form with:", {
+        formID,
+        projectCode: project.projectCode,
+        projectName: project.title,
+        students: project.students,
+        readOnly,
+      }); 
 
       navigate(`/evaluation-forms/${formID}?${queryParams}&source=evaluation`);
     } else {
@@ -206,9 +241,11 @@ const MyProjectsReview = () => {
         className: "text-lg text-center",
         render: (students) =>
           students && students.length > 0
-            ? students.map((s) => s.name).join(", ")
+            ? students.map((student) => (
+                <div key={student.id}>{student.fullName}</div>
+              ))
             : "No students",
-        sortable: true,
+        sortable: false, // Set sortable to false since sorting by students might not be straightforward
       },
       {
         key: "gitLink",
@@ -230,13 +267,13 @@ const MyProjectsReview = () => {
           ),
         sortable: true,
       },
-      {
-        key: "presentationGrade",
-        header: "Presentation Grade",
-        className: "text-lg text-center",
-        render: (_, project) => renderGradeCell(project, "presentation"),
-        sortable: true,
-      },
+      // {
+      //   key: "presentationGrade",
+      //   header: "Presentation Grade",
+      //   className: "text-lg text-center",
+      //   render: (_, project) => renderGradeCell(project, "presentation"),
+      //   sortable: true,
+      // },
       {
         key: "supervisorGrade",
         header: "Supervisor Grade",
@@ -345,18 +382,18 @@ const MyProjectsReview = () => {
             </div>
           </div>
           <Card className="p-6">
-          <Table
-            data={projects}
-            apiResponse={grades} // Pass the full evaluationsData array
-            userId={user?.id}
-            isDeadlinePassed={isDeadlinePassed}
-            columns={myProjectColumns}
-            onRowClick={handleRowClick}
-            showTabs={true}
-            useCustomColumns={true}
-            showDescription = {true}
-            description = "Click on a row to view project details and on a grade to add or edit evaluations."
-          />
+            <Table
+              data={projects}
+              apiResponse={grades} // Pass the full evaluationsData array
+              userId={user?.id}
+              isDeadlinePassed={isDeadlinePassed}
+              columns={myProjectColumns}
+              onRowClick={handleRowClick}
+              showTabs={true}
+              useCustomColumns={true}
+              showDescription={true}
+              description="Click on a row to view project details and on a grade to add or edit evaluations."
+            />
           </Card>
         </div>
       </div>
@@ -374,4 +411,3 @@ const MyProjectsReview = () => {
 };
 
 export default MyProjectsReview;
-
