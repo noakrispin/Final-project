@@ -156,10 +156,10 @@ exports.getProjectsForEvaluatorByForm = async (req, res) => {
       .where("formID", "==", formID)
       .get();
 
-    if (evaluatorSnapshot.empty) {
-      return res.status(404).json({ success: false, message: "No projects found for this evaluator and formID." });
-    }
-
+      if (evaluatorSnapshot.empty) {
+        return res.status(200).json({ success: true, data: [] });
+      }
+      
     const evaluatorData = evaluatorSnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
