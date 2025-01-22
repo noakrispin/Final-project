@@ -2,6 +2,9 @@ import { db } from '../firebaseConfig';
 import { collection, doc, writeBatch, getDocs } from 'firebase/firestore';
 
 export const ExcelDatabaseService = {
+
+  //functions for projects Upload files
+
   //insert new projects to projects collection from excel file
   insertProjects: async (projects) => {
     try {
@@ -22,7 +25,6 @@ export const ExcelDatabaseService = {
       throw new Error("Database error: " + error.message);
     }
   },
-
 
 //insert new projects' Supervisors as evaluators of SupervisorForm to evaluators collection from excel file
   insertSupervisorsEvaluators: async (projects) => {
@@ -57,7 +59,73 @@ export const ExcelDatabaseService = {
     }
   },
 
+  insertStudentsToFinalGrades: async (projects) => {
+    try {
+        // Fetch all existing finalGrades and map by unique combination of studentID and projectCode
+        const finalGradesSnapshot = await getDocs(collection(db, "finalGrades"));
+        const existingFinalGradesSet = new Set(
+            finalGradesSnapshot.docs.map((doc) =>
+                JSON.stringify({
+                    studentID: doc.data().studentID,
+                    projectCode: doc.data().projectCode,
+                })
+            )
+        );
 
+        const batch = writeBatch(db);
+
+        projects.forEach((project) => {
+            // Add Student 1 to finalGrades if they exist and not already added
+            if (project.Student1 && project.Student1.ID) {
+                const finalGradeRecord = {
+                    studentID: project.Student1.ID,
+                    projectCode: project.projectCode,
+                };
+
+                if (!existingFinalGradesSet.has(JSON.stringify(finalGradeRecord))) {
+                    const finalGradeRef = doc(collection(db, "finalGrades"));
+                    batch.set(finalGradeRef, {
+                        ...finalGradeRecord,
+                        status: "Not graded", // Default status
+                        CalculatedBookGrade: null,
+                        CalculatedPresentationGrade: null,
+                        CalculatedSupervisorGrade: null,
+                        finalGrade: null,
+                    });
+                }
+            }
+
+            // Add Student 2 to finalGrades if they exist and not already added
+            if (project.Student2 && project.Student2.ID) {
+                const finalGradeRecord = {
+                    studentID: project.Student2.ID,
+                    projectCode: project.projectCode,
+                };
+
+                if (!existingFinalGradesSet.has(JSON.stringify(finalGradeRecord))) {
+                    const finalGradeRef = doc(collection(db, "finalGrades"));
+                    batch.set(finalGradeRef, {
+                        ...finalGradeRecord,
+                        status: "Not graded", // Default status
+                        CalculatedBookGrade: null,
+                        CalculatedPresentationGrade: null,
+                        CalculatedSupervisorGrade: null,
+                        finalGrade: null,
+                    });
+                }
+            }
+        });
+
+        await batch.commit();
+        console.log("Students successfully added to finalGrades (excluding duplicates).");
+    } catch (error) {
+        console.error("Error adding students to finalGrades:", error.message);
+        throw new Error("Database error: " + error.message);
+    }
+},
+
+
+  //functions for Evaluators Upload files
   //Inserting evaluators by evaluators excel file (for presentation and book evaluators)
   insertEvaluators: async (processedData) => {
     try {

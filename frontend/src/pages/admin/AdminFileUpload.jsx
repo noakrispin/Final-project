@@ -25,11 +25,15 @@ const AdminFileUpload = () => {
 
     try {
       const processedData = await processExcelFile(file);
+
       await ExcelDatabaseService.insertProjects(processedData);
       console.log("Projects uploaded successfully:", processedData);
-
+      
       await ExcelDatabaseService.insertSupervisorsEvaluators(processedData);
       console.log("Evaluators uploaded successfully:", processedData);
+
+      await ExcelDatabaseService.insertStudentsToFinalGrades(processedData);
+      console.log("students uploaded successfully to final grades:", processedData);
 
       setUploadedProjects(processedData);
       setUploadSuccess(true);
