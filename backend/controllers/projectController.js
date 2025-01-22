@@ -23,6 +23,7 @@ exports.addProject = async (req, res) => {
 // Get details of a specific project
 exports.getProject = async (req, res) => {
   const { projectCode } = req.params;
+  console.log("Received projectCode:", projectCode); // Log projectCode
 
   try {
     if (!projectCode) {
@@ -30,12 +31,15 @@ exports.getProject = async (req, res) => {
     }
 
     const projectDoc = await admin.firestore().collection("projects").doc(projectCode).get();
+    console.log("Firestore query result exists:", projectDoc.exists); // Log query result
+
     if (!projectDoc.exists) {
       return res.status(404).json({ error: "Project not found" });
     }
 
     // Include students and supervisor details if needed
     const projectData = projectDoc.data();
+    console.log("Retrieved project data:", projectData); // Log project data
 
     res.status(200).json(projectData);
   } catch (error) {
