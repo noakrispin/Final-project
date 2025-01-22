@@ -1,4 +1,4 @@
-require("dotenv").config(); // Load environment variables from .env
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
@@ -25,7 +25,12 @@ app.use("/api/forms", formRoutes);
 app.use("/api/grades", finalGradeRoutes);
 app.use("/api/evaluators", evaluatorRoutes);
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+// Start the server only if this file is executed directly
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+  });
+}
+
+// Export the app for serverless use
+module.exports = app;
