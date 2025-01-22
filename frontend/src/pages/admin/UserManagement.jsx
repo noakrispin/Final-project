@@ -15,7 +15,7 @@ const UserManagement = () => {
   const [editRoleModal, setEditRoleModal] = useState({ isOpen: false, user: null });
   const [selectedRole, setSelectedRole] = useState(""); // State for the selected role
 
-  const tabs = ["User Management", "Form Management"];
+  const tabs = ["User Management", "Forms Management"];
   const [activeTab, setActiveTab] = useState("User Management");
 
   // Fetch users from the API on component mount
@@ -162,7 +162,7 @@ const UserManagement = () => {
                   }`}
                   onClick={() => {
                     setActiveTab(tab);
-                    if (tab === "Form Management") {
+                    if (tab === "Forms Management") {
                       navigate("/admin-forms");
                     }
                   }}

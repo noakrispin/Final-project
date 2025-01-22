@@ -12,7 +12,6 @@ import ProjectsSupervisors from "./pages/ProjectsSupervisors";
 import MyProjectsReview from "./pages/MyProjectsReview";
 import OtherProjectsReview from "./pages/OtherProjectsReview";
 import MyProfile from "./pages/MyProfile";
-import Supervisors from "./pages/SupervisorsStatus";
 import Login from "./pages/Login";
 import Contact from "./pages/Contact";
 import SignUp from "./pages/SignUp";
@@ -28,7 +27,7 @@ import SupervisorGradesFeedback from "./pages/SupervisorGradesFeedback";
 import ForgotPassword from "./pages/ForgotPassword";
 import UserManagement from "./pages/admin/UserManagement"
 import AdminReminders from "./pages/admin/AdminReminders"
-
+import AdminEditForm from "./pages/admin/AdminEditForm";
 
 // Component imports
 import Navbar from "./components/layout/Navbar";
@@ -162,6 +161,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute hasAccess={["Admin"]}>
               <AdminReminders />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin-edit-forms/*"
+          element={
+            <ProtectedRoute hasAccess={["Admin"]}>
+              <AdminEditForm />
             </ProtectedRoute>
           }
         />

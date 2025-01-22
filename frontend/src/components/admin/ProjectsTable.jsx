@@ -65,6 +65,9 @@ const ProjectsTable = ({
       columns={projectColumns} 
       data={projects}
       showTabs={false}
+      showDescription = {true}
+      description = "Click any cell to edit its content. Click student names to view their details."
+          
        />
       
     </Card>

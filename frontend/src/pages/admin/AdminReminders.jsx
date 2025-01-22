@@ -302,6 +302,9 @@ const AdminReminders = () => {
               columns={projectColumns}
               rowClassName="hover:bg-gray-50 transition duration-200"
               useCustomColumns={false}
+              showDescription = {true}
+              description = "add desciption (in AdminReminders)"
+       
             />
           )}
         </div>

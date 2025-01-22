@@ -60,6 +60,8 @@ const UserTable = ({ users, onDelete, onEditRole }) => {
         columns={userColumns}
         showTabs={false}
         onRowClick={(row) => console.log("Row clicked:", row)}
+        showDescription = {true}
+        description = "add description (in UserTable)"
       />
     </Card>
   );

@@ -5,7 +5,7 @@ const {
   getAllEvaluators,
   deleteEvaluator,
   getProjectsByEvaluator,
-  
+  getProjectsForEvaluatorByForm,
   getEvaluatorsByProject,
 } = require("../controllers/evaluatorController");
 
@@ -28,6 +28,11 @@ router.get("/projects/:evaluatorID", getProjectsByEvaluator);
 
 // Get all evaluators assigned to a specific project
 router.get("/projectEvaluators/:projectCode", getEvaluatorsByProject);
+
+
+router.get('/:evaluatorID/projects/:formID', getProjectsForEvaluatorByForm);
+
+
 
 
 module.exports = router;

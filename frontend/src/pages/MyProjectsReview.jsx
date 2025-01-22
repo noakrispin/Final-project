@@ -2,12 +2,14 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { projectsApi } from "../services/projectsAPI";
+import { evaluatorsApi } from "../services/evaluatorsAPI";
 import { formsApi } from "../services/formAPI";
 import { BlurElements } from "../components/shared/BlurElements";
 import ProjectDetailsPopup from "../components/shared/ProjectDetailsPopup";
 import { Table } from "../components/ui/Table";
 import { getGrade } from "../utils/getGrade";
 import { formatDate } from "../utils/dateUtils";
+import { Card } from "../components/ui/Card";
 
 const TABS = ["My Projects", "Other Projects"];
 
@@ -45,10 +47,11 @@ const MyProjectsReview = () => {
         setIsLoading(true);
         console.log("Fetching data...");
 
-        // Fetch all projects and evaluations in parallel
-        const [projectsData, evaluationsData] = await Promise.all([
-          projectsApi.getAllProjects(),
-          formsApi.getEvaluationsByEvaluator(user.id),
+        const formID = "SupervisorForm"; 
+      // Fetch all projects and evaluations in parallel
+      const [projectsData, evaluationsData] = await Promise.all([
+        evaluatorsApi.getProjectsForEvaluatorByForm(user.id, formID),
+        formsApi.getEvaluationsByEvaluator(user.id),
         ]);
         console.log("Evaluations Data from API:", evaluationsData);
         console.log("Projects Data:", projectsData);
@@ -171,7 +174,7 @@ const MyProjectsReview = () => {
         studentName: studentName || "",
       }).toString();
 
-      navigate(`/evaluation-forms/${formID}?${queryParams}`);
+      navigate(`/evaluation-forms/${formID}?${queryParams}&source=evaluation`);
     } else {
       // Open project details
       setSelectedProject(data);
@@ -341,7 +344,7 @@ const MyProjectsReview = () => {
               </p>
             </div>
           </div>
-
+          <Card className="p-6">
           <Table
             data={projects}
             apiResponse={grades} // Pass the full evaluationsData array
@@ -351,7 +354,10 @@ const MyProjectsReview = () => {
             onRowClick={handleRowClick}
             showTabs={true}
             useCustomColumns={true}
+            showDescription = {true}
+            description = "Click on a row to view project details and on a grade to add or edit evaluations."
           />
+          </Card>
         </div>
       </div>
 

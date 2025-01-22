@@ -4,6 +4,7 @@ import { projectsApi } from "../services/projectsAPI"; // Updated API import
 import { BlurElements } from "../components/shared/BlurElements";
 import ProjectDetailsPopup from "../components/shared/ProjectDetailsPopup";
 import { Table } from "../components/ui/Table";
+import { Card } from "../components/ui/Card";
 
 const FILTERS = ["All", "Part A", "Part B"];
 
@@ -124,10 +125,11 @@ const ProjectsSupervisors = () => {
   return (
     <div className="relative bg-white min-h-screen overflow-hidden">
       <BlurElements />
-
+      
       <div className="relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="ml-2 mb-6">
+          <div className="p-6 border-b border-gray-200">
             <h1 className="text-2xl font-bold">{`My Supervised Projects - ${user?.fullName}`}</h1>
             <p className="text-gray-600 text-lg mt-2">
               Here are all the projects currently under your supervision,
@@ -135,8 +137,11 @@ const ProjectsSupervisors = () => {
             </p>
           </div>
         </div>
+        </div>
+
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <Card className="p-6">
           <Table
             data={projects}
             columns={projectColumns}
@@ -148,8 +153,12 @@ const ProjectsSupervisors = () => {
             onRowClick={(row) => handleProjectClick(row)}
             rowClassName="cursor-pointer hover:bg-gray-300 transition-colors duration-150"
             showTabs={true}
+            showDescription = {true}
+            description = "Click on a project to view its details, save personal notes, email students etc."
           />
+          </Card>
         </div>
+        
       </div>
 
       {selectedProject && (

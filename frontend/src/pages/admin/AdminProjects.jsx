@@ -24,16 +24,14 @@ import * as XLSX from "xlsx";
 const TABS = ["All Projects", "Part A", "Part B"];
 
 const getTabDescription = (tab) => {
-  const interactiveFeatures =
-    "Click on any cell in the table to edit its content directly. Student names are clickable to view detailed student information.";
-
+  
   switch (tab) {
     case "All Projects":
-      return `Here you can view and manage all projects, including both Part A and Part B projects. Use the filters above to focus on specific project types. ${interactiveFeatures}`;
+      return `Here you can view and manage all projects, including both Part A and Part B projects. Use the filters above to focus on specific project types. `;
     case "Part A":
-      return `These are all Part A projects, typically focused on project planning and initial development phases. ${interactiveFeatures}`;
+      return `These are all Part A projects, typically focused on project planning and initial development phases. `;
     case "Part B":
-      return `These are all Part B projects, usually involving implementation and completion phases. ${interactiveFeatures}`;
+      return `These are all Part B projects, usually involving implementation and completion phases.`;
     default:
       return "";
   }

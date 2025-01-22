@@ -190,8 +190,6 @@ function QuestionEditor({ questions, setQuestions, reference }) {
 export default function EditFormComponent({
   formTitle,
   formDescription,
-  projectCode,
-  projectName,
   formID,
   questions,
 }) {
