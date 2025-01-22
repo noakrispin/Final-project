@@ -191,9 +191,7 @@ const AppContent = () => {
 
 const App = () => {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <AppContent />
   );
 };
 
