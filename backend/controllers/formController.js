@@ -334,11 +334,11 @@ module.exports = {
           console.log(
             `Student-Specific Weighted Sum: ${studentWeightedSum}, Student Weight: ${studentWeight}`
           );
-          const finalGrade = Number((generalGrade + studentWeightedSum).toFixed(2));
+            const studentGrade = Math.round(generalGrade + studentWeightedSum);
           console.log(
             `Final Grade for Student ID: ${studentID} = General Grade (${generalGrade}) + Student-Specific Grade (${studentWeightedSum})`
           );
-          studentGrades[studentID] = finalGrade;
+          studentGrades[studentID] = studentGrade;
         }
   
         return studentGrades;

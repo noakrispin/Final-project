@@ -11,7 +11,7 @@ const FILTERS = ["All", "Part A", "Part B"];
 
 export const Table = ({
   data,
-  apiResponse, // Pass API response directly
+  apiResponse, 
   columns,
   className = "",
   onRowClick,
@@ -67,12 +67,12 @@ export const Table = ({
 
   const renderGradeCell = (project, gradeType) => {
     const isUserSupervisor = project.isSupervisor;
-
+  
     console.log(
       `Rendering grades for project: ${project.projectCode}`,
       project.students
     );
-
+  
     // Determine the formID based on the grade type
     let formID;
     if (gradeType === "supervisor") {
@@ -82,16 +82,16 @@ export const Table = ({
     } else if (gradeType === "book") {
       formID = project.part === "A" ? "BookReviewerFormA" : "BookReviewerFormB";
     }
-
+  
     const isDeadlinePassed =
       project.deadline && new Date(project.deadline) < new Date();
-
+  
     // Check if there are grades for the project
     const hasGrades = project.students.some(
       (student) =>
         getGrade(apiResponse, formID, project.projectCode, student.id) !== null
     );
-
+  
     if (!hasGrades) {
       // No grades found, display placeholder for the entire project if the deadline has not passed
       if (
@@ -112,10 +112,10 @@ export const Table = ({
           </div>
         );
       }
-
+  
       return null;
     }
-
+  
     // Render grades for students with grades
     return (
       <div>
@@ -126,20 +126,21 @@ export const Table = ({
             project.projectCode,
             student.id
           );
-
+  
           if (grade === null) return null; // Skip students without grades
-
+  
           console.log(
-            `Rendering grade for student: ${student.name}, formID: ${formID}, projectCode: ${project.projectCode}, gradeType: ${gradeType}, grade: ${grade}`
+            `Rendering grade for student: ${student.fullName}, formID: ${formID}, projectCode: ${project.projectCode}, gradeType: ${gradeType}, grade: ${grade}`
           );
-
+  
           const metadata = {
             gradeType,
             project,
-            studentName: student.name,
+            studentName: student.fullName,
             formID,
+            readOnly: isDeadlinePassed,
           };
-
+  
           // Render cell content based on grade type and user role
           if (
             (isUserSupervisor && gradeType === "supervisor") ||
@@ -149,30 +150,30 @@ export const Table = ({
             return (
               <div
                 key={`${project.id}-${student.id}`}
-                className="flex flex-col"
+                className="flex justify-start items-center gap-2"
               >
-                <span>{student.name}</span>
+                <span>{student.fullName}:</span>
                 <span>
-                  {isDeadlinePassed ? (
-                    <span className="text-gray-500">{grade}</span>
-                  ) : (
-                    <span
-                      data-grade-action={JSON.stringify(metadata)}
-                      className="text-blue-500 underline cursor-pointer"
-                    >
-                      {grade}
-                    </span>
-                  )}
+                  <span
+                    data-grade-action={JSON.stringify(metadata)}
+                    className={`underline cursor-pointer ${
+                      isDeadlinePassed ? "text-gray-500" : "text-blue-500"
+                    }`}
+                  >
+                    {grade}
+                  </span>
                 </span>
               </div>
             );
           }
-
+  
           return null;
         })}
       </div>
     );
   };
+  
+    
 
   return (
     <div className="space-y-4">

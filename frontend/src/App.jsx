@@ -100,7 +100,7 @@ const AppContent = () => {
         <Route
           path="/evaluation-forms/*"
           element={
-            <ProtectedRoute adminOnly>
+            <ProtectedRoute allowedRoles={["Supervisor"]}>
               <EvaluationForms />
             </ProtectedRoute>
           }
