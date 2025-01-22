@@ -96,6 +96,7 @@ export default function MyProfile() {
           </button>
         </div>
 
+
         <div className="grid grid-cols-2 gap-6">
           {/* Total Projects Supervised */}
           <button
@@ -115,6 +116,19 @@ export default function MyProfile() {
             <p className="text-gray-600 text-lg">Pending Reviews</p>
           </button>
         </div>
+
+        {/* Admin Dashboard Button */}
+        {user.isAdmin && (
+          <div className="mt-6 flex justify-center">
+            <button
+              onClick={() => navigate("/admin-projects")}
+              className="block bg-yellow-100 text-center p-6 rounded-lg shadow hover:shadow-md transition-shadow w-1/2"
+            >
+              <h2 className="text-4xl font-bold text-yellow-600">Admin</h2>
+              <p className="text-gray-600 text-lg">Go to Dashboard</p>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

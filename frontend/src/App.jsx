@@ -49,7 +49,10 @@ const AppContent = () => {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
-        <Route path="/project/:projectId" element={<ProjectDetailsPage />} />
+        <Route
+          path="/project/:projectCode"
+          element={<ProjectDetailsPage />}
+        />
         <Route path="/forgot-password" element={<ForgotPassword />} />
 
         {/* Protected Routes */}
