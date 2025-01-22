@@ -5,71 +5,51 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Add loading state
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const storedUser = localStorage.getItem("user");
-        const token = localStorage.getItem("token");
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser && storedUser !== "undefined") {
+        const parsedUser = JSON.parse(storedUser);
+        console.log("User found in localStorage:", parsedUser);
 
-        if (storedUser && token) {
-          const parsedUser = JSON.parse(storedUser);
-          console.log("Restoring user session:", parsedUser);
-
-          // Optimistically set the user
-          setUser(parsedUser);
-
-          // Validate the token with the backend
-          const response = await api.get("/auth/validate", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-
-          if (response.status === 200) {
-            console.log("Token validation successful");
-          } else {
-            throw new Error("Token validation failed");
-          }
-        } else {
-          console.log("No valid user or token found in localStorage");
-        }
-      } catch (error) {
-        console.error("Session restoration error:", error.message);
-
-        // Keep the user logged in if it's a network issue
-        if (!error.response || error.response.status >= 500) {
-          console.warn("Skipping logout due to backend issue");
-        } else {
-          // Logout only on authentication-related issues
-          localStorage.removeItem("user");
-          localStorage.removeItem("token");
-          setUser(null);
-        }
-      } finally {
-        setLoading(false);
+        // Ensure isAdmin is boolean
+        const processedUser = {
+          ...parsedUser,
+          isAdmin: !!parsedUser.isAdmin,
+        };
+        setUser(processedUser);
+      } else {
+        console.log("No valid user found in localStorage, clearing...");
+        localStorage.removeItem("user");
       }
-    };
-
-    initializeAuth();
+    } catch (error) {
+      console.error("Failed to parse user from localStorage:", error);
+      localStorage.removeItem("user");
+    } finally {
+      setLoading(false); // Set loading to false after restoration
+    }
   }, []);
 
   const login = async (email, password) => {
     try {
       const response = await api.post("/auth/login", { email, password });
-      console.log("Login successful:", response);
+      console.log("Login API response:", response);
 
       const { user, token } = response;
 
+      // Ensure isAdmin is boolean
       const processedUser = {
         ...user,
-        isAdmin: !!user.isAdmin, // Ensure isAdmin is boolean
+        isAdmin: !!user.isAdmin,
       };
 
+      // Save user and token in localStorage
       localStorage.setItem("user", JSON.stringify(processedUser));
       localStorage.setItem("token", token);
 
       setUser(processedUser);
-
       return { success: true, user: processedUser };
     } catch (error) {
       console.error("Login error:", error.message);
