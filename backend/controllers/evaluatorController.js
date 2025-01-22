@@ -141,3 +141,51 @@ exports.getEvaluatorsByProject = async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch evaluators for project" });
   }
 };
+
+
+exports.getProjectsForEvaluatorByForm = async (req, res) => {
+  const { evaluatorID, formID } = req.params; // Fetch both evaluatorID and formID
+
+  try {
+    const evaluatorsRef = admin.firestore().collection("evaluators");
+    const projectsRef = admin.firestore().collection("projects");
+
+    // Query evaluators collection for the given evaluatorID and formID
+    const evaluatorSnapshot = await evaluatorsRef
+      .where("evaluatorID", "==", evaluatorID)
+      .where("formID", "==", formID)
+      .get();
+
+    if (evaluatorSnapshot.empty) {
+      return res.status(404).json({ success: false, message: "No projects found for this evaluator and formID." });
+    }
+
+    const evaluatorData = evaluatorSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    // Fetch corresponding projects based on projectCode
+    const projectPromises = evaluatorData.map((evaluator) =>
+      projectsRef.doc(evaluator.projectCode).get()
+    );
+
+    const projectSnapshots = await Promise.all(projectPromises);
+
+    // Combine evaluator data with project data
+    const projects = projectSnapshots.map((snapshot, index) => {
+      if (!snapshot.exists) return null;
+      return {
+        ...snapshot.data(),
+        evaluatorDetails: evaluatorData[index],
+      };
+    }).filter(Boolean);
+
+    res.status(200).json({ success: true, data: projects });
+  } catch (error) {
+    console.error("Error fetching projects for evaluator:", error.message);
+    res.status(500).json({ success: false, error: "Failed to fetch projects for evaluator." });
+  }
+};
+
+

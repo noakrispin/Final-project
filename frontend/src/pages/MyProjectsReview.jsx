@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { projectsApi } from "../services/projectsAPI";
+import { evaluatorsApi } from "../services/evaluatorsAPI";
 import { formsApi } from "../services/formAPI";
 import { BlurElements } from "../components/shared/BlurElements";
 import ProjectDetailsPopup from "../components/shared/ProjectDetailsPopup";
@@ -46,10 +47,11 @@ const MyProjectsReview = () => {
         setIsLoading(true);
         console.log("Fetching data...");
 
-        // Fetch all projects and evaluations in parallel
-        const [projectsData, evaluationsData] = await Promise.all([
-          projectsApi.getAllProjects(),
-          formsApi.getEvaluationsByEvaluator(user.id),
+        const formID = "SupervisorForm"; 
+      // Fetch all projects and evaluations in parallel
+      const [projectsData, evaluationsData] = await Promise.all([
+        evaluatorsApi.getProjectsForEvaluatorByForm(user.id, formID),
+        formsApi.getEvaluationsByEvaluator(user.id),
         ]);
         console.log("Evaluations Data from API:", evaluationsData);
         console.log("Projects Data:", projectsData);
