@@ -22,8 +22,10 @@ export const projectsApi = {
    */
   getProject: async (projectCode) => {
     try {
+      console.log("Fetching project with projectCode:", projectCode);
       const response = await api.get(`/projects/${projectCode}`);
-      return response.data;
+      console.log("Full response:", response);
+      return response.data || response; // Adjust based on the actual structure
     } catch (error) {
       console.error("Error fetching project:", error.response?.data || error.message);
       throw error;

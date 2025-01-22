@@ -5,8 +5,8 @@ import { useAuth } from "../../context/AuthContext";
 import { projectsApi } from "../../services/projectsAPI";
 import { assets } from "../../assets/assets";
 import UserMenu from "./UserMenu";
-import SearchBar from "../shared/SearchBar";
 import MobileMenu from "../shared/MobileMenu";
+import SearchBar from "../shared/SearchBar";
 
 const Navbar = () => {
   const location = useLocation();
@@ -18,6 +18,13 @@ const Navbar = () => {
   const [showResults, setShowResults] = useState(false);
 
   console.log("Navbar received user:", user); // Debugging log
+
+  // Clear search state on route change
+  useEffect(() => {
+    setSearchQuery("");
+    setSearchResults([]);
+    setShowResults(false);
+  }, [location.pathname]); // Run this whenever the route changes
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
@@ -57,7 +64,9 @@ const Navbar = () => {
 
   const handleResultClick = (projectCode) => {
     console.log("Navigating to project code:", projectCode);
-    navigate(`/project/${projectCode}`);
+    navigate(`/project/${projectCode}`); // Navigate to the project details page
+    setSearchQuery(""); // Clear the search query
+    setSearchResults([]); // Clear the search results
     setShowResults(false); // Close the dropdown
   };
 
@@ -116,9 +125,7 @@ const Navbar = () => {
             <UserMenu user={user} logout={logout} />
           ) : (
             <Button
-
               onClick={() => navigate('/login')}
-
               className="bg-[#6366F1] hover:bg-[#5558E1] text-white px-6 py-2 rounded-md text-sm font-medium transition-colors"
             >
               Login
