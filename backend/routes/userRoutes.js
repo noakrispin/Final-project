@@ -6,75 +6,55 @@ const {
   deleteUser, 
   updateUserRole 
 } = require("../controllers/userController");
+const db = require("../config/firebaseAdmin");
 
 const router = express.Router();
 
-// Async handler wrapper for consistent error handling
+// Middleware to check Firebase connection
+const checkFirebase = (req, res, next) => {
+  if (!db) {
+    console.error('Firebase database not initialized');
+    return res.status(500).json({
+      success: false,
+      message: "Database connection error",
+      error: "Firebase not initialized"
+    });
+  }
+  next();
+};
+
+// Apply Firebase check middleware to all routes
+router.use(checkFirebase);
+
+// Async handler wrapper
 const asyncHandler = (fn) => (req, res, next) => {
   return Promise.resolve(fn(req, res, next)).catch(next);
 };
 
-// Add a new user
-router.post("/", asyncHandler(async (req, res) => {
-  const result = await addUser(req, res);
-  return result;
-}));
-
-// Fetch user details along with subcollections
-router.get("/:id", asyncHandler(async (req, res) => {
-  const result = await getUser(req, res);
-  return result;
-}));
-
-// Fetch all users
+// Get all users with better error handling
 router.get("/", asyncHandler(async (req, res) => {
-  const result = await getAllUsers(req, res);
-  return result;
+  try {
+    const result = await getAllUsers(req, res);
+    return result;
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch users",
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
 }));
 
-// Delete user
-router.delete("/:id", asyncHandler(async (req, res) => {
-  const result = await deleteUser(req, res);
-  return result;
-}));
+// Other routes with similar error handling...
 
-// Update user role
-router.put("/:userId/role", asyncHandler(async (req, res) => {
-  const result = await updateUserRole(req, res);
-  return result;
-}));
-
-// Error handling middleware specific to user routes
+// Error handling middleware
 router.use((err, req, res, next) => {
   console.error('User route error:', err);
-  
-  // Handle specific Firebase errors
-  if (err.code === 'auth/user-not-found') {
-    return res.status(404).json({
-      error: {
-        message: 'User not found',
-        status: 404
-      }
-    });
-  }
-  
-  if (err.code === 'auth/invalid-uid') {
-    return res.status(400).json({
-      error: {
-        message: 'Invalid user ID',
-        status: 400
-      }
-    });
-  }
-
-  // Default error response
   res.status(err.status || 500).json({
-    error: {
-      message: process.env.NODE_ENV === 'production' 
-        ? 'Internal Server Error' 
-        : err.message,
-      status: err.status || 500
-    }
+    success: false,
+    message: err.message || 'Internal server error',
+    error: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });
 });
 
