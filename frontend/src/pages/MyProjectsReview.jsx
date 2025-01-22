@@ -15,8 +15,7 @@ const TABS = ["My Projects", "Other Projects"];
 
 const MyProjectsReview = () => {
   const [activeTab, setActiveTab] = useState(TABS[0]);
-  const [projectsFilter, setProjectsFilter] = useState("All");
-  const [searchProjects, setSearchProjects] = useState("");
+
   const [projects, setProjects] = useState([]);
   const [grades, setGrades] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -141,31 +140,25 @@ const MyProjectsReview = () => {
   };
 
   const progressStats = useMemo(() => {
-    console.log("Projects data (progressStats):", projects);
-  
-    // Total projects to evaluate
     const total = projects.length;
-    console.log("Total projects to evaluate:", total);
-  
-    // Projects already submitted (check evaluatorDetails for "status: Submitted")
     const graded = projects.filter((project) => {
       const evaluatorDetails = project.evaluatorDetails || {};
       return evaluatorDetails.status === "Submitted";
     }).length;
-  
-    console.log("Projects already graded:", graded);
-  
+
     return { graded, total };
   }, [projects]);
-  
-  
-  
 
   const getProgressBarColor = (progress) => {
     if (progress === 100) return "bg-green-500";
     if (progress > 0) return "bg-blue-500";
     return "bg-red-500";
   };
+
+  const progressPercentage =
+    progressStats.total > 0
+      ? (progressStats.graded / progressStats.total) * 100
+      : 0;
 
   const handleRowClick = (data, isGradeAction) => {
     if (isGradeAction) {
@@ -199,15 +192,6 @@ const MyProjectsReview = () => {
         studentName: studentName || "",
         readOnly: readOnly.toString(),
       }).toString();
-      
-      //debug log
-      console.log("Navigating to evaluation form with:", {
-        formID,
-        projectCode: project.projectCode,
-        projectName: project.title,
-        students: project.students,
-        readOnly,
-      }); 
 
       navigate(`/evaluation-forms/${formID}?${queryParams}&source=evaluation`);
     } else {
@@ -267,13 +251,6 @@ const MyProjectsReview = () => {
           ),
         sortable: true,
       },
-      // {
-      //   key: "presentationGrade",
-      //   header: "Presentation Grade",
-      //   className: "text-lg text-center",
-      //   render: (_, project) => renderGradeCell(project, "presentation"),
-      //   sortable: true,
-      // },
       {
         key: "supervisorGrade",
         header: "Supervisor Grade",
@@ -362,22 +339,18 @@ const MyProjectsReview = () => {
             <div className="mt-4 mb-6">
               <div className="relative w-full bg-gray-200 rounded-full h-4 overflow-hidden">
                 <div
-                  className={`h-full transition-all duration-500 ${getProgressBarColor(
-                    (progressStats.graded / progressStats.total) * 100
+                  className={`h-full transition-all duration-[1500ms] ${getProgressBarColor(
+                    progressPercentage
                   )}`}
                   style={{
-                    width: `${
-                      progressStats.total > 0
-                        ? (progressStats.graded / progressStats.total) * 100
-                        : 0
-                    }%`,
+                    width: `${progressPercentage}%`,
                   }}
                 ></div>
               </div>
               <p className="text-base text-gray-600 mt-2 text-center">
                 {progressStats.total > 0
-                  ? `${progressStats.graded}/${progressStats.total} Supervisor Grades Submitted`
-                  : "No projects to grade"}
+                  ? `${progressStats.graded}/${progressStats.total} Forms Submitted`
+                  : "No forms to review"}
               </p>
             </div>
           </div>

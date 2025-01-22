@@ -12,6 +12,11 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
   const [gitLink, setGitLink] = useState(project.gitLink || "");
   const [isEditingGitLink, setIsEditingGitLink] = useState(false);
   const [supervisors, setSupervisors] = useState([]);
+  const [isEditingDetails, setIsEditingDetails] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(project.title || "");
+  const [editedDescription, setEditedDescription] = useState(
+    project.description || ""
+  );
 
   useEffect(() => {
     const fetchSupervisors = async () => {
@@ -47,6 +52,11 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
     fetchSupervisors();
   }, [project]);
 
+  const isAdminOrSupervisor =
+    user.isAdmin === true ||
+    user.id === project.supervisor1 ||
+    user.id === project.supervisor2;
+
   const handleSaveGitLink = async () => {
     if (gitLink.trim()) {
       try {
@@ -69,6 +79,20 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
     } catch (error) {
       console.error("Error saving notes:", error);
       alert("Failed to save notes.");
+    }
+  };
+
+  const handleSaveDetails = async () => {
+    try {
+      await api.updateProject(project.id, {
+        title: editedTitle,
+        description: editedDescription,
+      });
+      alert("Project details updated successfully!");
+      setIsEditingDetails(false);
+    } catch (error) {
+      console.error("Error saving project details:", error);
+      alert("Failed to save project details.");
     }
   };
 
@@ -115,7 +139,18 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
 
         {/* Header */}
         <div className="p-6 border-b bg-gray-100">
-          <h2 className="text-2xl font-bold text-gray-800">{project.title}</h2>
+          {isEditingDetails ? (
+            <input
+              type="text"
+              value={editedTitle}
+              onChange={(e) => setEditedTitle(e.target.value)}
+              className="text-2xl font-bold text-gray-800 border-b border-gray-300 focus:border-blue-500 focus:outline-none transition w-full"
+            />
+          ) : (
+            <h2 className="text-2xl font-bold text-gray-800">
+              {project.title}
+            </h2>
+          )}
         </div>
 
         {/* Content */}
@@ -128,10 +163,44 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
                 <h3 className="text-lg font-semibold text-gray-700 mb-2">
                   Description
                 </h3>
-                <p className="text-gray-700 text-base leading-relaxed">
-                  {project.description || "No description available."}
-                </p>
+                {isEditingDetails ? (
+                  <textarea
+                    value={editedDescription}
+                    onChange={(e) => setEditedDescription(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md p-3 text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+                    rows={4}
+                  />
+                ) : (
+                  <p className="text-gray-700 text-base leading-relaxed">
+                    {project.description || "No description available."}
+                  </p>
+                )}
               </div>
+              {isAdminOrSupervisor&& !isEditingDetails && (
+                <button
+                  onClick={() => setIsEditingDetails(true)}
+                  className="text-blue-500 hover:underline text-sm font-medium flex items-center"
+                >
+                  <Edit3 className="h-4 w-4 mr-1" /> Edit Project Details
+                </button>
+              )}
+
+              {isEditingDetails && (
+                <div className="flex items-center gap-4 mt-2">
+                  <Button
+                    onClick={handleSaveDetails}
+                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md"
+                  >
+                    Save
+                  </Button>
+                  <Button
+                    onClick={() => setIsEditingDetails(false)}
+                    className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
 
               {/* Students Section */}
               <div>
@@ -219,59 +288,68 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
                     <p className="text-gray-500">Deadline</p>
                     <p className="text-gray-800 font-medium">
                       {project.deadline
-                        ? new Date(
-                            project.deadline._seconds * 1000
-                          ).toLocaleDateString()
+                        ? typeof project.deadline === "object" &&
+                          project.deadline._seconds !== undefined
+                          ? new Date(
+                              project.deadline._seconds * 1000
+                            ).toLocaleDateString()
+                          : new Date(project.deadline).toLocaleDateString()
                         : "No deadline provided"}
                     </p>
                   </div>
+
                   <div>
-                    <p className="text-gray-500">Git Link</p>
-                    {isEditingGitLink ? (
-                      <div className="flex flex-col items-start">
-                        <input
-                          type="url"
-                          className="w-full border-b border-gray-300 focus:border-blue-500 focus:outline-none text-gray-700 py-1 text-sm placeholder-gray-400 transition"
-                          placeholder="Enter Git link"
-                          value={gitLink}
-                          onChange={(e) => setGitLink(e.target.value)}
-                        />
-                        <Button
-                          onClick={handleSaveGitLink}
-                          className="mt-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-md px-3 py-1 text-sm shadow-sm transition"
-                        >
-                          Save
-                        </Button>
-                      </div>
-                    ) : gitLink ? (
-                      <div>
-                        <a
-                          href={gitLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-500 hover:underline font-medium"
-                        >
-                          View Repository
-                        </a>
-                        <button
-                          onClick={() => setIsEditingGitLink(true)}
-                          className="text-blue-500 hover:underline text-sm font-medium flex items-center"
-                        >
-                          <Edit3 className="h-4 w-4 mr-1" /> Edit Link
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-600">Missing</span>
-                        <button
-                          onClick={() => setIsEditingGitLink(true)}
-                          className="text-blue-500 hover:underline text-sm font-medium flex items-center"
-                        >
-                          <Edit3 className="h-4 w-4 mr-1" /> Add Link
-                        </button>
-                      </div>
-                    )}
-                  </div>
+  <p className="text-gray-500">Git Link</p>
+  {isEditingGitLink ? (
+    <div className="flex flex-col items-start">
+      <input
+        type="url"
+        className="w-full border-b border-gray-300 focus:border-blue-500 focus:outline-none text-gray-700 py-1 text-sm placeholder-gray-400 transition"
+        placeholder="Enter Git link"
+        value={gitLink}
+        onChange={(e) => setGitLink(e.target.value)}
+      />
+      <Button
+        onClick={handleSaveGitLink}
+        className="mt-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-md px-3 py-1 text-sm shadow-sm transition"
+      >
+        Save
+      </Button>
+    </div>
+  ) : gitLink ? (
+    <div>
+      <a
+        href={gitLink}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-500 hover:underline font-medium"
+      >
+        View Repository
+      </a>
+      {isAdminOrSupervisor && ( // Only show Edit button to admins or moderators
+        <button
+          onClick={() => setIsEditingGitLink(true)}
+          className="text-blue-500 hover:underline text-sm font-medium flex items-center"
+        >
+          <Edit3 className="h-4 w-4 mr-1" /> Edit Link
+        </button>
+      )}
+    </div>
+  ) : (
+    <div className="flex items-center gap-2">
+      <span className="text-gray-600">Missing</span>
+      {isAdminOrSupervisor && ( // Only show Add button to admins or supervisors
+        <button
+          onClick={() => setIsEditingGitLink(true)}
+          className="text-blue-500 hover:underline text-sm font-medium flex items-center"
+        >
+          <Edit3 className="h-4 w-4 mr-1" /> Add Link
+        </button>
+      )}
+    </div>
+  )}
+</div>
+
                 </div>
               </div>
               <div className="col-span-2 bg-yellow-50 p-4 rounded-md">

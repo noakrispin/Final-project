@@ -11,7 +11,7 @@ const FILTERS = ["All", "Part A", "Part B"];
 
 export const Table = ({
   data,
-  apiResponse, 
+  apiResponse,
   columns,
   className = "",
   onRowClick,
@@ -66,12 +66,7 @@ export const Table = ({
   };
 
   const renderGradeCell = (project, gradeType) => {
-    const isUserSupervisor = project.isSupervisor;
-  
-    console.log(
-      `Rendering grades for project: ${project.projectCode}`,
-      project.students
-    );
+    console.log(`Rendering grades for project: ${project.projectCode}`, project.students);
   
     // Determine the formID based on the grade type
     let formID;
@@ -80,52 +75,47 @@ export const Table = ({
     } else if (gradeType === "presentation") {
       formID = project.part === "A" ? "PresentationFormA" : "PresentationFormB";
     } else if (gradeType === "book") {
-      formID = project.part === "A" ? "BookReviewerFormA" : "BookReviewerFormB";
+      formID = project.part === "A" ? "bookReviewerFormA" : "bookReviewerFormB";
     }
   
-    const isDeadlinePassed =
-      project.deadline && new Date(project.deadline) < new Date();
+    const assignedFormID = project.evaluatorDetails?.formID;
+    const isAssignedToThisForm = formID === assignedFormID;
+    const isDeadlinePassed = project.deadline && new Date(project.deadline) < new Date();
+  
+    // If the evaluator is not assigned to this form, show "Not Assigned"
+    if (!isAssignedToThisForm) {
+      return <span className="text-gray-400 "> - </span>;
+    }
   
     // Check if there are grades for the project
     const hasGrades = project.students.some(
-      (student) =>
-        getGrade(apiResponse, formID, project.projectCode, student.id) !== null
+      (student) => getGrade(apiResponse, formID, project.projectCode, student.id) !== null
     );
   
+    // If no grades exist
     if (!hasGrades) {
-      // No grades found, display placeholder for the entire project if the deadline has not passed
-      if (
-        (isUserSupervisor && gradeType === "supervisor") ||
-        (!isUserSupervisor && gradeType === "presentation") ||
-        gradeType === "book"
-      ) {
-        return isDeadlinePassed ? (
-          <span className="text-gray-500">
-            Grade {gradeType.charAt(0).toUpperCase() + gradeType.slice(1)}
-          </span>
-        ) : (
-          <div
-            className="text-blue-500 underline cursor-pointer"
-            data-grade-action={JSON.stringify({ gradeType, project, formID })}
-          >
-            Grade {gradeType.charAt(0).toUpperCase() + gradeType.slice(1)}
-          </div>
-        );
-      }
-  
-      return null;
+      return (
+        <div
+          className={`text-blue-500 underline cursor-pointer ${
+            isDeadlinePassed ? "text-gray-500" : ""
+          }`}
+          data-grade-action={JSON.stringify({ gradeType, project, formID })}
+          onClick={() => {
+            if (!isDeadlinePassed) {
+              handleRowClick({ gradeType, project, studentName: null, formID }, true);
+            }
+          }}
+        >
+          {`Grade ${gradeType.charAt(0).toUpperCase() + gradeType.slice(1)}`}
+        </div>
+      );
     }
   
     // Render grades for students with grades
     return (
       <div>
         {project.students.map((student) => {
-          const grade = getGrade(
-            apiResponse,
-            formID,
-            project.projectCode,
-            student.id
-          );
+          const grade = getGrade(apiResponse, formID, project.projectCode, student.id);
   
           if (grade === null) return null; // Skip students without grades
   
@@ -141,39 +131,31 @@ export const Table = ({
             readOnly: isDeadlinePassed,
           };
   
-          // Render cell content based on grade type and user role
-          if (
-            (isUserSupervisor && gradeType === "supervisor") ||
-            (!isUserSupervisor && gradeType === "presentation") ||
-            gradeType === "book"
-          ) {
-            return (
-              <div
-                key={`${project.id}-${student.id}`}
-                className="flex justify-start items-center gap-2"
-              >
-                <span>{student.fullName}:</span>
-                <span>
-                  <span
-                    data-grade-action={JSON.stringify(metadata)}
-                    className={`underline cursor-pointer ${
-                      isDeadlinePassed ? "text-gray-500" : "text-blue-500"
-                    }`}
-                  >
-                    {grade}
-                  </span>
+          return (
+            <div
+              key={`${project.id}-${student.id}`}
+              className="flex justify-start items-center gap-2"
+            >
+              <span>{student.fullName}:</span>
+              <span>
+                <span
+                  data-grade-action={JSON.stringify(metadata)}
+                  className={`underline cursor-pointer ${
+                    isDeadlinePassed ? "text-gray-500" : "text-blue-500"
+                  }`}
+                  onClick={() => handleRowClick(metadata, true)}
+                >
+                  {grade}
                 </span>
-              </div>
-            );
-          }
-  
-          return null;
+              </span>
+            </div>
+          );
         })}
       </div>
     );
   };
   
-    
+  
 
   return (
     <div className="space-y-4">
