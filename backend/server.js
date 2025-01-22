@@ -4,6 +4,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const helmet = require('helmet');
 const compression = require('compression');
+const db = require("./config/firebaseAdmin");
 
 const app = express();
 
@@ -15,7 +16,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https://*.vercel.app", "https://*.firebase.com"]
+      connectSrc: ["'self'", "https://*.vercel.app", "https://*.firebase.com", "https://*.googleapis.com"]
     }
   }
 }));
@@ -24,7 +25,8 @@ app.use(helmet({
 app.use(cors({
   origin: [
     process.env.FRONTEND_URL || 'http://localhost:5173',
-    /\.vercel\.app$/
+    /\.vercel\.app$/,
+    /localhost/
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -41,31 +43,70 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Request logging middleware
 app.use((req, res, next) => {
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(`${req.method} ${req.path}`);
-  }
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
   next();
 });
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'ok', environment: process.env.NODE_ENV });
+// Firebase connection check middleware
+const checkFirebaseConnection = (req, res, next) => {
+  if (!db) {
+    console.error('Firebase not initialized');
+    return res.status(500).json({
+      error: {
+        message: 'Database connection error',
+        status: 500
+      }
+    });
+  }
+  next();
+};
+
+// Debug endpoint
+app.get('/api/debug', (req, res) => {
+  res.json({
+    environment: {
+      NODE_ENV: process.env.NODE_ENV,
+      isProduction: process.env.NODE_ENV === 'production'
+    },
+    firebase: {
+      isInitialized: !!db,
+      hasProjectId: !!process.env.FIREBASE_PROJECT_ID,
+      hasClientEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
+      hasPrivateKey: !!process.env.FIREBASE_PRIVATE_KEY,
+      hasDatabaseUrl: !!process.env.FIREBASE_DATABASE_URL
+    },
+    server: {
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime()
+    }
+  });
 });
 
-// Routes
-app.use("/api/auth", require("./routes/authRoutes"));
-app.use("/api/users", require("./routes/userRoutes"));
-app.use("/api/projects", require("./routes/projectRoutes"));
-app.use("/api/forms", require("./routes/formRoutes"));
-app.use("/api/grades", require("./routes/finalGradeRoutes"));
-app.use("/api/evaluators", require("./routes/evaluatorRoutes"));
+// Enhanced health check endpoint
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    environment: process.env.NODE_ENV,
+    firebase: db ? 'connected' : 'not initialized',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Apply Firebase check to all API routes
+app.use('/api/auth', checkFirebaseConnection, require("./routes/authRoutes"));
+app.use('/api/users', checkFirebaseConnection, require("./routes/userRoutes"));
+app.use('/api/projects', checkFirebaseConnection, require("./routes/projectRoutes"));
+app.use('/api/forms', checkFirebaseConnection, require("./routes/formRoutes"));
+app.use('/api/grades', checkFirebaseConnection, require("./routes/finalGradeRoutes"));
+app.use('/api/evaluators', checkFirebaseConnection, require("./routes/evaluatorRoutes"));
 
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({
     error: {
       message: 'Not Found',
-      status: 404
+      status: 404,
+      path: req.path
     }
   });
 });
@@ -79,7 +120,19 @@ app.use((err, req, res, next) => {
     return res.status(500).json({
       error: {
         message: 'Firebase initialization failed',
-        status: 500
+        status: 500,
+        code: err.code
+      }
+    });
+  }
+
+  // Handle Firebase permission errors
+  if (err.code === 'permission-denied') {
+    return res.status(403).json({
+      error: {
+        message: 'Firebase permission denied',
+        status: 403,
+        code: err.code
       }
     });
   }
@@ -89,7 +142,8 @@ app.use((err, req, res, next) => {
     return res.status(400).json({
       error: {
         message: err.message,
-        status: 400
+        status: 400,
+        type: 'validation'
       }
     });
   }
@@ -99,7 +153,8 @@ app.use((err, req, res, next) => {
     return res.status(401).json({
       error: {
         message: 'Invalid token',
-        status: 401
+        status: 401,
+        type: 'auth'
       }
     });
   }
@@ -110,7 +165,8 @@ app.use((err, req, res, next) => {
       message: process.env.NODE_ENV === 'production' 
         ? 'Internal Server Error' 
         : err.message,
-      status: err.status || 500
+      status: err.status || 500,
+      path: req.path
     }
   });
 });
@@ -120,6 +176,8 @@ if (require.main === module) {
   const PORT = process.env.PORT || 3001;
   app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV}`);
+    console.log(`Firebase status: ${db ? 'connected' : 'not initialized'}`);
   });
 }
 
