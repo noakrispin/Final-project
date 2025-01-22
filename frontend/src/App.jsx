@@ -28,7 +28,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import UserManagement from "./pages/admin/UserManagement"
 import AdminReminders from "./pages/admin/AdminReminders"
 import AdminEditForm from "./pages/admin/AdminEditForm";
-
+import AdminEvaluatorUpload from "./pages/admin/AdminEvaluatorUpload"; 
 
 // Component imports
 import Navbar from "./components/layout/Navbar";
@@ -129,6 +129,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute adminOnly>
               <AdminFileUpload />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin-evaluators"
+          element={
+            <ProtectedRoute adminOnly>
+              <AdminEvaluatorUpload />
             </ProtectedRoute>
           }
         />
