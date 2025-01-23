@@ -1,4 +1,4 @@
-import { api } from "./api"; // Import the shared API utilities
+import { api } from "./api"
 
 export const projectsApi = {
   /**
@@ -8,11 +8,11 @@ export const projectsApi = {
    */
   addProject: async (projectCode, data) => {
     try {
-      const response = await api.post("/projects", { projectCode, data });
-      return response.data;
+      const response = await api.post("/projects", { projectCode, data })
+      return response
     } catch (error) {
-      console.error("Error adding project:", error.response?.data || error.message);
-      throw error;
+      console.error("Error adding project:", error.response?.data || error.message)
+      throw error
     }
   },
 
@@ -22,40 +22,39 @@ export const projectsApi = {
    */
   getProject: async (projectCode) => {
     try {
-      console.log("Fetching project with projectCode:", projectCode);
-      const response = await api.get(`/projects/${projectCode}`);
-      console.log("Full response:", response);
-      return response.data || response; // Adjust based on the actual structure
+      console.log("Fetching project with projectCode:", projectCode)
+      const response = await api.get(`/projects/${projectCode}`)
+      console.log("Full response:", response)
+      return response
     } catch (error) {
-      console.error("Error fetching project:", error.response?.data || error.message);
-      throw error;
+      console.error("Error fetching project:", error.response?.data || error.message)
+      throw error
     }
   },
 
   /**
    * Get all projects.
    */
-  getAllProjects : async () => {
+  getAllProjects: async () => {
     try {
-      const response = await fetch("http://localhost:3001/api/projects");
-      const rawData = await response.json();
-  
-      // Ensure the response is an array
-      if (!Array.isArray(rawData)) {
-        console.error("Unexpected API Response: Not an array");
-        throw new Error("Projects data is not an array");
+      const response = await api.get("/projects")
+
+      // Log the raw response for debugging
+      console.log("Raw API Response:", response)
+
+      // Since we're using fetch, the response is already JSON parsed
+      // and should be the array directly
+      if (!Array.isArray(response)) {
+        console.error("Unexpected API Response Structure:", response)
+        return [] // Return empty array as fallback
       }
-  
-      console.log("Raw Response:", rawData); // Debug log
-      console.log("Parsed Response Data:", rawData); // Correctly parsed array
-  
-      return rawData; // Return the projects array
+
+      return response
     } catch (error) {
-      console.error("Error fetching projects:", error.message);
-      throw error;
+      console.error("Error fetching projects:", error)
+      throw error
     }
   },
-  
 
   /**
    * Update a specific project by project code.
@@ -64,11 +63,11 @@ export const projectsApi = {
    */
   updateProject: async (projectCode, data) => {
     try {
-      const response = await api.put(`/projects/${projectCode}`, data);
-      return response.data;
+      const response = await api.put(`/projects/${projectCode}`, data)
+      return response
     } catch (error) {
-      console.error("Error updating project:", error.response?.data || error.message);
-      throw error;
+      console.error("Error updating project:", error.response?.data || error.message)
+      throw error
     }
   },
 
@@ -78,11 +77,12 @@ export const projectsApi = {
    */
   deleteProject: async (projectCode) => {
     try {
-      const response = await api.delete(`/projects/${projectCode}`);
-      return response.data;
+      const response = await api.delete(`/projects/${projectCode}`)
+      return response
     } catch (error) {
-      console.error("Error deleting project:", error.response?.data || error.message);
-      throw error;
+      console.error("Error deleting project:", error.response?.data || error.message)
+      throw error
     }
   },
-};
+}
+

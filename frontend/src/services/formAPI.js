@@ -33,7 +33,7 @@ export const formsApi = {
    */
   getQuestions: async (formID) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/forms/${formID}/questions`);
+      const response = await api.get(`/forms/${formID}/questions`)
       if (!response.ok) {
         throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
