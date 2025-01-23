@@ -69,7 +69,7 @@ const AdminProjects = () => {
         const fetchedProjects = await projectsApi.getAllProjects();
         console.log("Fetched projects:", fetchedProjects);
   
-        // Extract unique supervisor IDs
+        // Extract unique supervisor email
         const supervisorIds = [
           ...new Set(
             fetchedProjects

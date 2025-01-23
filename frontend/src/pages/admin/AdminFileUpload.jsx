@@ -99,8 +99,8 @@ const AdminFileUpload = () => {
                     <li>Column 7: Student 2 Last Name (Optional)</li>
                     <li>Column 8: Student 2 ID (Optional - 9 digits)</li>
                     <li>Column 9: Student 2 Email (Optional - @e.braude.ac.il)</li>
-                    <li>Column 10: Supervisor 1 ID (Required)</li>
-                    <li>Column 11: Supervisor 2 ID (Optional)</li>
+                    <li>Column 10: Supervisor 1 Email (Required)</li>
+                    <li>Column 11: Supervisor 2 Email (Optional)</li>
                     <li>Column 12: Project Title (Required)</li>
                     <li>Column 13: Project Description (Optional)</li>
                     <li>Column 14: Part (Required - A or B)</li>

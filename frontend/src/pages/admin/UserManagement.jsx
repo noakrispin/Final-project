@@ -40,7 +40,7 @@ const UserManagement = () => {
   // Filter users whenever `users` or `roleFilter` changes
   useEffect(() => {
     const updatedUsers = users
-      .filter((user) => user && user.id) // Ensure valid users
+      .filter((user) => user && user.emailId) // Ensure valid users
       .filter((user) => {
         if (roleFilter === "All") return true; // No filtering for "All"
         return user.role === roleFilter; // Filter by role
@@ -69,14 +69,14 @@ const UserManagement = () => {
       return;
     }
 
-    const userId = deleteModal.user.id;
-    console.log(`Deleting user with ID: ${userId}`);
+    const userId = deleteModal.user.emailId;
+    console.log(`Deleting user with email: ${userId}`);
 
     try {
       const response = await userApi.deleteUser(userId);
       if (response) {
         setUsers((currentUsers) =>
-          currentUsers.filter((user) => user.id !== userId)
+          currentUsers.filter((user) => user.emailId !== userId)
         );
         closeDeleteModal();
         console.log("User deleted successfully.");
@@ -113,23 +113,23 @@ const UserManagement = () => {
       return;
     }
   
-    const userId = editRoleModal.user.id;
+    const userId = editRoleModal.user.emailId;
     const isAdmin = selectedRole === "Admin"; // Check if Admin is selected
     const role = "Supervisor"; // Admins retain 'Supervisor' as their role
   
-    console.log(`Updating user: ID: ${userId}, Role: ${role}, isAdmin: ${isAdmin}`);
+    console.log(`Updating user: email: ${userId}, Role: ${role}, isAdmin: ${isAdmin}`);
   
     try {
       const response = await userApi.updateUserRole(userId, { role, isAdmin });
       if (response) {
         setUsers((currentUsers) =>
           currentUsers.map((user) =>
-            user.id === userId ? { ...user, role, isAdmin } : user
+            user.emailId=== userId ? { ...user, role, isAdmin } : user
           )
         );
         setFilteredUsers((currentFilteredUsers) =>
           currentFilteredUsers.map((user) =>
-            user.id === userId ? { ...user, role, isAdmin } : user
+            user.emailId === userId ? { ...user, role, isAdmin } : user
           )
         );
         closeEditRoleModal();
