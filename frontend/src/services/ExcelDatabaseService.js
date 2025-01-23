@@ -239,17 +239,19 @@ export const ExcelDatabaseService = {
     }
   },
   
-  getProjects: async () => {
+getProjects: async () => {
     const snapshot = await getDocs(collection(db, "projects"));
     return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   },
 
+  // Optional: Fetch Uploaded Projects (if different logic is required)
   getUploadedProjects: async () => {
     const snapshot = await getDocs(collection(db, "projects"));
     return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   },
 
-  // clearUploadedProjects: async () => {
-  //   // Optional: Implement if needed
-  // },
+  // Optional: Clear Uploaded Projects (if needed)
+  clearUploadedProjects: async () => {
+    console.warn("clearUploadedProjects not implemented.");
+  },
 };

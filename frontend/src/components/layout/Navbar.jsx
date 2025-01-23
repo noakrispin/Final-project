@@ -93,9 +93,7 @@ const Navbar = () => {
             >
               PROJECTS TO REVIEW
             </NavLink>
-            {/* <NavLink to="/SupervisorGradesFeedback">GRADES</NavLink> */}
-            <NavLink to="/contact">CONTACT</NavLink>
-
+            <NavLink to="/SupervisorGradesFeedback">GRADES</NavLink> 
           </ul>
         </MobileMenu>
 

@@ -5,7 +5,6 @@ import { Button } from "../../components/ui/Button";
 import { processExcelFile } from "../../services/fileProcessingService";
 import { ExcelDatabaseService } from "../../services/ExcelDatabaseService";
 
-
 const AdminFileUpload = () => {
   const navigate = useNavigate();
   const [uploadedProjects, setUploadedProjects] = useState([]);
@@ -13,8 +12,6 @@ const AdminFileUpload = () => {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("Projects");
-
-
 
   const tabs = ["Projects", "Evaluators"];
 
@@ -24,26 +21,42 @@ const AdminFileUpload = () => {
     setUploadSuccess(false);
 
     try {
+      console.log("File received for processing:", file);
+
+      // Step 1: Process the Excel file
       const processedData = await processExcelFile(file);
+      console.log("Processed Data:", processedData);
 
+      if (!processedData || processedData.length === 0) {
+        throw new Error("The processed data is empty. Please check the file format.");
+      }
+
+      // Step 2: Insert projects into the database
+      console.log("Uploading projects to the database...");
       await ExcelDatabaseService.insertProjects(processedData);
-      console.log("Projects uploaded successfully:", processedData);
-      
+      console.log("Projects uploaded successfully.");
+
+      // Step 3: Insert supervisors as evaluators
+      console.log("Uploading supervisors as evaluators...");
       await ExcelDatabaseService.insertSupervisorsEvaluators(processedData);
-      console.log("Evaluators uploaded successfully:", processedData);
+      console.log("Supervisors uploaded successfully.");
 
+      // Step 4: Insert students to final grades
+      console.log("Uploading students to final grades...");
       await ExcelDatabaseService.insertStudentsToFinalGrades(processedData);
-      console.log("students uploaded successfully to final grades:", processedData);
+      console.log("Students uploaded successfully to final grades.");
 
+      // Set state after successful upload
       setUploadedProjects(processedData);
       setUploadSuccess(true);
 
+      // Navigate after a delay
       setTimeout(() => {
         navigate("/admin-projects");
       }, 2000);
     } catch (err) {
-      setError(err.message);
-      console.error("Error uploading file:", err);
+      console.error("Error during file upload:", err);
+      setError(err.message || "An unknown error occurred.");
     } finally {
       setIsUploading(false);
     }
@@ -79,7 +92,7 @@ const AdminFileUpload = () => {
           <div className="p-6 bg-slate-200 border border-blue-100 rounded-lg shadow-sm">
             <div className="mb-6 text-center">
               <h2 className="text-2xl text-blue-900 font-bold mb-2">
-              Project Upload Instructions
+                Project Upload Instructions
               </h2>
               <p className="text-gray-600 mb-4 max-w-3xl mx-auto break-words leading-relaxed text-center">
                 Please ensure your Excel file follows the format below before uploading.
@@ -126,6 +139,18 @@ const AdminFileUpload = () => {
                   View Projects
                 </Button>
               </div>
+
+              {error && (
+                <div className="mt-6 text-center text-red-600">
+                  <p>Error: {error}</p>
+                </div>
+              )}
+
+              {uploadSuccess && (
+                <div className="mt-6 text-center text-green-600">
+                  <p>Projects uploaded successfully!</p>
+                </div>
+              )}
             </div>
           </div>
         )}
