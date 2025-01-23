@@ -31,7 +31,7 @@ export default function Home() {
               asChild
               className="bg-white text-gray-800 hover:bg-gray-100 shadow-md px-6 py-3 text-lg font-semibold"
             >
-              <Link to="/signup" className="inline-flex items-center gap-3">
+              <Link to="/login" className="inline-flex items-center gap-3">
                 Get Started
                 <ArrowRight className="w-5 h-5" />
               </Link>

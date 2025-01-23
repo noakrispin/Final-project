@@ -3,7 +3,9 @@ import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { FaTrashAlt, FaPlus } from "react-icons/fa";
 import { Button } from "../ui/Button";
+import FormField from "./FormField";
 import { formsApi } from "../../services/formAPI";
+import { FaInfoCircle } from "react-icons/fa";
 
 function QuestionEditor({ questions, setQuestions, reference }) {
   const handleAddQuestion = () => {
@@ -20,12 +22,11 @@ function QuestionEditor({ questions, setQuestions, reference }) {
     };
     setQuestions((prev) => [...prev, newQuestion]);
     try {
-        const response =  formsApi.addQuestion(formID, newQuestionData);
-        setQuestions((prev) => [...prev, response.data.question]);
-      } catch (error) {
-        console.error("Error adding question:", error.message);
-      }
-    
+      const response = formsApi.addQuestion(formID, newQuestionData);
+      setQuestions((prev) => [...prev, response.data.question]);
+    } catch (error) {
+      console.error("Error adding question:", error.message);
+    }
   };
 
   const handleDeleteQuestion = (index) => {
@@ -39,15 +40,20 @@ function QuestionEditor({ questions, setQuestions, reference }) {
 
   const handleUpdateQuestion = async (index, key, value) => {
     const updatedQuestion = { ...questions[index], [key]: value };
-    setQuestions((prev) => prev.map((q, i) => (i === index ? updatedQuestion : q)));
+    setQuestions((prev) =>
+      prev.map((q, i) => (i === index ? updatedQuestion : q))
+    );
 
     try {
-      await formsApi.updateQuestion(formID, updatedQuestion.id, updatedQuestion);
+      await formsApi.updateQuestion(
+        formID,
+        updatedQuestion.id,
+        updatedQuestion
+      );
     } catch (error) {
       console.error("Error updating question:", error.message);
     }
   };
-
 
   return (
     <div className="space-y-6">
@@ -58,14 +64,13 @@ function QuestionEditor({ questions, setQuestions, reference }) {
         >
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg text-blue-900 font-semibold">
-              Question #{index + 1}
+            {field.reference} Question #{index + 1}
             </h3>
             <button
               onClick={() => handleDeleteQuestion(index)}
-              className="text-red-500 hover:text-red-700"
+              className="text-red-500 hover:text-red-700 text-2xl"
             >
               <FaTrashAlt className="mr-2" />
-              Delete
             </button>
           </div>
 
@@ -78,7 +83,9 @@ function QuestionEditor({ questions, setQuestions, reference }) {
               type="text"
               className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 shadow-sm"
               value={field.title}
-              onChange={(e) => handleUpdateQuestion(index, "title", e.target.value)}
+              onChange={(e) =>
+                handleUpdateQuestion(index, "title", e.target.value)
+              }
               placeholder="Enter question title"
             />
           </div>
@@ -141,14 +148,28 @@ function QuestionEditor({ questions, setQuestions, reference }) {
                 }
               >
                 <option value="number">Number</option>
-                <option value="textarea">Textarea</option>
+                <option value="textarea">Text</option>
               </select>
             </div>
           </div>
 
           {/* Required and Weight */}
-          <div className="grid grid-cols-2 gap-4 items-center">
-            <label className="flex items-center text-gray-700">
+          <div className="grid grid-cols-3 gap-2 items-center">
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Question Weight
+              </label>
+              <input
+                type="number"
+                className="w-40 p-3 border rounded focus:ring-2 focus:ring-blue-500 shadow-sm"
+                value={field.weight}
+                onChange={(e) =>
+                  handleUpdateQuestion(index, "weight", e.target.value)
+                }
+                placeholder="Weight"
+              />
+            </div>
+            <label className="flex items-center text-gray-700 font-medium">
               <input
                 type="checkbox"
                 className="mr-2"
@@ -159,20 +180,6 @@ function QuestionEditor({ questions, setQuestions, reference }) {
               />
               Required
             </label>
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Question Weight
-              </label>
-              <input
-                type="number"
-                className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 shadow-sm"
-                value={field.weight}
-                onChange={(e) =>
-                  handleUpdateQuestion(index, "weight", e.target.value)
-                }
-                placeholder="Weight"
-              />
-            </div>
           </div>
         </div>
       ))}
@@ -183,6 +190,67 @@ function QuestionEditor({ questions, setQuestions, reference }) {
         <FaPlus className="mr-2" />
         Add {reference === "general" ? "General" : "Student"} Question
       </Button>
+    </div>
+  );
+}
+
+function QuestionViewer({ questions }) {
+  return (
+    <div className="space-y-6">
+      {questions.map((field, index) => (
+        <div
+          key={field.id || field.name}
+          className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300"
+        >
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg text-blue-900 font-semibold flex items-center">
+              <span className="mr-2 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
+                #{index + 1}
+              </span>
+              {field.title}
+            </h3>
+            <span className="text-sm text-gray-500">
+              {field.reference} question
+            </span>
+          </div>
+
+          <p className="text-gray-600 mb-4">{field.description}</p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="flex items-center">
+              <span className="font-medium mr-2">Response Type:</span>
+              <span className="text-gray-700 capitalize">
+                {field.response_type}
+              </span>
+            </div>
+            <div className="flex items-center">
+              <span className="font-medium mr-2">Required:</span>
+              <span
+                className={`px-2 py-1 rounded-full text-xs ${
+                  field.required
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}
+              >
+                {field.required ? "Yes" : "No"}
+              </span>
+            </div>
+            <div className="flex items-center">
+              <span className="font-medium mr-2">Weight:</span>
+              <span className="text-gray-700">{field.weight}</span>
+            </div>
+            <div className="flex items-center">
+              <span className="font-medium mr-2">Order:</span>
+              <span className="text-gray-700">{field.order}</span>
+            </div>
+          </div>
+
+          {/* <div className="mt-4 pt-4 border-t border-gray-200 flex items-center text-sm text-gray-500">
+            <FaInfoCircle className="mr-2" />
+            <span>Question ID: {field.questionID}</span>
+          </div> */}
+        </div>
+      ))}
     </div>
   );
 }
@@ -199,9 +267,8 @@ export default function EditFormComponent({
   const [generalQuestions, setGeneralQuestions] = useState([]);
   const [studentQuestions, setStudentQuestions] = useState([]);
   const [editedFormName, setEditedFormName] = useState(formTitle);
-  const [editedFormDescription, setEditedFormDescription] = useState(
-    formDescription
-  );
+  const [editedFormDescription, setEditedFormDescription] =
+    useState(formDescription);
   const [isEditMode, setIsEditMode] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
@@ -263,22 +330,22 @@ export default function EditFormComponent({
   };
 
   return (
-    <div className="relative p-6">
-      <div className="flex justify-center mb-6">
+    <div className="relative p-4 md:p-6">
+      <div className="flex flex-col md:flex-row justify-center items-center mb-6 space-y-2 md:space-y-0 md:space-x-2">
         <Button
           onClick={() =>
             isEditMode && hasUnsavedChanges
               ? confirmExitEditMode()
               : setIsEditMode((prev) => !prev)
           }
-          className="bg-blue-500 text-white hover:bg-blue-600 transition duration-200"
+          className="bg-blue-500 text-white hover:bg-blue-600 transition duration-200 w-full md:w-auto"
         >
           {isEditMode ? "Exit Edit Mode" : "Edit Form"}
         </Button>
         {isEditMode && (
           <Button
             onClick={handleSave}
-            className="bg-blue-500 text-white hover:bg-blue-600 transition duration-200"
+            className="bg-green-500 text-white hover:bg-green-600 transition duration-200 w-full md:w-auto"
           >
             Save Changes
           </Button>
@@ -286,7 +353,7 @@ export default function EditFormComponent({
       </div>
 
       <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
-        <div className="p-6 bg-slate-200 border border-blue-100 rounded-lg shadow-sm mb-6">
+        <div className="p-4 md:p-6 bg-slate-200 border border-blue-100 rounded-lg shadow-sm mb-6">
           {isEditMode ? (
             <>
               <label className="block text-gray-700 font-medium mb-2">
@@ -327,7 +394,7 @@ export default function EditFormComponent({
           )}
         </div>
 
-        <div className="p-6 bg-slate-200 border border-blue-100 rounded-lg shadow-sm mb-6">
+        <div className="p-4 md:p-6 bg-slate-200 border border-blue-100 rounded-lg shadow-sm mb-6">
           <h3 className="text-lg font-bold text-blue-900 mb-4">
             General Questions
           </h3>
@@ -338,16 +405,11 @@ export default function EditFormComponent({
               reference="general"
             />
           ) : (
-            generalQuestions.map((field) => (
-              <div key={field.id} className="mb-4 border-b pb-4">
-                <p className="font-semibold">{field.title}</p>
-                <p className="text-sm text-gray-500">{field.description}</p>
-              </div>
-            ))
+            <QuestionViewer questions={generalQuestions} />
           )}
         </div>
 
-        <div className="p-6 bg-slate-200 border border-blue-100 rounded-lg shadow-sm mb-6">
+        <div className="p-4 md:p-6 bg-slate-200 border border-blue-100 rounded-lg shadow-sm mb-6">
           <h3 className="text-lg font-bold text-blue-900 mb-4">
             Student Questions
           </h3>
@@ -358,19 +420,14 @@ export default function EditFormComponent({
               reference="student"
             />
           ) : (
-            studentQuestions.map((field) => (
-              <div key={field.id} className="mb-4 border-b pb-4">
-                <p className="font-semibold">{field.title}</p>
-                <p className="text-sm text-gray-500">{field.description}</p>
-              </div>
-            ))
+            <QuestionViewer questions={studentQuestions} />
           )}
         </div>
 
         {isEditMode && (
           <Button
             onClick={handleSave}
-            className="bg-blue-500 text-white hover:bg-blue-600 transition duration-200"
+            className="bg-green-500 text-white hover:bg-green-600 transition duration-200 w-full md:w-auto"
           >
             Save Changes
           </Button>

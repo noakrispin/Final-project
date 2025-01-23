@@ -140,7 +140,7 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
         {/* Header */}
         <div className="p-6 border-b bg-gray-100">
           {isEditingDetails ? (
-            <input
+            <text
               type="text"
               value={editedTitle}
               onChange={(e) => setEditedTitle(e.target.value)}
@@ -176,7 +176,7 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
                   </p>
                 )}
               </div>
-              {isAdminOrSupervisor&& !isEditingDetails && (
+              {isAdminOrSupervisor && !isEditingDetails && (
                 <button
                   onClick={() => setIsEditingDetails(true)}
                   className="text-blue-500 hover:underline text-sm font-medium flex items-center"
@@ -287,69 +287,69 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
                   <div>
                     <p className="text-gray-500">Deadline</p>
                     <p className="text-gray-800 font-medium">
-                      {project.deadline
-                        ? typeof project.deadline === "object" &&
+                      {project.deadline === null ||
+                      project.deadline === undefined
+                        ? "No deadline"
+                        : typeof project.deadline === "object" &&
                           project.deadline._seconds !== undefined
-                          ? new Date(
-                              project.deadline._seconds * 1000
-                            ).toLocaleDateString()
-                          : new Date(project.deadline).toLocaleDateString()
-                        : "No deadline provided"}
+                        ? new Date(
+                            project.deadline._seconds * 1000
+                          ).toLocaleDateString()
+                        : new Date(project.deadline).toLocaleDateString()}
                     </p>
                   </div>
 
                   <div>
-  <p className="text-gray-500">Git Link</p>
-  {isEditingGitLink ? (
-    <div className="flex flex-col items-start">
-      <input
-        type="url"
-        className="w-full border-b border-gray-300 focus:border-blue-500 focus:outline-none text-gray-700 py-1 text-sm placeholder-gray-400 transition"
-        placeholder="Enter Git link"
-        value={gitLink}
-        onChange={(e) => setGitLink(e.target.value)}
-      />
-      <Button
-        onClick={handleSaveGitLink}
-        className="mt-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-md px-3 py-1 text-sm shadow-sm transition"
-      >
-        Save
-      </Button>
-    </div>
-  ) : gitLink ? (
-    <div>
-      <a
-        href={gitLink}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-blue-500 hover:underline font-medium"
-      >
-        View Repository
-      </a>
-      {isAdminOrSupervisor && ( // Only show Edit button to admins or moderators
-        <button
-          onClick={() => setIsEditingGitLink(true)}
-          className="text-blue-500 hover:underline text-sm font-medium flex items-center"
-        >
-          <Edit3 className="h-4 w-4 mr-1" /> Edit Link
-        </button>
-      )}
-    </div>
-  ) : (
-    <div className="flex items-center gap-2">
-      <span className="text-gray-600">Missing</span>
-      {isAdminOrSupervisor && ( // Only show Add button to admins or supervisors
-        <button
-          onClick={() => setIsEditingGitLink(true)}
-          className="text-blue-500 hover:underline text-sm font-medium flex items-center"
-        >
-          <Edit3 className="h-4 w-4 mr-1" /> Add Link
-        </button>
-      )}
-    </div>
-  )}
-</div>
-
+                    <p className="text-gray-500">Git Link</p>
+                    {isEditingGitLink ? (
+                      <div className="flex flex-col items-start">
+                        <input
+                          type="url"
+                          className="w-full border-b border-gray-300 focus:border-blue-500 focus:outline-none text-gray-700 py-1 text-sm placeholder-gray-400 transition"
+                          placeholder="Enter Git link"
+                          value={gitLink}
+                          onChange={(e) => setGitLink(e.target.value)}
+                        />
+                        <Button
+                          onClick={handleSaveGitLink}
+                          className="mt-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-md px-3 py-1 text-sm shadow-sm transition"
+                        >
+                          Save
+                        </Button>
+                      </div>
+                    ) : gitLink ? (
+                      <div>
+                        <a
+                          href={gitLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:underline font-medium"
+                        >
+                          View Repository
+                        </a>
+                        {isAdminOrSupervisor && ( // Only show Edit button to admins or moderators
+                          <button
+                            onClick={() => setIsEditingGitLink(true)}
+                            className="text-blue-500 hover:underline text-sm font-medium flex items-center"
+                          >
+                            <Edit3 className="h-4 w-4 mr-1" /> Edit Link
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-600">Missing</span>
+                        {isAdminOrSupervisor && ( // Only show Add button to admins or supervisors
+                          <button
+                            onClick={() => setIsEditingGitLink(true)}
+                            className="text-blue-500 hover:underline text-sm font-medium flex items-center"
+                          >
+                            <Edit3 className="h-4 w-4 mr-1" /> Add Link
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="col-span-2 bg-yellow-50 p-4 rounded-md">

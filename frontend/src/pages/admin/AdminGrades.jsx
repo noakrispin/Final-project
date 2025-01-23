@@ -73,7 +73,7 @@ const AdminGradesPage = () => {
             )
           : null;
 
-        // Ensure student object has a fullName fallback
+        
         // Find the student name dynamically
         const studentName = project
           ? [project.Student1, project.Student2]
@@ -122,8 +122,10 @@ const AdminGradesPage = () => {
     }
   };
 
-  const renderGradeStatus = (project) => {
-    if (!project || !project.status) {
+  const renderGradeStatus = (status) => {
+    console.log("status in render status:",status)
+    
+    if (!status ) {
       return (
         <span
           className="inline-block px-3 py-1 text-sm rounded-full text-center bg-gray-100 text-gray-500"
@@ -145,8 +147,8 @@ const AdminGradesPage = () => {
     };
 
     const statusClass =
-      statusClasses[project.status] || "bg-gray-100 text-gray-500";
-    console.log("Rendering status:", project.status);
+      statusClasses[status] || "bg-gray-100 text-gray-500";
+    
     return (
       <span
         className={`inline-block px-3 py-1 text-sm rounded-full text-center ${statusClass}`}
@@ -156,7 +158,7 @@ const AdminGradesPage = () => {
           lineHeight: "1.5",
         }}
       >
-        {project.status}
+        {status}
       </span>
     );
   };
@@ -218,7 +220,7 @@ const AdminGradesPage = () => {
         key: "status",
         header: "Grade Status",
         className: "text-base",
-        render: (project) => renderGradeStatus(project),
+        render: (status) => renderGradeStatus(status),
       },
       {
         key: "deadline",
