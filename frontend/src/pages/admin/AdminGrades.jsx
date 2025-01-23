@@ -6,6 +6,10 @@ import ProjectAssessmentPopup from "../../components/ui/ProjectAssessmentPopup";
 import { gradesApi } from "../../services/finalGradesAPI";
 import { projectsApi } from "../../services/projectsAPI";
 import { userApi } from "../../services/userAPI";
+import { Button } from "../../components/ui/Button";
+import * as XLSX from "xlsx";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const AdminGradesPage = () => {
   const [projects, setProjects] = useState([]);
@@ -54,55 +58,55 @@ const AdminGradesPage = () => {
       console.log("Grades:", grades);
       console.log("Projects:", projects);
       console.log("Users:", users);
-
+  
       // Filter out placeholder grades
       const filteredGrades = grades.filter(
         (grade) =>
           grade.projectCode && grade.projectCode !== "placeholderProject"
       );
       console.log("Filtered Grades:", filteredGrades);
-
+  
       // Map grades to project and user details
       return filteredGrades.map((grade) => {
         const project = projects.find(
           (proj) => proj.projectCode === grade.projectCode
         );
-        const student = project
-          ? [project.Student1, project.Student2].find(
-              (s) => s && s.ID === grade.studentID
-            )
-          : null;
-
-        
+  
+        if (!project) {
+          console.warn(`Project not found for grade: ${grade.projectCode}`);
+          return null;
+        }
+  
+        const student = [project.Student1, project.Student2].find(
+          (s) => s && s.ID === grade.studentID
+        );
+  
         // Find the student name dynamically
-        const studentName = project
-          ? [project.Student1, project.Student2]
-              .filter((student) => student && student.ID === grade.studentID)
-              .map(
-                (student) =>
-                  student.fullName || `${student.firstName} ${student.lastName}`
-              )
-              .join(", ") || "Unknown Student"
-          : "Unknown Student";
-
+        const studentName = [project.Student1, project.Student2]
+          .filter((student) => student && student.ID === grade.studentID)
+          .map(
+            (student) =>
+              student.fullName || `${student.firstName} ${student.lastName}`
+          )
+          .join(", ") || "Unknown Student";
+  
         // Map supervisor IDs to full names from the `users` collection
-        const supervisors = project
-          ? [project.supervisor1, project.supervisor2]
-              .filter((id) => id) // Exclude null or empty supervisor IDs
-              .map((id) => {
-                const supervisor = users.find((user) => user.emailId === id);
-                return supervisor ? supervisor.fullName : `Supervisor ID ${id}`;
-              })
-          : [];
+        const supervisors = [project.supervisor1, project.supervisor2]
+          .filter((id) => id) // Exclude null or empty supervisor IDs
+          .map((id) => {
+            const supervisor = users.find((user) => user.emailId === id);
+            return supervisor ? supervisor.fullName : `Supervisor ID ${id}`;
+          });
         const projectSupervisors =
           supervisors.length > 0 ? supervisors.join(", ") : "No Supervisors";
+  
         const deadline =
           project.deadline && project.deadline._seconds
             ? new Date(project.deadline._seconds * 1000).toLocaleDateString()
-            : "No Deadline";
-
+            : "No Deadline"; // Use a fallback for undefined deadlines
+  
         console.log("Rendering status(in preprocess):", grade.status);
-
+  
         return {
           ...project, // Include project details
           projectCode: grade.projectCode,
@@ -113,14 +117,15 @@ const AdminGradesPage = () => {
           supervisorGrade: grade.CalculatedSupervisorGrade || "N/A",
           finalGrade: grade.finalGrade || "N/A",
           status: grade.status || "Not graded",
-          deadline: deadline,
+          deadline: deadline, // Add fallback value for undefined deadline
         };
-      });
+      }).filter(Boolean); // Filter out null values
     } catch (error) {
       console.error("Error preprocessing projects:", error.message);
       throw new Error("Failed to preprocess project data.");
     }
   };
+  
 
   const renderGradeStatus = (status) => {
     console.log("status in render status:",status)
@@ -239,6 +244,39 @@ const AdminGradesPage = () => {
     []
   );
 
+  // Function to format data for export
+  const prepareExportData = (projects) => {
+    const exportData = [];
+    const seenStudentIds = new Set(); // Track processed student IDs
+  
+    projects.forEach((project) => {
+      // Add Student 1 data if not already added
+      if (project.Student1 && !seenStudentIds.has(project.Student1.ID)) {
+        seenStudentIds.add(project.Student1.ID);
+        exportData.push({
+          "Student ID": project.Student1.ID || "",
+          "Student First Name": project.Student1.firstName || "",
+          "Student Last Name": project.Student1.lastName || "",
+          "Student Final Grade": project.Student1.finalGrade || "N/A",
+        });
+      }
+  
+      // Add Student 2 data if not already added
+      if (project.Student2 && !seenStudentIds.has(project.Student2.ID)) {
+        seenStudentIds.add(project.Student2.ID);
+        exportData.push({
+          "Student ID": project.Student2.ID || "",
+          "Student First Name": project.Student2.firstName || "",
+          "Student Last Name": project.Student2.lastName || "",
+          "Student Final Grade": project.Student2.finalGrade || "N/A",
+        });
+      }
+    });
+  
+    return exportData;
+  };
+  
+  
   //
   /*
   const handleExport = () => {
@@ -251,6 +289,28 @@ const AdminGradesPage = () => {
 
     exportToExcelFile(dataToExport, "Project_Grades.xlsx");
   };*/
+
+  const handleExportToExcel = () => {
+    try {
+      // Prepare data for export with the selected columns
+      const exportData = prepareExportData(projects);
+  
+      // Create a new workbook and add the data
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+  
+      // Append worksheet to workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Projects");
+  
+      // Export the workbook
+      XLSX.writeFile(workbook, "projects_export.xlsx");
+  
+      toast.success("Data exported successfully!");
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      toast.error("Failed to export data.");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -288,6 +348,13 @@ const AdminGradesPage = () => {
           >
             Export to Excel
           </button> */}
+
+          <Button
+            onClick={handleExportToExcel}
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg mt-4"
+          >
+            Export to Excel
+          </Button>
         </div>
 
         <div className="overflow-auto p-6">

@@ -57,27 +57,31 @@ const AdminReminders = () => {
       console.log("Grades:", grades);
       console.log("Projects:", projects);
       console.log("Users:", users);
-
+  
       // Filter out placeholder grades
       const filteredGrades = grades.filter(
         (grade) =>
           grade.projectCode && grade.projectCode !== "placeholderProject"
       );
       console.log("Filtered Grades:", filteredGrades);
-
+  
       // Map grades to project and user details
       return filteredGrades.map((grade) => {
         const project = projects.find(
           (proj) => proj.projectCode === grade.projectCode
         );
+        if (!project) {
+          console.warn(`Project not found for grade: ${grade.projectCode}`);
+          return null;
+        }
+  
         const student = project
           ? [project.Student1, project.Student2].find(
               (s) => s && s.ID === grade.studentID
             )
           : null;
-
+  
         // Ensure student object has a fullName fallback
-        // Find the student name dynamically
         const studentName = project
           ? [project.Student1, project.Student2]
               .filter((student) => student && student.ID === grade.studentID)
@@ -87,25 +91,29 @@ const AdminReminders = () => {
               )
               .join(", ") || "Unknown Student"
           : "Unknown Student";
-
+  
         // Map supervisor IDs to full names from the `users` collection
         const supervisors = project
           ? [project.supervisor1, project.supervisor2]
               .filter((id) => id) // Exclude null or empty supervisor IDs
               .map((id) => {
                 const supervisor = users.find((user) => user.id === id);
-                return supervisor ? supervisor.fullName : `Supervisor ID ${id}`;
+                return supervisor
+                  ? supervisor.fullName
+                  : `${id}`;
               })
           : [];
         const projectSupervisors =
           supervisors.length > 0 ? supervisors.join(", ") : "No Supervisors";
+  
+        // Use fallback for undefined or missing deadlines
         const deadline =
           project.deadline && project.deadline._seconds
             ? new Date(project.deadline._seconds * 1000).toLocaleDateString()
-            : "No Deadline";
-
+            : "No Deadline"; // Explicitly indicate that there is no deadline
+  
         console.log("Rendering status(in preprocess):", grade.status);
-
+  
         return {
           ...project, // Include project details
           projectCode: grade.projectCode,
@@ -116,14 +124,15 @@ const AdminReminders = () => {
           supervisorGrade: grade.CalculatedSupervisorGrade || "N/A",
           finalGrade: grade.finalGrade || "N/A",
           status: grade.status || "Not graded",
-          deadline: deadline,
+          deadline: deadline, // Fallback for undefined deadlines
         };
-      });
+      }).filter(Boolean); // Filter out null values
     } catch (error) {
       console.error("Error preprocessing projects:", error.message);
       throw new Error("Failed to preprocess project data.");
     }
   };
+  
 
 
   const handleSaveDeadline = async () => {
@@ -265,7 +274,7 @@ const AdminReminders = () => {
           </div>
           <div>
           <label className="block text-gray-700 font-medium mb-2">Email Message (Optional):</label>
-          <p className="text-gray-500 text-sm mb-2">
+          <p className="text-gray-500 text-base mb-2">
             If no text message is added, the following message will be sent: <br />
             <em>"A new deadline has been set for project submissions. Please log in to the system to view the details."</em>
           </p>
@@ -309,21 +318,13 @@ const AdminReminders = () => {
           )}
         </div>
 
-        <div className="p-6 border-t border-gray-200 flex justify-between items-center">
-          <div>
-            <label className="block text-gray-700">Schedule Reminder Date:</label>
-            <input
-              type="date"
-              value={scheduleDate}
-              onChange={(e) => setScheduleDate(e.target.value)}
-              className="border p-2 rounded-md"
-            />
-          </div>
-          <div>
+        <div className="p-6 border-t border-gray-200 flex flex-wrap lg:flex-nowrap space-y-6 lg:space-y-0 lg:space-x-8">
+          {/* Left Section: Reminder Message */}
+          <div className="lg:w-1/2">
             <label className="block text-gray-700 font-medium mb-2">
               Reminder Message (Optional):
             </label>
-            <p className="text-gray-500 text-sm mb-2">
+            <p className="text-gray-500 text-base mb-2">
               If no text message is added, the following default message will be sent: <br />
               <em>"This is a reminder to review the project's status. Please log in to the system to take action."</em>
             </p>
@@ -335,10 +336,30 @@ const AdminReminders = () => {
               rows="4"
             />
           </div>
-          <Button onClick={handleSendReminders} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
-            Send Reminders
-          </Button>
+
+          {/* Right Section: Schedule Reminder Date and Button */}
+          <div className="lg:w-1/2 flex flex-col justify-between">
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">Schedule Reminder Date:</label>
+              <input
+                type="date"
+                value={scheduleDate}
+                onChange={(e) => setScheduleDate(e.target.value)}
+                className="border p-2 rounded-md w-full"
+              />
+            </div>
+            <div className="mt-4 lg:mt-0 flex justify-end">
+              <Button
+                onClick={handleSendReminders}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+              >
+                Send Reminders
+              </Button>
+            </div>
+          </div>
         </div>
+
+
       </div>
     </div>
   );
