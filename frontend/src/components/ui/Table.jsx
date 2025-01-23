@@ -286,7 +286,7 @@ export const Table = ({
           variant="outline"
           size="sm"
           onClick={() => setIsColumnManagementOpen(true)}
-          className="text-gray-500 hover:text-gray-700"
+          className=" bg-white hover:white text-blue-500 "
         >
           <Settings2 className="mr-2 h-4 w-4" />
           Show/Hide Columns

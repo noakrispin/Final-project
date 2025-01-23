@@ -60,6 +60,10 @@ const AdminProjects = () => {
     closeNotesModal,
   } = useProjectModals(projects, setProjects);
 
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, project: null });
+
+  const [isDeleting, setIsDeleting] = useState(false);
+
   useEffect(() => {
     const fetchProjects = async () => {
       try {
@@ -141,12 +145,13 @@ const AdminProjects = () => {
   }, []);
   
 
+
   const moveToPartB = async () => {
     try {
       // Check if there are already projects in Part B
       const partBProjects = projects.filter((project) => project.part === "B");
       if (partBProjects.length > 0) {
-        alert("Cannot move projects to Part B because Part B is not empty.");
+        alert("Part B must be empty before transferring projects from Part A..");
         return;
       }
 
@@ -224,7 +229,49 @@ const AdminProjects = () => {
       </div>
     );
   }
+  const openDeleteModal = (project) => {
+    if (!project || typeof project !== "object") {
+      console.error("Invalid project passed to openDeleteModal:", project);
+      return;
+    }
+    setDeleteModal({ isOpen: true, project });
+  };
 
+    // Close the delete modal
+  const closeDeleteModal = () => {
+    setDeleteModal({ isOpen: false, project: null });
+  };
+  
+  // Handle project deletion
+  const handleDeleteProject = async () => {
+    if (!deleteModal.project) {
+      console.error("No project is selected for deletion.");
+      return;
+    }
+  
+    const projectCode = deleteModal.project.projectCode; // Ensure this matches your API
+    console.log(`Deleting Project: ${projectCode}`);
+  
+    setIsDeleting(true); // Disable the delete button while processing
+  
+    try {
+      const response = await projectsApi.deleteProject(projectCode); // Ensure the API is correct
+      if (response) {
+        setProjects((current) =>
+          current.filter((project) => project.projectCode !== projectCode)
+        );
+        closeDeleteModal();
+        console.log("Project deleted successfully.");
+      } else {
+        console.error("Failed to delete project.");
+      }
+    } catch (err) {
+      console.error("Error deleting project:", err.message);
+      alert("An error occurred while deleting the project.");
+    } finally {
+      setIsDeleting(false); // Re-enable the delete button
+    }
+  };
   return (
     <div className="relative bg-white min-h-screen overflow-hidden">
       <BlurElements />
@@ -261,6 +308,17 @@ const AdminProjects = () => {
                   <p className="text-gray-600 text-lg leading-relaxed">
                     {getTabDescription(activeTab)}
                   </p>
+                  {/* Additional explanation for Part A and Part B */}
+                  {activeTab === "Part A" && (
+                    <p className="mt-4 text-gray-500 text-base leading-relaxed">
+                      Part A projects cannot be transferred to Part B if Part B already contains projects. Please ensure Part B is empty before transferring.
+                    </p>
+                  )}
+                  {activeTab === "Part B" && (
+                    <p className="mt-4 text-gray-500 text-base leading-relaxed">
+                      Part B is reserved for projects in their implementation and completion phases. Ensure Part A is managed appropriately before transferring.
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -283,13 +341,15 @@ const AdminProjects = () => {
                     Export & Delete
                   </Button>
                 )}
-                <Button
-                  onClick={() => navigate("/admin-upload")}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  <MdOutlineFileUpload />
-                  Upload Excel File
-                </Button>
+                {activeTab === "All Projects" && (
+                  <Button
+                    onClick={() => navigate("/admin-upload")}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <MdOutlineFileUpload />
+                    Upload Excel File
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -305,9 +365,39 @@ const AdminProjects = () => {
             onEditField={handleEditField}
             onAddNote={handleAddNote}
             onStudentClick={handleStudentClick}
+            onDelete={openDeleteModal} // Pass openDeleteModal as onDelete
           />
         </div>
       </div>
+
+      {deleteModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h2 className="text-lg font-bold mb-4">Confirm Deletion</h2>
+            <p>Are you sure you want to delete {deleteModal.project?.title}?</p>
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={closeDeleteModal}
+                disabled={isDeleting} // Disable the button during deletion
+                className={`px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 ${
+                  isDeleting ? "cursor-not-allowed opacity-50" : ""
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteProject}
+                disabled={isDeleting} // Disable the button during deletion
+                className={`px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 ml-2 ${
+                  isDeleting ? "cursor-not-allowed opacity-50" : ""
+                }`}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       <NotesModal
