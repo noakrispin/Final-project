@@ -15,7 +15,7 @@ export const evaluatorsApi = {
   },
 
   /**
-   * Get details of a specific evaluator by ID.
+   * Get details of a specific evaluator by emailID.
    */
   getEvaluator: async (id) => {
     try {
@@ -41,7 +41,7 @@ export const evaluatorsApi = {
   },
 
   /**
-   * Delete a specific evaluator by ID.
+   * Delete a specific evaluator by emailID.
    */
   deleteEvaluator: async (id) => {
     try {
@@ -54,7 +54,7 @@ export const evaluatorsApi = {
   },
 
   /**
-   * Get all projects assigned to a particular evaluator by ID.
+   * Get all projects assigned to a particular evaluator by emailID.
    */
   getProjectsByEvaluator: async (evaluatorID) => {
     try {

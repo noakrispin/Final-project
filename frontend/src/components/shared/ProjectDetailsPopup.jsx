@@ -34,7 +34,7 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
                 `Fetched supervisor data for ID ${id}:`,
                 userResponse
               );
-              return userResponse.fullName || `Supervisor with ID: ${id}`;
+              return userResponse.fullName || `Supervisor with email: ${id}`;
             } catch (error) {
               console.error(`Error fetching supervisor with ID ${id}:`, error);
               return `Supervisor with ID: ${id}`;
@@ -54,8 +54,8 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
 
   const isAdminOrSupervisor =
     user.isAdmin === true ||
-    user.id === project.supervisor1 ||
-    user.id === project.supervisor2;
+    user.email === project.supervisor1 ||
+    user.email === project.supervisor2;
 
   const handleSaveGitLink = async () => {
     if (gitLink.trim()) {
@@ -140,11 +140,12 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
         {/* Header */}
         <div className="p-6 border-b bg-gray-100">
           {isEditingDetails ? (
-            <text
+            <input
               type="text"
               value={editedTitle}
               onChange={(e) => setEditedTitle(e.target.value)}
-              className="text-2xl font-bold text-gray-800 border-b border-gray-300 focus:border-blue-500 focus:outline-none transition w-full"
+              className="text-2xl font-bold text-gray-800 border border-blue-300 bg-blue-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition w-full rounded-md px-4 py-2"
+              placeholder="Enter project title..."
             />
           ) : (
             <h2 className="text-2xl font-bold text-gray-800">
@@ -167,7 +168,7 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
                   <textarea
                     value={editedDescription}
                     onChange={(e) => setEditedDescription(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md p-3 text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+                    className="text-base font-medium text-gray-800 border border-blue-300 bg-blue-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition w-full rounded-md px-4 py-2"
                     rows={4}
                   />
                 ) : (
@@ -243,8 +244,8 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
 
               {/* Personal Notes */}
               {userRole === "Supervisor" &&
-                (project.supervisor1 === user?.id ||
-                  project.supervisor2 === user?.id) && (
+                (project.supervisor1 === user?.emailId ||
+                  project.supervisor2 === user?.emailId) && (
                   <div>
                     <h3 className="text-lg font-semibold text-gray-700 mb-2">
                       Personal Notes
