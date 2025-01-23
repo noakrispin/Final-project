@@ -26,7 +26,7 @@ const OtherProjectsReview = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!user || !user.id) {
+      if (!user || !user.email) {
         console.error("User or Evaluator ID is missing.");
         return;
       }
@@ -47,7 +47,7 @@ const OtherProjectsReview = () => {
           try {
             console.log(`Fetching projects for formID: ${formID}`);
             const response = await evaluatorsApi.getProjectsForEvaluatorByForm(
-              user.id,
+              user.email,
               formID
             );
             if (Array.isArray(response) && response.length > 0) {
@@ -65,7 +65,7 @@ const OtherProjectsReview = () => {
         }
 
         const evaluationsData = await formsApi.getEvaluationsByEvaluator(
-          user.id
+          user.email
         );
         console.log("Evaluations Data:", evaluationsData);
 
@@ -345,7 +345,7 @@ const OtherProjectsReview = () => {
             <Table
               data={projects}
               apiResponse={grades}
-              userId={user?.id}
+              userId={user?.email}
               isDeadlinePassed={isDeadlinePassed}
               columns={projectColumns}
               onRowClick={handleRowClick}

@@ -30,8 +30,18 @@ const AdminNavbar = () => {
             <NavLink to='/admin-projects'>PROJECTS</NavLink>
             <NavLink to='/admin-reminders'>REMINDERS</NavLink>
             <NavLink to='/admin-grades'>GRADES</NavLink>
-            <NavLink to='/admin-upload'>UPLOAD FILES</NavLink>
-            <NavLink to='/admin-management'>MANAGEMENT</NavLink>
+            <NavLink
+              to="/admin-upload"
+              activePaths={["/admin-upload", "/admin-evaluators"]}
+            >
+              UPLOAD FILES
+            </NavLink>
+            <NavLink
+              to="/admin-management"
+              activePaths={["/admin-management", "/admin-forms"]}
+            >
+              MANAGEMENT
+            </NavLink>
           </ul>
         </MobileMenu>
 
@@ -58,13 +68,18 @@ const AdminNavbar = () => {
   );
 };
 
-const NavLink = ({ to, children }) => {
+const NavLink = ({ to, children, activePaths = [] }) => {
   const location = useLocation();
-  const isActive = location.pathname === to;
+  const isActive = activePaths.includes(location.pathname) || location.pathname === to;
+
   return (
     <Link
       to={to}
-      className={`${isActive ? 'text-[#6366F1] border-b-2 border-[#6366F1]' : 'hover:text-[#6366F1]'} py-2 px-4 lg:py-1 text-base`}
+      className={`${
+        isActive
+          ? 'text-[#6366F1] border-b-2 border-[#6366F1]'
+          : 'hover:text-[#6366F1]'
+      } py-2 px-4 lg:py-1 text-base`}
     >
       <li>{children}</li>
     </Link>
