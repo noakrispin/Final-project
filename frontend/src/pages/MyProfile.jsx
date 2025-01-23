@@ -85,7 +85,7 @@ export default function MyProfile() {
           </p>
           <button
             onClick={() => navigate("/forgot-password")}
-            className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700"
+            className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 shadow hover:shadow-md"
           >
             Change Password
           </button>
@@ -96,7 +96,7 @@ export default function MyProfile() {
           {/* Total Projects Supervised */}
           <button
             onClick={() => navigate("/projectsSupervisors")}
-            className="block bg-blue-100 text-center p-6 rounded-lg shadow hover:shadow-md transition-shadow"
+            className="block bg-blue-100 hover:bg-blue-200 text-center p-6 rounded-lg shadow hover:shadow-md transition-shadow"
           >
             <h2 className="text-4xl font-bold text-blue-600">{supervisedProjectsCount}</h2>
             <p className="text-gray-600 text-lg">Total Projects Supervised</p>
@@ -105,7 +105,7 @@ export default function MyProfile() {
           {/* Pending Reviews */}
           <button
             onClick={() => navigate("/MyProjectsReview")}
-            className="block bg-green-100 text-center p-6 rounded-lg shadow hover:shadow-md transition-shadow"
+            className="block bg-green-100 hover:bg-green-200 text-center p-6 rounded-lg shadow hover:shadow-md transition-shadow"
           >
             <h2 className="text-4xl font-bold text-green-600">{pendingReviewsCount}</h2>
             <p className="text-gray-600 text-lg">Pending Reviews</p>
@@ -117,10 +117,10 @@ export default function MyProfile() {
           <div className="mt-6 flex justify-center">
             <button
               onClick={() => navigate("/admin-projects")}
-              className="block bg-yellow-100 text-center p-6 rounded-lg shadow hover:shadow-md transition-shadow w-1/2"
+              className="block bg-yellow-100 hover:bg-yellow-200 text-center p-3 rounded-lg shadow hover:shadow-md transition-shadow text-lg"
             >
-              <h2 className="text-4xl font-bold text-yellow-600">Admin</h2>
-              <p className="text-gray-600 text-lg">Go to Dashboard</p>
+              <h2 className="text-3xl font-bold text-yellow-600">Go to Admin Mode</h2>
+              
             </button>
           </div>
         )}

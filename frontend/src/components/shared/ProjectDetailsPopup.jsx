@@ -140,7 +140,7 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
         {/* Header */}
         <div className="p-6 border-b bg-gray-100">
           {isEditingDetails ? (
-            <input
+            <text
               type="text"
               value={editedTitle}
               onChange={(e) => setEditedTitle(e.target.value)}
