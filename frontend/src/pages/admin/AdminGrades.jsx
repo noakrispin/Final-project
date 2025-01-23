@@ -90,7 +90,7 @@ const AdminGradesPage = () => {
           ? [project.supervisor1, project.supervisor2]
               .filter((id) => id) // Exclude null or empty supervisor IDs
               .map((id) => {
-                const supervisor = users.find((user) => user.id === id);
+                const supervisor = users.find((user) => user.emailId === id);
                 return supervisor ? supervisor.fullName : `Supervisor ID ${id}`;
               })
           : [];
@@ -171,12 +171,12 @@ const AdminGradesPage = () => {
         sortable: true,
         className: "text-base",
       },
-      {
-        key: "title",
-        header: "Project Title",
-        sortable: true,
-        className: "text-base",
-      },
+      // {
+      //   key: "title",
+      //   header: "Project Title",
+      //   sortable: true,
+      //   className: "text-base",
+      // },
       { key: "part", header: "Part", className: "text-base" },
       {
         key: "studentName",
@@ -215,6 +215,13 @@ const AdminGradesPage = () => {
         className: "text-base",
         render: (project) =>
           project.supervisorGrade !== undefined ? project.supervisorGrade : " ",
+      },
+      {
+        key: "finalGrade",
+        header: "Final Grade",
+        className: "text-base",
+        render: (project) =>
+          project.finalGrade !== undefined ? project.finalGrade : " ",
       },
       {
         key: "status",

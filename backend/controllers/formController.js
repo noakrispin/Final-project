@@ -4,26 +4,26 @@ module.exports = {
   /* -------------------------forms--------------------------*/
 
   // Create a new form with subcollections
-  createForm: async (req, res) => {
-    const { formID, description, formName } = req.body;
+  // createForm: async (req, res) => {
+  //   const { formID, description, formName } = req.body;
 
-    if (!formID || !formName) {
-      return res.status(400).json({ message: "Form ID and Form Name are required." });
-    }
+  //   if (!formID || !formName) {
+  //     return res.status(400).json({ message: "Form ID and Form Name are required." });
+  //   }
 
-    try {
-      await db.collection("forms").doc(formID).set({
-        description: description || "",
-        formName,
-        created_at: new Date().toISOString(),
-      });
+  //   try {
+  //     await db.collection("forms").doc(formID).set({
+  //       description: description || "",
+  //       formName,
+  //       created_at: new Date().toISOString(),
+  //     });
 
-      res.status(201).json({ message: "Form created successfully." });
-    } catch (error) {
-      console.error("Error creating form:", error.message);
-      res.status(500).json({ message: "Failed to create form." });
-    }
-  },
+  //     res.status(201).json({ message: "Form created successfully." });
+  //   } catch (error) {
+  //     console.error("Error creating form:", error.message);
+  //     res.status(500).json({ message: "Failed to create form." });
+  //   }
+  // },
 
   // Update a specific form
   updateForm: async (req, res) => {
@@ -42,7 +42,6 @@ module.exports = {
       res.status(500).json({ message: "Failed to update form." });
     }
   },
-
 
   // Fetch a specific form
   getForm: async (req, res) => {
@@ -85,50 +84,49 @@ module.exports = {
         ...doc.data(), // Include the form's fields
       }));
 
-      console.log("Fetched forms:", forms); 
-      res.status(200).json(forms); 
+      console.log("Fetched forms:", forms);
+      res.status(200).json(forms);
     } catch (error) {
-      console.error("Error fetching forms:", error.message); 
-      res.status(500).json({ message: "Failed to fetch forms." }); 
+      console.error("Error fetching forms:", error.message);
+      res.status(500).json({ message: "Failed to fetch forms." });
     }
   },
-
 
   // Delete a form along with its subcollections
-  deleteForm: async (req, res) => {
-    const { formID } = req.params;
+  // deleteForm: async (req, res) => {
+  //   const { formID } = req.params;
 
-    if (!formID) {
-      return res.status(400).json({ message: "Form ID is required." });
-    }
+  //   if (!formID) {
+  //     return res.status(400).json({ message: "Form ID is required." });
+  //   }
 
-    try {
-      const formRef = db.collection("forms").doc(formID);
+  //   try {
+  //     const formRef = db.collection("forms").doc(formID);
 
-      // Function to delete all documents in a subcollection
-      const deleteSubcollection = async (subcollection) => {
-        const snapshot = await formRef.collection(subcollection).get();
-        const batch = db.batch();
-        snapshot.docs.forEach((doc) => batch.delete(doc.ref));
-        await batch.commit();
-      };
+  //     // Function to delete all documents in a subcollection
+  //     const deleteSubcollection = async (subcollection) => {
+  //       const snapshot = await formRef.collection(subcollection).get();
+  //       const batch = db.batch();
+  //       snapshot.docs.forEach((doc) => batch.delete(doc.ref));
+  //       await batch.commit();
+  //     };
 
-      // Delete subcollections
-      await Promise.all([
-        deleteSubcollection("questions"),
-        deleteSubcollection("responses"),
-        deleteSubcollection("evaluations"),
-      ]);
+  //     // Delete subcollections
+  //     await Promise.all([
+  //       deleteSubcollection("questions"),
+  //       deleteSubcollection("responses"),
+  //       deleteSubcollection("evaluations"),
+  //     ]);
 
-      // Delete the form document
-      await formRef.delete();
+  //     // Delete the form document
+  //     await formRef.delete();
 
-      res.status(200).json({ message: "Form and its subcollections deleted successfully." });
-    } catch (error) {
-      console.error("Error deleting form:", error.message);
-      res.status(500).json({ message: "Failed to delete form." });
-    }
-  },
+  //     res.status(200).json({ message: "Form and its subcollections deleted successfully." });
+  //   } catch (error) {
+  //     console.error("Error deleting form:", error.message);
+  //     res.status(500).json({ message: "Failed to delete form." });
+  //   }
+  // },
 
   /* -------------------------form's questions (questions subCollection) --------------------------*/
 
@@ -221,26 +219,26 @@ module.exports = {
   submitForm: async (req, res) => {
     const { formID } = req.params;
     const { evaluatorID, projectCode, general, students } = req.body;
-  
+
     console.log("Submitting form data:", { evaluatorID, projectCode, general, students });
-  
+
     if (!formID || !evaluatorID || !projectCode || !general || !students) {
       console.log("Missing required fields:", { formID, evaluatorID, projectCode, general, students });
       return res.status(400).json({
         message: "Form ID, evaluator ID, project code, general responses, and student responses are required.",
       });
     }
-  
+
     try {
       console.log("Fetching questions and weights for form:", formID);
-  
+
       // Fetch question weights from the `questions` subcollection
       const questionsSnapshot = await db
         .collection("forms")
         .doc(formID)
         .collection("questions")
         .get();
-  
+
       const questionWeights = {};
       questionsSnapshot.docs.forEach((doc) => {
         const { questionID, weight, response_type } = doc.data();
@@ -248,9 +246,9 @@ module.exports = {
           questionWeights[questionID] = weight;
         }
       });
-  
+
       console.log("Fetched Question Weights:", questionWeights);
-  
+
       // Save or update responses
       const existingResponsesSnapshot = await db
         .collection("forms")
@@ -259,7 +257,7 @@ module.exports = {
         .where("evaluatorID", "==", evaluatorID)
         .where("projectCode", "==", projectCode)
         .get();
-  
+
       let responseRef;
       if (!existingResponsesSnapshot.empty) {
         console.log("Updating existing response...");
@@ -279,18 +277,18 @@ module.exports = {
           created_at: new Date().toISOString(),
         });
       }
-  
+
       console.log("Responses saved successfully.");
-  
+
       // Function to calculate weighted grades
       const calculateGrades = (generalResponses, studentResponses, weights) => {
         console.log("Calculating grades...");
-  
+
         // Calculate the weighted grade for general responses
         const calculateGeneralGrade = (responses) => {
           let totalWeightedSum = 0;
           let totalWeight = 0;
-  
+
           Object.entries(responses).forEach(([questionID, score]) => {
             if (typeof score === "number" && weights[questionID]) {
               console.log(
@@ -304,19 +302,19 @@ module.exports = {
               );
             }
           });
-  
+
           console.log("Total General Weighted Sum:", totalWeightedSum, "Total Weight:", totalWeight);
           return totalWeight > 0 ? totalWeightedSum : 0;
         };
-  
+
         const generalGrade = calculateGeneralGrade(generalResponses);
-  
+
         // Calculate each student's total weighted grade
         const studentGrades = {};
         for (const [studentID, studentSpecificResponses] of Object.entries(studentResponses)) {
           let studentWeightedSum = 0;
           let studentWeight = 0;
-  
+
           Object.entries(studentSpecificResponses).forEach(([questionID, score]) => {
             if (typeof score === "number" && weights[questionID]) {
               console.log(
@@ -330,24 +328,24 @@ module.exports = {
               );
             }
           });
-  
+
           console.log(
             `Student-Specific Weighted Sum: ${studentWeightedSum}, Student Weight: ${studentWeight}`
           );
-            const studentGrade = Math.round(generalGrade + studentWeightedSum);
+          const studentGrade = Number((generalGrade + studentWeightedSum).toFixed(0));
           console.log(
-            `Final Grade for Student ID: ${studentID} = General Grade (${generalGrade}) + Student-Specific Grade (${studentWeightedSum})`
+            `Grade for Student ID(to this Form): ${studentID} = General Grade (${generalGrade}) + Student-Specific Grade (${studentWeightedSum})`
           );
           studentGrades[studentID] = studentGrade;
         }
-  
+
         return studentGrades;
       };
-  
+
       // Calculate weighted grades for each student
       const weightedGrades = calculateGrades(general, students, questionWeights);
       console.log("Calculated Weighted Grades:", weightedGrades);
-  
+
       // Check for existing evaluation
       const existingEvaluationSnapshot = await db
         .collection("forms")
@@ -356,7 +354,7 @@ module.exports = {
         .where("evaluatorID", "==", evaluatorID)
         .where("projectCode", "==", projectCode)
         .get();
-  
+
       if (!existingEvaluationSnapshot.empty) {
         console.log("Updating existing evaluation...");
         const evaluationRef = existingEvaluationSnapshot.docs[0].ref;
@@ -374,19 +372,140 @@ module.exports = {
         };
         await db.collection("forms").doc(formID).collection("evaluations").add(evaluationData);
       }
-  
+
       console.log("Evaluation saved successfully.");
-  
+
+
+      console.log("Updating finalGrades...");
+
+      const finalGradesSnapshot = await db
+        .collection("finalGrades")
+        .where("projectCode", "==", projectCode)
+        .get();
+
+      if (!finalGradesSnapshot.empty) {
+        finalGradesSnapshot.forEach(async (doc) => {
+          const finalGradeDoc = doc.data();
+          const studentID = finalGradeDoc.studentID;
+
+          console.log(`Processing final grades for studentID: ${studentID}`);
+
+          // Calculate averages for each grade component
+          const evaluatorsSnapshot = await db
+            .collection("evaluators")
+            .where("projectCode", "==", projectCode)
+            .get();
+
+          let totalSupervisorGrade = 0;
+          let totalPresentationGrade = 0;
+          let totalBookGrade = 0;
+
+          let supervisorCount = 0;
+          let presentationCount = 0;
+          let bookCount = 0;
+
+          evaluatorsSnapshot.forEach(async (evaluatorDoc) => {
+            const evaluator = evaluatorDoc.data();
+
+            if (evaluator.status === "Submitted") {
+              const evaluationSnapshot = await db
+                .collection("forms")
+                .doc(evaluator.formID)
+                .collection("evaluations")
+                .where("evaluatorID", "==", evaluator.evaluatorID)
+                .where("projectCode", "==", projectCode)
+                .get();
+
+              evaluationSnapshot.forEach((evaluationDoc) => {
+                const evaluation = evaluationDoc.data();
+                const grades = evaluation.grades || {};
+
+                if (grades[studentID] !== undefined) {
+                  switch (evaluator.formID) {
+                    case "SupervisorForm":
+                      totalSupervisorGrade += grades[studentID];
+                      supervisorCount++;
+                      break;
+                    case "PresentationForm":
+                      totalPresentationGrade += grades[studentID];
+                      presentationCount++;
+                      break;
+                    case "BookForm":
+                      totalBookGrade += grades[studentID];
+                      bookCount++;
+                      break;
+                    default:
+                      console.log(`Unknown formID: ${evaluator.formID}`);
+                  }
+                }
+              });
+            }
+          });
+
+          const calculatedSupervisorGrade =
+            supervisorCount > 0 ? totalSupervisorGrade / supervisorCount : null;
+          const calculatedPresentationGrade =
+            presentationCount > 0 ? totalPresentationGrade / presentationCount : null;
+          const calculatedBookGrade =
+            bookCount > 0 ? totalBookGrade / bookCount : null;
+
+          console.log(`Grade Averages for student ${studentID}:`, {
+            calculatedSupervisorGrade,
+            calculatedPresentationGrade,
+            calculatedBookGrade,
+          });
+
+          // Determine status
+          let status = "Partially graded";
+
+          const allSubmitted = evaluatorsSnapshot.docs.every(
+            (evaluatorDoc) => evaluatorDoc.data().status === "Submitted"
+          );
+          const noneSubmitted = evaluatorsSnapshot.docs.every(
+            (evaluatorDoc) => evaluatorDoc.data().status !== "Submitted"
+          );
+
+          if (allSubmitted) {
+            status = "Fully graded";
+          } else if (noneSubmitted) {
+            status = "Not graded";
+          }
+
+          // Calculate final grade
+          const finalGrade =
+            (calculatedSupervisorGrade || 0) * 0.5 +
+            (calculatedPresentationGrade || 0) * 0.25 +
+            (calculatedBookGrade || 0) * 0.25;
+
+          // Update finalGrades document
+          await db.collection("finalGrades").doc(doc.id).update({
+            CalculatedSupervisorGrade: calculatedSupervisorGrade,
+            CalculatedPresentationGrade: calculatedPresentationGrade,
+            CalculatedBookGrade: calculatedBookGrade,
+            finalGrade,
+            status,
+            updated_at: new Date().toISOString(),
+          });
+
+          console.log(`Updated final grade for student ${studentID}:`, {
+            finalGrade,
+            status,
+          });
+        });
+      } else {
+        console.log("No matching finalGrades document found for the project and student.");
+      }
+
       res.status(200).json({
-        message: "Form submitted successfully with calculated evaluations.",
+        message: "Form submitted successfully with calculated evaluations&final grades.",
       });
     } catch (error) {
       console.error("Error submitting form:", error.message, error.stack);
       res.status(500).json({ message: "Failed to submit form." });
     }
   },
-  
-  
+
+
   // Fetch the last response for a specific form, evaluator, and project
   getLastResponse: async (req, res) => {
     const { formID } = req.params;
@@ -405,7 +524,6 @@ module.exports = {
         .collection("responses")
         .where("evaluatorID", "==", evaluatorID)
         .where("projectCode", "==", projectCode)
-        //.orderBy("created_at", "desc")
         .limit(1)
         .get();
 
@@ -447,62 +565,62 @@ module.exports = {
     }
   },
 
-  
+
 
   // Fetch all evaluations for a specific evaluator
   getEvaluationsByEvaluator: async (req, res) => {
     const { evaluatorID } = req.query;
 
     if (!evaluatorID) {
-        console.error("Evaluator ID is missing in the request.");
-        return res.status(400).json({ message: "Evaluator ID is required." });
+      console.error("Evaluator ID is missing in the request.");
+      return res.status(400).json({ message: "Evaluator ID is required." });
     }
 
     try {
-        console.log("Fetching evaluations for evaluatorID:", evaluatorID);
-        const formsSnapshot = await db.collection("forms").get();
+      console.log("Fetching evaluations for evaluatorID:", evaluatorID);
+      const formsSnapshot = await db.collection("forms").get();
 
-        if (formsSnapshot.empty) {
-            console.log("No forms found.");
-            return res.status(200).json([]); // Return an empty array if no forms exist
+      if (formsSnapshot.empty) {
+        console.log("No forms found.");
+        return res.status(200).json([]); // Return an empty array if no forms exist
+      }
+
+      const evaluations = [];
+      for (const formDoc of formsSnapshot.docs) {
+        console.log(`Fetching evaluations for form: ${formDoc.id}`);
+        const evaluationsSnapshot = await db
+          .collection("forms")
+          .doc(formDoc.id)
+          .collection("evaluations")
+          .where("evaluatorID", "==", evaluatorID)
+          .get();
+
+        console.log(
+          `Query for form ${formDoc.id} returned ${evaluationsSnapshot.size} evaluations.`
+        );
+
+
+        if (!evaluationsSnapshot.empty) {
+          evaluationsSnapshot.forEach((doc) => {
+            console.log(`Evaluation for form ${formDoc.id}:`, doc.data());
+            evaluations.push({
+              formID: formDoc.id,
+              ...doc.data(),
+              id: doc.id,
+            });
+          });
+        } else {
+          console.log(`No evaluations for form: ${formDoc.id} and evaluatorID: ${evaluatorID}`);
         }
+      }
 
-        const evaluations = [];
-        for (const formDoc of formsSnapshot.docs) {
-            console.log(`Fetching evaluations for form: ${formDoc.id}`);
-            const evaluationsSnapshot = await db
-                .collection("forms")
-                .doc(formDoc.id)
-                .collection("evaluations")
-                .where("evaluatorID", "==", evaluatorID)
-                .get();
-
-            console.log(
-                `Query for form ${formDoc.id} returned ${evaluationsSnapshot.size} evaluations.`
-            );
-            
-
-            if (!evaluationsSnapshot.empty) {
-                evaluationsSnapshot.forEach((doc) => {
-                    console.log(`Evaluation for form ${formDoc.id}:`, doc.data());
-                    evaluations.push({
-                        formID: formDoc.id,
-                        ...doc.data(),
-                        id: doc.id,
-                    });
-                });
-            } else {
-                console.log(`No evaluations for form: ${formDoc.id} and evaluatorID: ${evaluatorID}`);
-            }
-        }
-
-        console.log("Collected Evaluations:", evaluations);
-        res.status(200).json(evaluations); // Respond with collected evaluations or an empty array
+      console.log("Collected Evaluations:", evaluations);
+      res.status(200).json(evaluations); // Respond with collected evaluations or an empty array
     } catch (error) {
-        console.error("Error fetching evaluations:", error.message);
-        res.status(500).json({ message: "Failed to fetch evaluations." });
+      console.error("Error fetching evaluations:", error.message);
+      res.status(500).json({ message: "Failed to fetch evaluations." });
     }
-},
+  },
 
 
 

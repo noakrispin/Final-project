@@ -72,7 +72,7 @@ export default function UnifiedFormComponent({
     try {
       const lastResponse = await formsApi.getLastResponse(
         formID,
-        user?.id,
+        user?.emailId,
         projectCode
       );
 
@@ -135,7 +135,7 @@ export default function UnifiedFormComponent({
     }
 
     const responses = {
-      evaluatorID: user.id,
+      evaluatorID: user.emailId,
       projectCode,
       general: {},
       students: {},
@@ -169,13 +169,13 @@ export default function UnifiedFormComponent({
 
       // Add or update evaluator status in Evaluators collection
       const evaluatorData = {
-        evaluatorID: user.id,
+        evaluatorID: user.emailId,
         formID,
         projectCode,
         status: "Submitted",
       };
 
-      const evaluatorId = `${user.id}-${formID}-${projectCode}`; // Unique ID for evaluator
+      const evaluatorId = `${user.emailId}-${formID}-${projectCode}`; // Unique ID for evaluator
       console.log("Updating evaluator status:", evaluatorData);
 
       await evaluatorsApi.addOrUpdateEvaluator(evaluatorId, evaluatorData);
