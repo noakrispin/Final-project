@@ -59,9 +59,9 @@ const validateAuthInput = (req, res, next) => {
 
 // Registration validation middleware
 const validateRegistration = (req, res, next) => {
-  const { email, password, name, role } = req.body;
+  const { email, password, fullName, role,itAdmin } = req.body;
 
-  if (!name || name.trim().length === 0) {
+  if (!fullName  || fullName .trim().length === 0) {
     return res.status(400).json({
       error: {
         message: 'Name is required',

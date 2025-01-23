@@ -1,11 +1,5 @@
 const express = require("express");
-const { 
-  addUser, 
-  getUser, 
-  getAllUsers, 
-  deleteUser, 
-  updateUserRole 
-} = require("../controllers/userController");
+const { addUser, getUser, getAllUsers, deleteUser, updateUserRole } = require("../controllers/userController");
 const db = require("../config/firebaseAdmin");
 
 const router = express.Router();
@@ -31,24 +25,14 @@ const asyncHandler = (fn) => (req, res, next) => {
   return Promise.resolve(fn(req, res, next)).catch(next);
 };
 
-// Get all users with better error handling
-router.get("/", asyncHandler(async (req, res) => {
-  try {
-    const result = await getAllUsers(req, res);
-    return result;
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch users",
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
-  }
-}));
+// Define routes
+router.post("/", asyncHandler(addUser));  // Add user
+router.get("/:id", asyncHandler(getUser));  // Get single user by ID
+router.get("/", asyncHandler(getAllUsers));  // Get all users
+router.delete("/:id", asyncHandler(deleteUser));  // Delete user by ID
+router.put("/:userId/role", asyncHandler(updateUserRole));  // Update user role
 
-// Other routes with similar error handling...
-
-// Error handling middleware
+// Error handling middleware for route errors
 router.use((err, req, res, next) => {
   console.error('User route error:', err);
   res.status(err.status || 500).json({
