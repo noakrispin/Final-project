@@ -3,13 +3,15 @@ import PropTypes from 'prop-types';
 import { Table } from '../ui/Table';
 import { Card } from '../ui/Card';
 import { Info } from 'lucide-react';
+import { MdDeleteForever } from "react-icons/md";
 
 const ProjectsTable = ({ 
   projects, 
   activeTab, 
   onEditField, 
   onAddNote, 
-  onStudentClick 
+  onStudentClick,
+  onDelete // Ensure onDelete is destructured here
 }) => {
   const renderEditableCell = (value, row, field, fieldName, fieldType = 'text', options = []) => (
     <div className="group relative">
@@ -57,7 +59,32 @@ const ProjectsTable = ({
     { key: 'type', header: 'Type', sortable: true, render: (value, row) => renderEditableCell(value, row, 'type', 'Type', 'select', ['Development', 'Research']) },
     { key: 'deadline', header: 'Deadline', sortable: true, render: (value, row) => renderEditableCell(value, row, 'deadline', 'Deadline', 'date') },
     { key: 'specialNotes', header: 'Special Notes', sortable: true, render: (value, row) => <button onClick={() => onAddNote(row)} className="text-blue-600 hover:text-blue-700">{value || 'Add note'}</button> },
+    {
+      key: "actions",
+      header: "Actions",
+      render: (value, row) => (
+        <div className="flex space-x-2">
+          <button
+            className="text-red-600 hover:text-red-700"
+            onClick={() => onDelete(row)}
+            aria-label="Delete Project"
+            title="Delete Project"
+          >
+            <MdDeleteForever />
+          </button>
+        </div>
+      ),
+    },
+
   ];
+
+  if (!projects || projects.length === 0) {
+    return (
+      <Card className="p-6">
+        <p className="text-gray-600">No projects available to display.</p>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-6">
@@ -67,6 +94,7 @@ const ProjectsTable = ({
       showTabs={false}
       showDescription = {true}
       description = "Click any cell to edit its content. Click student names to view their details."
+      onRowClick={() => {}} // Placeholder to prevent errors
           
        />
       
@@ -79,7 +107,8 @@ ProjectsTable.propTypes = {
   activeTab: PropTypes.string.isRequired,
   onEditField: PropTypes.func.isRequired,
   onAddNote: PropTypes.func.isRequired,
-  onStudentClick: PropTypes.func.isRequired
+  onStudentClick: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired, 
 };
 
 export default ProjectsTable;
