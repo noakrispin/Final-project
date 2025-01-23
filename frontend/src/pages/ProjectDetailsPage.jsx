@@ -40,13 +40,13 @@ const ProjectDetailsPage = () => {
         setProject(projectData);
   
         // Fetch supervisor details
-        const supervisorIds = [projectData.supervisor1, projectData.supervisor2].filter(Boolean);
-        if (supervisorIds.length > 0) {
+        const supervisorEmails = [projectData.supervisor1, projectData.supervisor2].filter(Boolean); // Now using emails
+        if (supervisorEmails.length > 0) {
           const supervisorDetails = await Promise.all(
-            supervisorIds.map((id) =>
-              userApi.getUser(id).catch((error) => {
-                console.error(`Error fetching supervisor with ID ${id}:`, error);
-                return { fullName: `Supervisor with ID: ${id}`, topics: [] };
+            supervisorEmails.map((email) =>
+              userApi.getUser(email).catch((error) => {
+                console.error(`Error fetching supervisor with email ${email}:`, error);
+                return { fullName: `Supervisor with email: ${email}`, topics: [] };
               })
             )
           );

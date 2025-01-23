@@ -21,12 +21,12 @@ const ProjectsSupervisors = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       if (!user) return;
-
+    
       try {
         setIsLoading(true);
         const projectsData = await projectsApi.getAllProjects(); // Fetch projects from the backend
         const filteredProjects = projectsData.filter(
-          (project) => project.supervisor1 === user.id || project.supervisor2 === user.id
+          (project) => project.supervisor1 === user.email || project.supervisor2 === user.email
         );
         setProjects(filteredProjects);
       } catch (err) {
