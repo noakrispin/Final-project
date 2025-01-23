@@ -9,7 +9,7 @@ const UserTable = ({ users, onDelete, onEditRole }) => {
   console.log("Users passed to UserTable:", users);
 
   const userColumns = [
-    { key: "id", header: "ID", sortable: true },
+    
     { key: "fullName", header: "Full Name", sortable: true },
     { key: "email", header: "Email", sortable: true },
     {

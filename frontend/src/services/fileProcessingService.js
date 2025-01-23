@@ -144,6 +144,16 @@ const validateData = (data) => {
           `Invalid email format for Student 2 in row ${index + 1}`
         );
       }
+      if (!emailRegex.test(row.supervisor1)) {
+        throw new Error(
+          `Invalid supervisor email format for supervisor 1 in row ${index + 1}`
+        );
+      }
+      if (row.supervisor2 && !emailRegex.test(row.supervisor2)) {
+        throw new Error(
+          `Invalid supervisor email format for supervisor 2 in row ${index + 1}`
+        );
+      }
 
       const idRegex = /^\d{9}$/;
       if (!idRegex.test(row.student1Id)) {
@@ -156,17 +166,6 @@ const validateData = (data) => {
           `Invalid student ID format for Student 2 in row ${index + 1}`
         );
       }
-      if (!idRegex.test(row.supervisor1)) {
-        throw new Error(
-          `Invalid supervisor ID format for supervisor 1 in row ${index + 1}`
-        );
-      }
-      if (row.supervisor2 && !idRegex.test(row.supervisor2)) {
-        throw new Error(
-          `Invalid supervisor ID format for supervisor 2 in row ${index + 1}`
-        );
-      }
-
       return row;
     });
   } else {
@@ -175,19 +174,17 @@ const validateData = (data) => {
         throw new Error(`Missing projectCode in row ${index + 1}`);
       }
 
-      const idRegex = /^\d{9}$/;
-      if (row.presentationEvaluator && !idRegex.test(row.presentationEvaluator)) {
+      if (row.presentationEvaluator && !emailRegex.test(row.presentationEvaluator)) {
         throw new Error(
-          `Invalid ID format for Presentation Evaluator in row ${index + 1}`
+          `Invalid email format for Presentation Evaluator in row ${index + 1}`
         );
       }
-      if (row.bookEvaluator && !idRegex.test(row.bookEvaluator)) {
+      if (row.bookEvaluator && !emailRegex.test(row.bookEvaluator)) {
         throw new Error(
-          `Invalid ID format for Book Evaluator in row ${index + 1}`
+          `Invalid email format for Book Evaluator in row ${index + 1}`
         );
       }
       
-
       return row;
     });
   }

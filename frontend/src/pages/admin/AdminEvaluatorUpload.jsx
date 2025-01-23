@@ -78,8 +78,8 @@ const AdminEvaluatorUpload = () => {
                 </p>
                 <ul className="list-disc list-inside text-left mt-2">
                   <li>Column 1: Project Code (Required)</li>
-                  <li>Column 2: Presentation Evaluator </li>
-                  <li>Column 3: Book Evaluator</li>
+                  <li>Column 2: Presentation Evaluator Email</li>
+                  <li>Column 3: Book Evaluator Email</li>
                 </ul>
                 <p>
                   If there are too many or too few columns, the file will not be
