@@ -5,9 +5,14 @@ export const formsApi = {
    * Get a specific form by ID.
    */
   getForm: async (formID) => {
-    return await api.get(`/forms/${formID}`);
+    try {
+      const response = await api.get(`/forms/${formID}`)
+      return response
+    } catch (error) {
+      console.error("Error fetching form:", error)
+      throw error
+    }
   },
-
   /**
    * Fetch all forms from the database.
    */
@@ -25,7 +30,13 @@ export const formsApi = {
    * Update a specific form by ID.
    */
   updateForm: async (formID, updatedData) => {
-    return await api.put(`/forms/${formID}`, updatedData);
+    try {
+      const response = await api.put(`/forms/${formID}`, updatedData)
+      return response
+    } catch (error) {
+      console.error("Error updating form:", error)
+      throw error
+    }
   },
 
   /**
@@ -33,14 +44,12 @@ export const formsApi = {
    */
   getQuestions: async (formID) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/forms/${formID}/questions`);
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`);
-      }
-      return await response.json();
+      const response = await api.get(`/forms/${formID}/questions`)
+      console.log("Questions response:", response) // Debug log
+      return response
     } catch (error) {
-      console.error("Error fetching questions:", error);
-      throw error;
+      console.error("Error fetching questions:", error)
+      throw error
     }
   },
 
@@ -48,21 +57,39 @@ export const formsApi = {
    * Add a new question to a specific form.
    */
   addQuestion: async (formID, questionData) => {
-    return await api.post(`/forms/${formID}/questions`, questionData);
+    try {
+      const response = await api.post(`/forms/${formID}/questions`, questionData)
+      return response
+    } catch (error) {
+      console.error("Error adding question:", error)
+      throw error
+    }
   },
 
   /**
    * Update a specific question in a form.
    */
   updateQuestion: async (formID, questionId, updatedData) => {
-    return await api.put(`/forms/${formID}/questions/${questionId}`, updatedData);
+    try {
+      const response = await api.put(`/forms/${formID}/questions/${questionId}`, updatedData)
+      return response
+    } catch (error) {
+      console.error("Error updating question:", error)
+      throw error
+    }
   },
 
   /**
    * Delete a specific question from a form.
    */
   deleteQuestion: async (formID, questionId) => {
-    return await api.delete(`/forms/${formID}/questions/${questionId}`);
+    try {
+      const response = await api.delete(`/forms/${formID}/questions/${questionId}`)
+      return response
+    } catch (error) {
+      console.error("Error deleting question:", error)
+      throw error
+    }
   },
 
   /**
@@ -71,14 +98,26 @@ export const formsApi = {
    * @param {object} formData - The data to submit for the form.
    */
   submitForm: async (formID, formData) => {
-    return await api.post(`/forms/${formID}/submit`, formData);
+    try {
+      const response = await api.post(`/forms/${formID}/submit`, formData)
+      return response
+    } catch (error) {
+      console.error("Error submitting form:", error)
+      throw error
+    }
   },
 
   /**
    * Fetch all responses for a specific form.
    */
   getResponses: async (formID) => {
-    return await api.get(`/forms/${formID}/responses`);
+    try {
+      const response = await api.get(`/forms/${formID}/responses`)
+      return response
+    } catch (error) {
+      console.error("Error fetching responses:", error)
+      throw error
+    }
   },
 
   /**
@@ -119,28 +158,51 @@ export const formsApi = {
    * Delete a specific response from a form.
    */
   deleteResponse: async (formID, responseId) => {
-    return await api.delete(`/forms/${formID}/responses/${responseId}`);
+    try {
+      const response = await api.delete(`/forms/${formID}/responses/${responseId}`)
+      return response
+    } catch (error) {
+      console.error("Error deleting response:", error)
+      throw error
+    }
   },
-
   /**
    * Fetch all evaluations for a specific form.
    */
   getEvaluations: async (formID) => {
-    return await api.get(`/forms/${formID}/evaluations`);
+    try {
+      const response = await api.get(`/forms/${formID}/evaluations`)
+      return response
+    } catch (error) {
+      console.error("Error fetching evaluations:", error)
+      throw error
+    }
   },
 
   /**
    * Update a specific evaluation in a form.
    */
   updateEvaluation: async (formID, evaluationId, updatedData) => {
-    return await api.put(`/forms/${formID}/evaluations/${evaluationId}`, updatedData);
+    try {
+      const response = await api.put(`/forms/${formID}/evaluations/${evaluationId}`, updatedData)
+      return response
+    } catch (error) {
+      console.error("Error updating evaluation:", error)
+      throw error
+    }
   },
 
   /**
    * Delete a specific evaluation from a form.
    */
   deleteEvaluation: async (formID, evaluationId) => {
-    return await api.delete(`/forms/${formID}/evaluations/${evaluationId}`);
+    try {
+      const response = await api.delete(`/forms/${formID}/evaluations/${evaluationId}`)
+      return response
+    } catch (error) {
+      console.error("Error deleting evaluation:", error)
+      throw error
+    }
   },
 
   /**
