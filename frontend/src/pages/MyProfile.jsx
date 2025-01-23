@@ -23,7 +23,7 @@ export default function MyProfile() {
   
       try {
         
-        const fetchedUser = await userApi.getUser(authUser.id);
+        const fetchedUser = await userApi.getUser(authUser.email);
         setUser(fetchedUser);
   
         // Fetch all projects
@@ -32,12 +32,12 @@ export default function MyProfile() {
         // Count supervised projects
         const supervisedCount = projectsData.filter(
           (project) =>
-            project.supervisor1 === authUser.id || project.supervisor2 === authUser.id
+            project.supervisor1 === authUser.email || project.supervisor2 === authUser.email
         ).length;
         setSupervisedProjectsCount(supervisedCount);
   
         // Fetch evaluator data for pending reviews
-        const evaluatorsResponse = await evaluatorsApi.getProjectsByEvaluator(authUser.id);
+        const evaluatorsResponse = await evaluatorsApi.getProjectsByEvaluator(authUser.email);
         console.log("evaluatorsResponse:",evaluatorsResponse);
         const pendingReviews = evaluatorsResponse.filter((evaluator) =>
               evaluator.status === "Not Submitted"
