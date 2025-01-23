@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext"; // Correctly import useAuth
-import { api } from "../services/api";
 import { projectsApi } from "../services/projectsAPI";
+import { userApi } from "../services/userAPI";
+import { evaluatorsApi } from "../services/evaluatorsAPI";
 
 export default function MyProfile() {
   const { user: authUser } = useAuth(); // Use the useAuth hook
@@ -19,37 +20,31 @@ export default function MyProfile() {
         setLoading(false);
         return;
       }
-
+  
       try {
-        // Fetch user details
-        const userResponse = await api.get(`/users/${authUser.id}`);
-        if (userResponse.success) {
-          const fetchedUser = userResponse.data;
-          console.log("Fetched user data in MyProfile:", fetchedUser);
-          setUser(fetchedUser);
-        } else {
-          setError("Failed to load profile data.");
-          return;
-        }
-
+        
+        const fetchedUser = await userApi.getUser(authUser.id);
+        setUser(fetchedUser);
+  
         // Fetch all projects
         const projectsData = await projectsApi.getAllProjects();
-
+  
         // Count supervised projects
         const supervisedCount = projectsData.filter(
           (project) =>
             project.supervisor1 === authUser.id || project.supervisor2 === authUser.id
         ).length;
         setSupervisedProjectsCount(supervisedCount);
-
-        // Fetch evaluator projects for pending reviews
-        const evaluatorsResponse = await api.get(`/evaluators/projects/${authUser.id}`);
-        if (evaluatorsResponse.success) {
-          const pendingReviews = evaluatorsResponse.data.filter(
-            (project) => project.status === "Not Submitted"
+  
+        // Fetch evaluator data for pending reviews
+        const evaluatorsResponse = await evaluatorsApi.getProjectsByEvaluator(authUser.id);
+        console.log("evaluatorsResponse:",evaluatorsResponse);
+        const pendingReviews = evaluatorsResponse.filter((evaluator) =>
+              evaluator.status === "Not Submitted"
           );
+          console.log("pendingReviews",pendingReviews);
           setPendingReviewsCount(pendingReviews.length);
-        }
+          
       } catch (err) {
         console.error("Error fetching profile or projects:", err.message);
         setError("Unable to fetch profile or projects data.");
@@ -57,10 +52,10 @@ export default function MyProfile() {
         setLoading(false);
       }
     };
-
+  
     fetchProfileAndProjects();
   }, [authUser]);
-
+  
   if (loading) return <div>Loading your profile...</div>;
   if (error) return <div>Error: {error}</div>;
 

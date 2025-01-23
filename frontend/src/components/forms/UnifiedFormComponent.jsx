@@ -369,9 +369,11 @@ export default function UnifiedFormComponent({
             </div>
           ))}
         </div>
-        {/* Student Evaluation */}
 
-        {students.length > 0 &&
+
+        {/* Student Evaluation */}
+        {studentQuestions.length > 0 &&
+          students.length > 0 &&
           students.map((student) => (
             <div
               key={`student-${student.id}`}
