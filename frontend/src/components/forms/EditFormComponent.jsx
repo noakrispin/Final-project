@@ -3,9 +3,9 @@ import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { FaTrashAlt, FaPlus } from "react-icons/fa";
 import { Button } from "../ui/Button";
-import FormField from "./FormField";
+//import FormField from "./FormField";
 import { formsApi } from "../../services/formAPI";
-import { FaInfoCircle } from "react-icons/fa";
+//import { FaInfoCircle } from "react-icons/fa";
 
 function QuestionEditor({ questions, setQuestions, reference }) {
   const handleAddQuestion = () => {
@@ -20,6 +20,13 @@ function QuestionEditor({ questions, setQuestions, reference }) {
       response_type: "text",
       weight: 0,
     };
+  
+    const existingQuestion = questions.find((q) => q.questionID === newQuestion.questionID);
+    if (existingQuestion) {
+      alert("This question already exists.");
+      return;
+    }
+  
     setQuestions((prev) => [...prev, newQuestion]);
     try {
       const response = formsApi.addQuestion(formID, newQuestionData);
@@ -29,14 +36,27 @@ function QuestionEditor({ questions, setQuestions, reference }) {
     }
   };
 
-  const handleDeleteQuestion = (index) => {
+  const handleDeleteQuestion = async (index) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this question?"
     );
-    if (confirmDelete) {
+    if (!confirmDelete) return;
+  
+    const questionToDelete = questions[index];
+  
+    try {
+      if (!questionToDelete.id.startsWith("new_")) {
+        // Only delete from DB if it exists there
+        await formsApi.deleteQuestion(formID, questionToDelete.id);
+      }
+      // Remove from local state
       setQuestions((prev) => prev.filter((_, i) => i !== index));
+    } catch (error) {
+      console.error("Error deleting question:", error.message);
+      alert("Failed to delete question. Please try again.");
     }
   };
+  
 
   const handleUpdateQuestion = async (index, key, value) => {
     const updatedQuestion = { ...questions[index], [key]: value };
@@ -63,7 +83,7 @@ function QuestionEditor({ questions, setQuestions, reference }) {
           className="p-6 bg-white border border-gray-300 rounded-lg shadow-sm"
         >
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg text-blue-900 font-semibold">
+            <h3 className="text-xl text-blue-900 font-semibold">
             {field.reference} Question #{index + 1}
             </h3>
             <button
@@ -203,8 +223,8 @@ function QuestionViewer({ questions }) {
           className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300"
         >
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg text-blue-900 font-semibold flex items-center">
-              <span className="mr-2 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
+            <h3 className="text-xl text-blue-900 font-semibold flex items-center">
+              <span className="mr-2 font-semibold bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-base">
                 #{index + 1}
               </span>
               {field.title}
@@ -226,7 +246,7 @@ function QuestionViewer({ questions }) {
             <div className="flex items-center">
               <span className="font-medium mr-2">Required:</span>
               <span
-                className={`px-2 py-1 rounded-full text-xs ${
+                className={`px-2 py-1 rounded-full text-sm font-medium ${
                   field.required
                     ? "bg-green-100 text-green-800"
                     : "bg-red-100 text-red-800"
@@ -283,6 +303,7 @@ export default function EditFormComponent({
     }
   };
 
+  
   useEffect(() => {
     if (!user) {
       navigate("/login");
@@ -315,20 +336,62 @@ export default function EditFormComponent({
 
   const handleSave = async () => {
     try {
-      const updatedQuestions = [...generalQuestions, ...studentQuestions];
+      const updatedGeneralQuestions = generalQuestions.map((q) => ({
+        ...q,
+        order: parseInt(q.order), // Ensure order is an integer
+        weight: parseFloat(q.weight), // Ensure weight is a float
+      }));
+      const updatedStudentQuestions = studentQuestions.map((q) => ({
+        ...q,
+        order: parseInt(q.order), // Ensure order is an integer
+        weight: parseFloat(q.weight), // Ensure weight is a float
+      }));
+  
+      // Update Form Metadata (name and description)
       await formsApi.updateForm(formID, {
         formName: editedFormName,
         description: editedFormDescription,
-        questions: updatedQuestions,
       });
+  
+      // Sync Questions with Database
+      const syncQuestions = async (questions, reference) => {
+        for (const question of questions) {
+          try {
+            if (question.id.startsWith("new_")) {
+              // Add new question
+              const response = await formsApi.addQuestion(formID, question);
+              question.id = response.data.id; // Update local ID with database ID
+            } else {
+              // Update existing question
+              await formsApi.updateQuestion(formID, question.id, question);
+            }
+          } catch (error) {
+            console.error(`Error syncing ${reference} question:`, error.message);
+          }
+        }
+      };
+  
+      // Sync General and Student Questions
+      await syncQuestions(updatedGeneralQuestions, "general");
+      await syncQuestions(updatedStudentQuestions, "student");
+  
+      // Refresh Local State with Questions from DB
+      const allQuestions = await formsApi.getQuestions(formID);
+      const formattedQuestions = allQuestions.data.sort((a, b) => a.order - b.order);
+  
+      setGeneralQuestions(formattedQuestions.filter((q) => q.reference === "general"));
+      setStudentQuestions(formattedQuestions.filter((q) => q.reference === "student"));
+  
       alert("Form updated successfully!");
       setIsEditMode(false);
       setHasUnsavedChanges(false);
     } catch (error) {
-      console.error("Error saving form updates:", error);
+      console.error("Error saving form updates:", error.message);
+      alert("Failed to save changes. Please try again.");
     }
   };
-
+  
+  
   return (
     <div className="relative p-4 md:p-6">
       <div className="flex flex-col md:flex-row justify-center items-center mb-6 space-y-2 md:space-y-0 md:space-x-2">
@@ -356,12 +419,12 @@ export default function EditFormComponent({
         <div className="p-4 md:p-6 bg-slate-200 border border-blue-100 rounded-lg shadow-sm mb-6">
           {isEditMode ? (
             <>
-              <label className="block text-gray-700 font-medium mb-2">
+              <label className="text-2xl font-bold text-blue-900 mb-4">
                 Form Name
               </label>
               <input
                 type="text"
-                className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 shadow-sm mb-4"
+                className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 shadow-sm text-lg font-medium mb-4"
                 value={editedFormName}
                 onChange={(e) => {
                   setEditedFormName(e.target.value);
@@ -369,11 +432,11 @@ export default function EditFormComponent({
                 }}
                 placeholder="Form Name"
               />
-              <label className="block text-gray-700 font-medium mb-2">
+              <label className="text-2xl font-bold text-blue-900 mb-4">
                 Form Description
               </label>
               <textarea
-                className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 shadow-sm"
+                className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 shadow-sm text-lg "
                 value={editedFormDescription}
                 onChange={(e) => {
                   setEditedFormDescription(e.target.value);
@@ -395,7 +458,7 @@ export default function EditFormComponent({
         </div>
 
         <div className="p-4 md:p-6 bg-slate-200 border border-blue-100 rounded-lg shadow-sm mb-6">
-          <h3 className="text-lg font-bold text-blue-900 mb-4">
+          <h3 className="text-2xl font-bold text-blue-900 mb-4">
             General Questions
           </h3>
           {isEditMode ? (
@@ -410,7 +473,7 @@ export default function EditFormComponent({
         </div>
 
         <div className="p-4 md:p-6 bg-slate-200 border border-blue-100 rounded-lg shadow-sm mb-6">
-          <h3 className="text-lg font-bold text-blue-900 mb-4">
+          <h3 className="text-2xl font-bold text-blue-900 mb-4">
             Student Questions
           </h3>
           {isEditMode ? (

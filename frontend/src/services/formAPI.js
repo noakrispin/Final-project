@@ -58,13 +58,14 @@ export const formsApi = {
    */
   addQuestion: async (formID, questionData) => {
     try {
-      const response = await api.post(`/forms/${formID}/questions`, questionData)
-      return response
+      const response = await api.post(`/forms/${formID}/questions`, questionData);
+      return response;
     } catch (error) {
-      console.error("Error adding question:", error)
-      throw error
+      console.error("Error adding question:", error.message);
+      throw error;
     }
   },
+  
 
   /**
    * Update a specific question in a form.
