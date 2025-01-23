@@ -19,6 +19,7 @@ const Navbar = () => {
 
   console.log("Navbar received user:", user); // Debugging log
 
+  
   // Clear search state on route change
   useEffect(() => {
     setSearchQuery("");
@@ -86,9 +87,15 @@ const Navbar = () => {
         <MobileMenu isOpen={menuOpen} setIsOpen={setMenuOpen}>
           <ul className="flex flex-col lg:flex-row items-center gap-2 lg:gap-12 font-medium text-gray-800 text-sm">
             <NavLink to="/projectsSupervisors">MY PROJECTS</NavLink>
-            <NavLink to="/MyProjectsReview">PROJECTS TO REVIEW</NavLink>
+            <NavLink
+              to="/MyProjectsReview"
+              activePaths={["/MyProjectsReview", "/OtherProjectsReview"]}
+            >
+              PROJECTS TO REVIEW
+            </NavLink>
             {/* <NavLink to="/SupervisorGradesFeedback">GRADES</NavLink> */}
             <NavLink to="/contact">CONTACT</NavLink>
+
           </ul>
         </MobileMenu>
 
@@ -137,9 +144,10 @@ const Navbar = () => {
   );
 };
 
-const NavLink = ({ to, children }) => {
+const NavLink = ({ to, children, activePaths = [] }) => {
   const location = useLocation();
-  const isActive = location.pathname === to;
+  const isActive = activePaths.includes(location.pathname) || location.pathname === to;
+
   return (
     <Link
       to={to}
@@ -153,5 +161,6 @@ const NavLink = ({ to, children }) => {
     </Link>
   );
 };
+
 
 export default Navbar;

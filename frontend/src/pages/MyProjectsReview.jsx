@@ -37,7 +37,7 @@ const MyProjectsReview = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!user || !user.id) {
+      if (!user || !user.email) {
         console.error("User or Evaluator ID is missing.");
         return;
       }
@@ -49,8 +49,8 @@ const MyProjectsReview = () => {
         const formID = "SupervisorForm";
         // Fetch all projects and evaluations in parallel
         const [projectsData, evaluationsData] = await Promise.all([
-          evaluatorsApi.getProjectsForEvaluatorByForm(user.id, formID),
-          formsApi.getEvaluationsByEvaluator(user.id),
+          evaluatorsApi.getProjectsForEvaluatorByForm(user.email, formID),
+          formsApi.getEvaluationsByEvaluator(user.email),
         ]);
         console.log("Evaluations Data from API:", evaluationsData);
         console.log("Projects Data (before formatting):", projectsData);
@@ -91,8 +91,8 @@ const MyProjectsReview = () => {
               ? new Date(project.deadline._seconds * 1000)
               : project.deadline,
             isSupervisor:
-              project.supervisor1 === user.id ||
-              project.supervisor2 === user.id,
+              project.supervisor1 === user.email ||
+              project.supervisor2 === user.email,
             students, // Use the extracted and formatted students
           };
         });
@@ -358,7 +358,7 @@ const MyProjectsReview = () => {
             <Table
               data={projects}
               apiResponse={grades} // Pass the full evaluationsData array
-              userId={user?.id}
+              userId={user?.email}
               isDeadlinePassed={isDeadlinePassed}
               columns={myProjectColumns}
               onRowClick={handleRowClick}
