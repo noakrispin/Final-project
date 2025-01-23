@@ -4,12 +4,12 @@ const db = require("../config/firebaseAdmin");
 const { sendEmail } = require("../utils/emailService");
 
 // Helper function to get role-specific details
-const getRoleSpecificDetails = async (role, userId) => {
+const getRoleSpecificDetails = async (role, emailId) => {
   try {
     if (role === "Supervisor") {
       const supervisorDoc = await db
         .collection("users")
-        .doc(userId)
+        .doc(emailId) // Use emailId here
         .collection("supervisorDetails")
         .doc("details")
         .get();
@@ -18,7 +18,7 @@ const getRoleSpecificDetails = async (role, userId) => {
     } else if (role === "Admin") {
       const adminDoc = await db
         .collection("users")
-        .doc(userId)
+        .doc(emailId) // Use emailId here
         .collection("adminDetails")
         .doc("details")
         .get();
@@ -40,16 +40,15 @@ exports.login = async (req, res) => {
     // Query Firestore for user by email
     const userDoc = await db
       .collection("users")
-      .where("email", "==", email)
-      .limit(1)
+      .doc(email) // Use email as the key
       .get();
 
-    if (userDoc.empty) {
+    if (!userDoc.exists) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    const user = userDoc.docs[0].data();
-    const userId = userDoc.docs[0].id;
+    const user = userDoc.data();
+    const emailId = user.email; // Rename for consistency
 
     // Validate password
     const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -58,23 +57,20 @@ exports.login = async (req, res) => {
     }
 
     // Fetch role-specific details
-    const roleDetails = await getRoleSpecificDetails(user.role, userId);
+    const roleDetails = await getRoleSpecificDetails(user.role, emailId);
 
     // Generate JWT token
-    const token = jwt.sign({ id: userId, role: user.role }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ emailId, role: user.role }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
-
-    // Remove sensitive fields before sending response
-    const { password: _, ...userWithoutPassword } = user;
 
     // Send response
     res.status(200).json({
       success: true,
       token,
       user: {
-        id: userId,
-        ...userWithoutPassword,
+        emailId, // Use the new identifier name
+        ...user,
         ...(roleDetails ? { roleDetails } : {}),
       },
     });
@@ -84,17 +80,19 @@ exports.login = async (req, res) => {
   }
 };
 
+
 // Register function
 exports.register = async (req, res) => {
-  const { id, fullName, email, password, role, supervisorTopics, permissions } = req.body;
+  const { email, fullName, password, role, supervisorTopics, permissions } = req.body;
 
   try {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Add user to Firestore
-    await db.collection("users").doc(id).set({
-      id,
+    const emailId = email; // Rename for clarity
+    await db.collection("users").doc(emailId).set({
+      emailId, // Include as the identifier in the user object
       fullName,
       email,
       role,
@@ -105,7 +103,7 @@ exports.register = async (req, res) => {
     if (role === "Supervisor") {
       await db
         .collection("users")
-        .doc(id)
+        .doc(emailId)
         .collection("supervisorDetails")
         .doc("details")
         .set({
@@ -114,7 +112,7 @@ exports.register = async (req, res) => {
     } else if (role === "Admin") {
       await db
         .collection("users")
-        .doc(id)
+        .doc(emailId)
         .collection("adminDetails")
         .doc("details")
         .set({
@@ -123,6 +121,14 @@ exports.register = async (req, res) => {
           personalNotes: "",
         });
     }
+
+    res.status(201).json({ success: true, message: "User registered successfully" });
+  } catch (error) {
+    console.error("Error during registration:", error.message);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
     // Temporarily comment out email-sending functionality
     /*
     // Send email notification
@@ -136,19 +142,14 @@ exports.register = async (req, res) => {
     `;
     await sendEmail(email, "Welcome to Final Project Portal", emailText);
   */
-    res.status(201).json({ success: true, message: "User registered successfully" });
-  } catch (error) {
-    console.error("Error during registration:", error.message);
-    res.status(500).json({ success: false, message: "Internal server error" });
-  }
-};
+ 
 
 // Get Profile function
 exports.getProfile = async (req, res) => {
-  const userId = req.user.id;
+  const emailId = req.user.email;
 
   try {
-    const userDoc = await db.collection("users").doc(userId).get();
+    const userDoc = await db.collection("users").doc(emailId).get();
 
     if (!userDoc.exists) {
       return res.status(404).json({ success: false, message: "User not found" });
@@ -157,7 +158,7 @@ exports.getProfile = async (req, res) => {
     const user = userDoc.data();
 
     // Fetch role-specific details
-    const roleDetails = await getRoleSpecificDetails(user.role, userId);
+    const roleDetails = await getRoleSpecificDetails(user.role, emailId);
 
     const { password: _, ...userWithoutPassword } = user;
 
@@ -175,13 +176,12 @@ exports.getProfile = async (req, res) => {
 };
 
 exports.verifyUser = async (req, res) => {
-  const { email, id } = req.body;
+  const { email } = req.body;
 
   try {
     const userDoc = await db
       .collection("users")
       .where("email", "==", email)
-      .where("id", "==", id)
       .limit(1)
       .get();
 
@@ -198,13 +198,12 @@ exports.verifyUser = async (req, res) => {
 
 // Reset Password function
 exports.resetPassword = async (req, res) => {
-  const { email, id, newPassword } = req.body;
+  const { email, newPassword } = req.body;
 
   try {
     const userDoc = await db
       .collection("users")
       .where("email", "==", email)
-      .where("id", "==", id)
       .limit(1)
       .get();
 
@@ -213,11 +212,11 @@ exports.resetPassword = async (req, res) => {
     }
 
     const user = userDoc.docs[0];
-    const userId = user.id;
+    const emailId = user.email;
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    await db.collection("users").doc(userId).update({
+    await db.collection("users").doc(emailId).update({
       password: hashedPassword,
     });
     // Temporarily comment out email-sending functionality
