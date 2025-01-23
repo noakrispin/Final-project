@@ -2,13 +2,13 @@ const admin = require("firebase-admin");
 const { addDocument, getDocument, addSubcollection, getSubcollection } = require("../utils/firebaseHelper");
 
 // Helper function to handle subcollections
-const handleSubcollections = async (id, role, supervisorTopics) => {
+const handleSubcollections = async (emailId, role, supervisorTopics) => {
   try {
     if (role === "Supervisor" || role === "Admin") {
-      await addSubcollection("users", id, "supervisorDetails", { supervisorTopics });
+      await addSubcollection("users", emailId, "supervisorDetails", { supervisorTopics });
     }
     if (role === "Admin") {
-      await addSubcollection("users", id, "adminDetails", { permissions: ["manageUsers", "assignRoles"] });
+      await addSubcollection("users", emailId, "adminDetails", { permissions: ["manageUsers", "assignRoles"] });
     }
   } catch (error) {
     console.error("Error adding subcollections:", error.message);
@@ -18,20 +18,22 @@ const handleSubcollections = async (id, role, supervisorTopics) => {
 
 // Add a new user
 const addUser = async (req, res) => {
-  const { id, fullName, email, role, password, supervisorTopics, isAdmin = false } = req.body; // Default to false if not provided
+  const { email, fullName, role, password, supervisorTopics, isAdmin = false } = req.body;
 
   try {
     const isAdminValue = !!isAdmin; // Ensure `isAdmin` is always a boolean
-    const response = await addDocument("users", id, { id, fullName, email, role, password, isAdmin: isAdminValue });
+    const emailId = email; // Use email as the document ID
+    const response = await addDocument("users", emailId, { emailId, fullName, email, role, password, isAdmin: isAdminValue });
+
     if (!response.success) {
       return res.status(400).json({ success: false, error: "Failed to add user to main collection." });
     }
 
     if (role === "Supervisor" || isAdminValue) {
-      await addSubcollection("users", id, "supervisorDetails", "details", { supervisorTopics: supervisorTopics || [] });
+      await addSubcollection("users", emailId, "supervisorDetails", "details", { supervisorTopics: supervisorTopics || [] });
     }
     if (isAdminValue) {
-      await addSubcollection("users", id, "adminDetails", "details", { permissions: "All admin permissions" });
+      await addSubcollection("users", emailId, "adminDetails", "details", { permissions: "All admin permissions" });
     }
 
     res.status(201).json({ success: true, message: "User added successfully." });
@@ -44,7 +46,9 @@ const addUser = async (req, res) => {
 // Fetch user details along with subcollections
 const getUser = async (req, res) => {
   try {
-    const userResponse = await getDocument("users", req.params.id);
+    const emailId = req.params.id; // Use email as the document ID
+    const userResponse = await getDocument("users", emailId);
+
     if (!userResponse.success) {
       return res.status(404).json({ success: false, error: "User not found." });
     }
@@ -54,7 +58,7 @@ const getUser = async (req, res) => {
     // Fetch adminDetails if isAdmin is true
     let adminDetails = null;
     if (user.isAdmin) {
-      const adminData = await getSubcollection("users", req.params.id, "adminDetails");
+      const adminData = await getSubcollection("users", emailId, "adminDetails");
       adminDetails = adminData.success ? adminData.data : null;
     }
 
@@ -93,12 +97,11 @@ const getAllUsers = async (req, res) => {
 };
 
 const deleteUser = async (req, res) => {
-  const userId = req.params.id;
+  const emailId = req.params.id; // Use email as the document ID
 
   try {
-    console.log(`Deleting user with ID: ${userId}`);
-    // Delete the main user document
-    const userRef = admin.firestore().collection("users").doc(userId);
+    console.log(`Deleting user with emailId: ${emailId}`);
+    const userRef = admin.firestore().collection("users").doc(emailId);
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
@@ -107,15 +110,15 @@ const deleteUser = async (req, res) => {
 
     // Delete the user's subcollections if any
     if (userDoc.data().role === "Supervisor") {
-      await admin.firestore().collection("users").doc(userId).collection("supervisorDetails").doc("details").delete();
+      await userRef.collection("supervisorDetails").doc("details").delete();
     }
     if (userDoc.data().role === "Admin") {
-      await admin.firestore().collection("users").doc(userId).collection("adminDetails").doc("details").delete();
+      await userRef.collection("adminDetails").doc("details").delete();
     }
 
     // Delete the main user document
     await userRef.delete();
-    console.log(`User with ID ${userId} deleted successfully.`);
+    console.log(`User with emailId ${emailId} deleted successfully.`);
     res.status(200).json({ success: true, message: "User deleted successfully" });
   } catch (error) {
     console.error("Error deleting user:", error.message);
@@ -124,10 +127,8 @@ const deleteUser = async (req, res) => {
 };
 
 const updateUserRole = async (req, res) => {
-  const { userId } = req.params;
+  const { userId } = req.params; // This should now be emailId
   const { role, isAdmin } = req.body;
-
-  console.log(`Updating user role: ${userId}, role: ${role}, isAdmin: ${isAdmin}`);
 
   try {
     const userRef = admin.firestore().collection("users").doc(userId);
@@ -142,7 +143,7 @@ const updateUserRole = async (req, res) => {
     if (updatedData.isAdmin) {
       await addSubcollection("users", userId, "adminDetails", "details", { permissions: "All admin permissions" });
     } else {
-      await admin.firestore().collection("users").doc(userId).collection("adminDetails").doc("details").delete();
+      await userRef.collection("adminDetails").doc("details").delete();
     }
 
     await userRef.update(updatedData);

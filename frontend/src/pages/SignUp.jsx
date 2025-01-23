@@ -12,14 +12,6 @@ function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const validateIdCard = (value) => {
-    if (!value) return "ID card is required";
-    const cleanValue = value.toString().replace(/\D/g, ''); // Remove non-numeric characters
-    if (cleanValue.length !== 9) return "ID card must be exactly 9 digits";
-    if (!/^\d{9}$/.test(cleanValue)) return "ID card must contain only numbers";
-    return true;
-  };
-
   const validateEmail = (email) => {
     if (!email) return "Email is required";
     if (!email.endsWith("@e.braude.ac.il")) return "Email must end with @e.braude.ac.il";
@@ -31,7 +23,6 @@ function SignUp() {
   const onSubmit = async (data) => {
     try {
       const response = await api.post("/auth/register", {
-        id: data.id,
         fullName: data.fullName,
         email: data.email,
         password: data.password,
@@ -65,17 +56,6 @@ function SignUp() {
         <p className="text-lg text-gray-600 mb-6">Sign up to access the Final Project Portal.</p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <InputField
-            label="ID"
-            name="id"
-            type="number"
-            register={register}
-            required="ID is required"
-            pattern={{
-              validate: validateIdCard
-            }}
-            errors={errors}
-          />
           <InputField
             label="Full Name"
             name="fullName"
