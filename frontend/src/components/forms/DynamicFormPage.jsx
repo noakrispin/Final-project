@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import UnifiedFormComponent from "./UnifiedFormComponent";
-import EditFormComponent from "./editFormComponent";
+import EditFormComponent from "./EditFormComponent";
 import { formsApi } from "../../services/formAPI";
 
 const DynamicFormPage = () => {
