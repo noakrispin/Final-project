@@ -156,10 +156,10 @@ const updateUserRole = async (req, res) => {
 };
 
 const scheduleRemindersForAll = async (req, res) => {
-  const { scheduleDate, message } = req.body;
+  const { scheduleDateTime, message } = req.body;
 
-  if (!scheduleDate) {
-    return res.status(400).json({ error: "Schedule date is required to send reminders." });
+  if (!scheduleDateTime) {
+    return res.status(400).json({ error: "Schedule date and time are required to send reminders." });
   }
 
   const defaultTemplate =
@@ -167,21 +167,19 @@ const scheduleRemindersForAll = async (req, res) => {
   const finalMessage = message || defaultTemplate;
 
   try {
-    // Fetch all users
     const usersSnapshot = await admin.firestore().collection("users").get();
     const userEmails = usersSnapshot.docs
       .map((doc) => doc.data().email)
-      .filter(Boolean); // Ensure only valid emails are included
+      .filter(Boolean);
 
     if (userEmails.length === 0) {
       return res.status(404).json({ error: "No users found to send reminders." });
     }
 
-    // Save the scheduled reminder
     const remindersCollection = admin.firestore().collection("scheduled_reminders");
     const reminderData = {
       userEmails,
-      scheduleDate: new Date(scheduleDate),
+      scheduleDateTime: new Date(scheduleDateTime), // Store exact date and time
       message: finalMessage,
       status: "pending",
       createdAt: new Date(),
