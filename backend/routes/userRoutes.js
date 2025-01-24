@@ -1,5 +1,5 @@
 const express = require("express");
-const { addUser, getUser, getAllUsers, deleteUser, updateUserRole,  scheduleRemindersForAll, processScheduledReminders } = require("../controllers/userController");
+const { addUser, getUser, getAllUsers, deleteUser, updateUserRole,  scheduleRemindersForAll } = require("../controllers/userController");
 const db = require("../config/firebaseAdmin");
 
 const router = express.Router();
@@ -34,10 +34,6 @@ router.put("/:userId/role", asyncHandler(updateUserRole));  // Update user role
 router.post(
   "/schedule-reminders",
   asyncHandler(scheduleRemindersForAll) // Add the route for scheduling reminders
-);
-router.post(
-  "/process-reminders",
-  asyncHandler(processScheduledReminders) // Add the route for processing reminders
 );
 
 // Error handling middleware for route errors

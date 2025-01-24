@@ -1,6 +1,7 @@
 const admin = require("firebase-admin");
 const { addDocument, getDocument, addSubcollection, getSubcollection } = require("../utils/firebaseHelper");
 
+
 // Helper function to handle subcollections
 const handleSubcollections = async (emailId, role, supervisorTopics) => {
   try {
@@ -167,6 +168,7 @@ const scheduleRemindersForAll = async (req, res) => {
   const finalMessage = message || defaultTemplate;
 
   try {
+    // Fetch all user emails
     const usersSnapshot = await admin.firestore().collection("users").get();
     const userEmails = usersSnapshot.docs
       .map((doc) => doc.data().email)
@@ -176,69 +178,26 @@ const scheduleRemindersForAll = async (req, res) => {
       return res.status(404).json({ error: "No users found to send reminders." });
     }
 
-    const remindersCollection = admin.firestore().collection("scheduled_reminders");
-    const reminderData = {
-      userEmails,
-      scheduleDateTime: new Date(scheduleDateTime), // Store exact date and time
-      message: finalMessage,
-      status: "pending",
-      createdAt: new Date(),
-    };
+    // Send emails immediately
+    await Promise.all(
+      userEmails.map((email) =>
+        sendEmail(email, "Reminder Notification", finalMessage)
+      )
+    );
 
-    await remindersCollection.add(reminderData);
-    res.status(201).json({ success: true, message: "Reminders scheduled successfully for all users." });
+    // Log successful emails
+    console.log(`Reminders sent immediately to ${userEmails.length} users.`);
+
+    res.status(201).json({
+      success: true,
+      message: `Reminders sent immediately to ${userEmails.length} users.`,
+    });
   } catch (error) {
-    console.error("Error scheduling reminders:", error.message);
-    res.status(500).json({ error: "Failed to schedule reminders for all users." });
+    console.error("Error sending reminders immediately:", error.message);
+    res.status(500).json({ error: "Failed to send reminders." });
   }
 };
 
-const processScheduledReminders = async () => {
-  try {
-    // Get all reminders that are pending and due for processing
-    const remindersSnapshot = await admin
-    .firestore()
-    .collection("scheduled_reminders")
-    .where("status", "==", "pending")
-    .where("scheduleDateTime", "<=", new Date()) // Correct field name
-    .get();
-
-    if (remindersSnapshot.empty) {
-      console.log("No reminders to process.");
-      return;
-    }
-
-    const reminders = remindersSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    for (const reminder of reminders) {
-      const { userEmails, message } = reminder;
-
-      // Log for debugging
-      console.log("Processing reminder for emails:", userEmails);
-
-      if (!userEmails || userEmails.length === 0) {
-        console.log(`No emails found for reminder ${reminder.id}. Skipping.`);
-        continue;
-      }
-
-      // Send reminder emails
-      await Promise.all(
-        userEmails.map((email) => sendEmail(email, "Reminder Notification", message))
-      );
-
-      // Mark reminder as sent
-      await admin.firestore().collection("scheduled_reminders").doc(reminder.id).update({
-        status: "sent",
-        sentAt: new Date(),
-      });
-    }
-  } catch (error) {
-    console.error("Error processing reminders:", error.message);
-  }
-};
 
 
 module.exports = {
@@ -248,5 +207,4 @@ module.exports = {
   deleteUser,
   updateUserRole,
   scheduleRemindersForAll, 
-  processScheduledReminders,
  }

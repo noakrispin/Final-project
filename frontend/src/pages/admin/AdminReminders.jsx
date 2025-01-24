@@ -163,58 +163,25 @@ const AdminReminders = () => {
 
   // Handle sending reminders
   const handleSendReminders = async () => {
-    if (!scheduleDate) {
-      toast.error("Please select a schedule date.");
-      return;
-    }
-  
-    if (!scheduleTime) {
-      toast.error("Please select a schedule time.");
-      return;
-    }
-  
-    const scheduleDateTime = new Date(`${scheduleDate}T${scheduleTime}:00`);
-  
-    // Validate if the combined date and time are valid
-    if (isNaN(scheduleDateTime.getTime())) {
-      toast.error("Invalid date or time format. Please check your inputs.");
-      return;
-    }
-  
-    // Validate if the scheduled date and time are in the future
-    if (scheduleDateTime < new Date()) {
-      toast.error("Please select a future date and time for scheduling reminders.");
+    if (!emailMessage.trim()) {
+      toast.error("Please enter a reminder message.");
       return;
     }
   
     try {
-      await emailAPI.sendRemindersToAll(
-        scheduleDateTime.toISOString(), // Send ISO string to API
-        emailMessage || "Default reminder message for all users."
-      );
+      // Send reminders immediately
+      await emailAPI.sendRemindersToAll(emailMessage);
   
-      // Format the scheduled date and time for display
-      const formattedDateTime = new Intl.DateTimeFormat("en-US", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }).format(scheduleDateTime);
+      // Show success toast
+      toast.success("Reminders sent successfully.");
   
-      // Update the scheduled reminder state
-      setScheduledReminder({
-        dateTime: formattedDateTime,
-        message: emailMessage || "Default reminder message for all users.",
-      });
-  
-      toast.success(`Reminders scheduled successfully for ${formattedDateTime}.`);
-      setScheduleDate("");
-      setScheduleTime(""); // Clear time
+      // Clear the message box
       setEmailMessage("");
     } catch (error) {
       console.error("Error sending reminders:", error);
       toast.error("Failed to send reminders.");
     }
   };
-  
   
   const projectColumns = useMemo(
     () => [
@@ -341,22 +308,27 @@ const AdminReminders = () => {
               rowClassName="hover:bg-gray-50 transition duration-200"
               useCustomColumns={false}
               showDescription={true}
-              description="add description (in AdminReminders)"
+              description="Overview of projects with supervisors, deadlines, and grades."
               className="table-auto min-w-full" // Ensure table takes up full width
             />
           </div>
         )}
       </div>
 
-        <div className="p-6 border-t border-gray-200 flex flex-wrap lg:flex-nowrap space-y-6 lg:space-y-0 lg:space-x-8">
-          {/* Left Section: Reminder Message */}
-          <div className="lg:w-1/2">
+        {/* Reminders Section */}
+        <div className="p-6 border-t border-gray-200 flex flex-col space-y-6">
+          {/* Reminder Message */}
+          <div>
             <label className="block text-gray-700 font-medium mb-2">
-              Reminder Message (Optional):
+              Reminder Message:
             </label>
             <p className="text-gray-500 text-base mb-2">
-              If no text message is added, the following default message will be sent: <br />
-              <em>"This is a reminder to review the project's status. Please log in to the system to take action."</em>
+              If no text message is added, the following default message will be sent:
+              <br />
+              <em>
+                "This is a reminder to review the project's status. Please log in to the
+                system to take action."
+              </em>
             </p>
             <textarea
               value={emailMessage}
@@ -367,59 +339,16 @@ const AdminReminders = () => {
             />
           </div>
 
-            {/* Right Section: Schedule Reminder Date and Button */}
-            <div className="lg:w-1/2 flex flex-col justify-between">
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  Schedule Reminder Date:
-                </label>
-                <input
-                  type="date"
-                  value={scheduleDate}
-                  onChange={(e) => setScheduleDate(e.target.value)}
-                  className="border p-2 rounded-md w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  Schedule Reminder Time:
-                </label>
-                <input
-                  type="time"
-                  value={scheduleTime}
-                  onChange={(e) => setScheduleTime(e.target.value)}
-                  className="border p-2 rounded-md w-full"
-                />
-              </div>
-              <div className="mt-4 lg:mt-0 flex justify-end">
-              <Button
-                onClick={handleSendReminders}
-                className={`bg-blue-600 text-white px-4 py-2 rounded-lg ${
-                  scheduleDate && scheduleTime ? "hover:bg-blue-700" : "opacity-50 cursor-not-allowed"
-                }`}
-                disabled={!scheduleDate || !scheduleTime}
-              >
-                Send Reminders
-              </Button>
-              </div>
-            </div>
+          {/* Send Reminder Button */}
+          <div className="flex justify-end">
+          <Button
+            onClick={handleSendReminders}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+          >
+            Send Reminders
+          </Button>
           </div>
-
-          {/* Display Scheduled Reminder Info */}
-          {scheduledReminder && (
-            <div className="bg-green-50 border border-green-400 text-green-700 p-4 rounded-md mt-6">
-              <h3 className="font-semibold">Reminder Scheduled</h3>
-              <p>
-                <strong>Date & Time:</strong> {scheduledReminder.dateTime}
-              </p>
-              <p>
-                <strong>Message:</strong>{" "}
-                {scheduledReminder.message !== "Default reminder message for all users."
-                  ? scheduledReminder.message
-                  : "No custom message provided. A default reminder will be sent."}
-              </p>
-            </div>
-          )}
+        </div>
       </div>
     </div>
   );
