@@ -126,69 +126,71 @@ export default function UnifiedFormComponent({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     if (!isFormValid()) {
       alert(
         "Please fill in all required fields. Text areas must have at least 5 words."
       );
       return;
     }
-
+  
     const responses = {
-      evaluatorID: user.email,
+      evaluatorID: user.email, // Ensure evaluatorID is correct
       projectCode,
       general: {},
       students: {},
     };
-
-    console.log("Form data being submitted:", responses);
-
+  
     // Populate general responses
     generalQuestions.forEach((field) => {
       responses.general[field.name] = formData[field.name];
     });
-
+  
     // Populate student-specific responses
     students.forEach((student) => {
-      responses.students[student.id] = {
-        ...formData[`student${student.id}`], // Preserve existing responses for this student
-      };
-
+      const studentResponses = {};
       studentQuestions.forEach((field) => {
         const fieldName = `student${student.id}_${field.name}`;
-        responses.students[student.id][field.name] =
-          formData[fieldName] ||
-          responses.students[student.id][field.name] ||
-          ""; // Merge existing and new responses
+        studentResponses[field.name] = formData[fieldName] || ""; // Use field name without prefix
       });
+      responses.students[student.id] = studentResponses;
     });
-
+  
     try {
-      console.log("Submitting form data:", responses); // Debug log
+      console.log("Submitting form data:", responses);
+  
       // Submit the form responses
-      await formsApi.submitForm(formID, responses); // Pass formID and the complete responses object
+      await formsApi.submitForm(formID, responses);
+  
       console.log("Form submitted successfully");
-
+      console.log("user.email",user.email);
       // Add or update evaluator status in Evaluators collection
       const evaluatorData = {
-        evaluatorID: user.email,
+        evaluatorID: user.email.trim(), // Ensure evaluatorID is accurate
         formID,
         projectCode,
         status: "Submitted",
       };
-
-      const evaluatorId = `${user.email}-${formID}-${projectCode}`; // Unique ID for evaluator
-      console.log("Updating evaluator status:", evaluatorData);
-
-      await evaluatorsApi.addOrUpdateEvaluator(evaluatorId, evaluatorData);
+      console.log("Preparing evaluator data for submission:", {
+        evaluatorID: user.email.trim(),
+        formID,
+        projectCode,
+        status: "Submitted",
+      });
+      
+  
+      console.log("Evaluator data to update:", evaluatorData);
+  
+      await evaluatorsApi.addOrUpdateEvaluator(evaluatorData); 
       console.log("Evaluator status updated successfully");
-
+  
       // Redirect after successful submission
       navigate(-1); // Go back to the previous page
     } catch (error) {
       console.error("Error submitting form or updating evaluator:", error);
     }
   };
+  
 
   const updateProgress = (updatedFormData = formData) => {
     const staticFields = ["projectCode", "title", "evaluatorName"]; // Non-editable fields

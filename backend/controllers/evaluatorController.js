@@ -5,41 +5,48 @@ exports.addOrUpdateEvaluator = async (req, res) => {
   const { formID, projectCode, status, evaluatorID } = req.body;
 
   try {
+    if (!evaluatorID || !formID || !projectCode) {
+      return res.status(400).json({ error: { message: "Missing required fields", status: 400 } });
+    }
+
     const evaluatorsRef = admin.firestore().collection("evaluators");
 
-    // Query Firestore for an existing evaluator with the same evaluatorID, projectCode, and formID
+    // Query Firestore for an existing evaluator
     const querySnapshot = await evaluatorsRef
-      .where("evaluatorID", "==", evaluatorID)
-      .where("projectCode", "==", projectCode)
-      .where("formID", "==", formID)
+      .where("evaluatorID", "==", evaluatorID.trim()) // Trim to avoid extra spaces
+      .where("projectCode", "==", projectCode.trim())
+      .where("formID", "==", formID.trim())
       .get();
 
     if (!querySnapshot.empty) {
-      // Update the existing document
-      const docId = querySnapshot.docs[0].id; // Get the document ID of the first matching record
+      const docId = querySnapshot.docs[0].id;
+
+      console.log("Updating existing evaluator record:", docId);
       await evaluatorsRef.doc(docId).set(
-        { evaluatorID, formID, projectCode, status },
-        { merge: true } // Merge to avoid overwriting other fields
+        { evaluatorID: evaluatorID.trim(), formID, projectCode, status },
+        { merge: true }
       );
 
-      res.status(200).json({ success: true, message: "Evaluator record updated successfully" });
+      return res.status(200).json({ success: true, message: "Evaluator record updated successfully" });
     } else {
-      // Create a new document if no matching record exists
-      const newDocRef = evaluatorsRef.doc(); // Generate a new document ID
-      await newDocRef.set({
-        evaluatorID,
+      console.log("No matching evaluator found. Creating new record.");
+
+      await evaluatorsRef.add({
+        evaluatorID: evaluatorID.trim(),
         formID,
         projectCode,
         status,
       });
 
-      res.status(201).json({ success: true, message: "New evaluator record created successfully" });
+      return res.status(201).json({ success: true, message: "New evaluator record created successfully" });
     }
   } catch (error) {
     console.error("Error adding/updating evaluator:", error.message);
-    res.status(500).json({ success: false, error: "Failed to add/update evaluator" });
+    res.status(500).json({ error: "Failed to add/update evaluator" });
   }
 };
+
+
 
 
 // Get a specific evaluator by ID
