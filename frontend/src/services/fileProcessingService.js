@@ -1,5 +1,7 @@
 import ExcelJS from 'exceljs';
 
+const emailRegex = /^[^\s@]+@e\.braude\.ac\.il$/;
+
 export const processExcelFile = async (file) => {
   try {
     const data = await readExcelFile(file);
@@ -133,7 +135,7 @@ const validateData = (data) => {
         throw new Error(`Missing required data in row ${index + 1}`);
       }
 
-      const emailRegex = /^[^\s@]+@e\.braude\.ac\.il$/;
+
       if (!emailRegex.test(row.student1Email)) {
         throw new Error(
           `Invalid email format for Student 1 in row ${index + 1}`
