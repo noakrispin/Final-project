@@ -364,7 +364,7 @@ const AdminGradesPage = () => {
             onRowClick={(row) => setSelectedGrade({ project: row })}
             useCustomColumns={false}
             showDescription={true}
-            description="Weighted grades for each student. Click on a row to view detailed project information."
+            description="Weighted grades for each student. Click on a row to view detailed project assessments."
           />
         </div>
       </div>
