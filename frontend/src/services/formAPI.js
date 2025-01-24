@@ -113,13 +113,22 @@ export const formsApi = {
    */
   getResponses: async (formID) => {
     try {
-      const response = await api.get(`/forms/${formID}/responses`)
-      return response
+      const response = await api.get(`/forms/${formID}/responses`);
+      if (!response || response.length === 0) {
+        console.warn(`No responses found for formID: ${formID}`);
+        return [];
+      }
+      return response;
     } catch (error) {
-      console.error("Error fetching responses:", error)
-      throw error
+      if (error.response?.status === 404) {
+        console.warn(`Responses subcollection not found for formID: ${formID}`);
+        return []; // Return an empty array if the subcollection doesn't exist
+      }
+      console.error("Error fetching responses:", error);
+      throw error;
     }
   },
+  
 
   /**
    * Fetch the last response for a specific evaluator and optionally for a specific student.

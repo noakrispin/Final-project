@@ -1,102 +1,194 @@
-import React, { useState } from "react";
-import {X, ChevronDown, ChevronUp } from "lucide-react";
-
-
+import React, { useState, useEffect } from "react";
+import { X, ChevronDown, ChevronUp } from "lucide-react";
+import { formsApi } from "../../services/formAPI"; 
 
 const ProjectAssessmentPopup = ({ project, onClose }) => {
-    const [expandedAttendees, setExpandedAttendees] = useState({});
-    const [selectedAssessment, setSelectedAssessment] = useState(null);
+  const [expandedSections, setExpandedSections] = useState({});
+  const [expandedQuestions, setExpandedQuestions] = useState({});
+  const [bookData, setBookData] = useState({ questions: [], responses: [] });
+  const [presentationData, setPresentationData] = useState({ questions: [], responses: [] });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (project) {
+      fetchResponses(project);
+    }
+  }, [project]);
+
+  // Determine form IDs based on project part
+  const getFormIDs = (projectPart) => {
+    if (projectPart === "A") {
+      return {
+        bookForm: "bookReviewerFormA",
+        presentationForm: "PresentationFormA",
+      };
+    }
+    if (projectPart === "B") {
+      return {
+        bookForm: "bookReviewerFormB",
+        presentationForm: "PresentationFormB",
+      };
+    }
+    return {}; 
+  };
+
+  const fetchResponses = async (project) => {
+    try {
+      setLoading(true);
+      const { bookForm, presentationForm } = getFormIDs(project.part);
   
-    const toggleAttendee = (attendee) => {
-      setExpandedAttendees((prev) => ({
-        ...prev,
-        [attendee]: !prev[attendee],
-      }));
-    };
+      if (!bookForm || !presentationForm) {
+        console.error("Form IDs not found for project part:", project.part);
+        return;
+      }
+      console.log("bookForm",bookForm);
+      console.log("presentationForm",presentationForm);
+
+      // Fetch book form responses and questions
+      const bookFormResponses = await formsApi.getResponses(bookForm);
+      const bookQuestions = await formsApi.getQuestions(bookForm);
+      const filteredBookResponses = filterResponsesByProjectCode(bookFormResponses, project.projectCode);
   
-    const handleSelectAssessment = (attendee, type) => {
-      const evaluations = project.answers?.attendeeEvaluations.find(
-        (evaluation) => evaluation.evaluator === attendee
-      );
-      if (!evaluations) return;
-      setSelectedAssessment({
-        attendee,
-        type,
-        details: evaluations[type === "Book Grade" ? "bookReviewerFormA" : "PresentationFormA"],
+      // Fetch presentation form responses and questions
+      const presentationFormResponses = await formsApi.getResponses(presentationForm);
+      const presentationQuestions = await formsApi.getQuestions(presentationForm);
+      const filteredPresentationResponses = filterResponsesByProjectCode(presentationFormResponses, project.projectCode);
+  
+      // Extract required textarea questions
+      setBookData({
+        questions: bookQuestions.filter((q) => q.response_type === "textarea" && q.required),
+        responses: filteredBookResponses,
       });
-    };
   
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg shadow-lg w-11/12 max-w-4xl p-6 overflow-auto max-h-[90vh]">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">{project.title}</h2>
-            <button
-              className="text-gray-600 hover:text-gray-800"
-              onClick={onClose}
-            >
-              <X className="h-6 w-6 text-gray-600" />
-            </button>
+      setPresentationData({
+        questions: presentationQuestions.filter((q) => q.response_type === "textarea" && q.required),
+        responses: filteredPresentationResponses,
+      });
+    } catch (error) {
+      console.error("Error fetching responses:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+
+  const filterResponsesByProjectCode = (responses, code) => {
+    return responses.filter((response) => response.projectCode === code);
+  };
+
+  const toggleSection = (section) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
+
+  const toggleQuestion = (question) => {
+    setExpandedQuestions((prev) => ({
+      ...prev,
+      [question]: !prev[question],
+    }));
+  };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-lg w-11/12 max-w-4xl p-6 overflow-auto max-h-[90vh]">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">Project Assessment</h2>
+          <button
+            className="text-gray-600 hover:text-gray-800"
+            onClick={onClose}
+          >
+            <X className="h-6 w-6 text-gray-600" />
+          </button>
+        </div>
+
+        {/* Book Section */}
+        <div className="mb-6">
+          <div
+            className="bg-gray-100 p-4 rounded-lg flex justify-between items-center cursor-pointer"
+            onClick={() => toggleSection("book")}
+          >
+            <h3 className="text-lg font-semibold">Book Form Responses</h3>
+            {expandedSections["book"] ? (
+              <ChevronUp className="h-5 w-5 text-gray-500" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-gray-500" />
+            )}
           </div>
-  
-          {/* Attendees */}
-          <div>
-            <h3 className="text-xl font-semibold mb-4">Presentation Attendees</h3>
-            {project.presentationAttendees.map((attendee, index) => (
-              <div key={index} className="mb-4">
-                <div
-                  className="bg-gray-100 p-4 rounded-lg flex justify-between items-center cursor-pointer"
-                  onClick={() => toggleAttendee(attendee)}
-                >
-                  <span className="text-gray-800 font-medium">{attendee}</span>
-                  {expandedAttendees[attendee] ? (
-                    <ChevronUp className="h-5 w-5 text-gray-500" />
-                  ) : (
-                    <ChevronDown className="h-5 w-5 text-gray-500" />
-                  )}
-                </div>
-  
-                {expandedAttendees[attendee] && (
-                  <div className="bg-white shadow-md rounded-lg mt-2 p-4">
-                    <h4 className="text-lg font-semibold mb-2">Assessments</h4>
-                    <ul className="space-y-2">
-                      {["Book Grade", "Presentation Grade"].map((type, i) => (
-                        <li
-                          key={i}
-                          className="cursor-pointer text-blue-600 hover:underline"
-                          onClick={() => handleSelectAssessment(attendee, type)}
-                        >
-                          {type}
-                        </li>
+          {expandedSections["book"] && (
+            <div className="mt-4">
+              {bookData.questions.map(({ title, id }, index) => (
+                <div key={index} className="mb-4">
+                  <div
+                    className="bg-gray-200 p-3 rounded-lg cursor-pointer"
+                    onClick={() => toggleQuestion(id)}
+                  >
+                    <h4 className="font-medium">{title}</h4>
+                  </div>
+                  {expandedQuestions[id] && (
+                    <ul className="ml-6 mt-2 list-disc">
+                      {bookData.responses.map((response, idx) => (
+                        response[id] && (
+                          <li key={idx} className="text-gray-700">
+                            {response[id]}
+                          </li>
+                        )
                       ))}
                     </ul>
-                  </div>
-                )}
-              </div>
-            ))}
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Presentation Section */}
+        <div>
+          <div
+            className="bg-gray-100 p-4 rounded-lg flex justify-between items-center cursor-pointer"
+            onClick={() => toggleSection("presentation")}
+          >
+            <h3 className="text-lg font-semibold">Presentation Form Responses</h3>
+            {expandedSections["presentation"] ? (
+              <ChevronUp className="h-5 w-5 text-gray-500" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-gray-500" />
+            )}
           </div>
-  
-          {/* Selected Assessment */}
-          {selectedAssessment && (
-            <div className="mt-6 bg-gray-50 p-4 rounded-lg shadow-md">
-              <h4 className="text-lg font-semibold mb-2">
-                {selectedAssessment.type} by {selectedAssessment.attendee}
-              </h4>
-              <ul className="space-y-2">
-                {Object.entries(selectedAssessment.details || {}).map(
-                  ([key, value]) => (
-                    <li key={key}>
-                      <strong>{key}:</strong> {value}
-                    </li>
-                  )
-                )}
-              </ul>
+          {expandedSections["presentation"] && (
+            <div className="mt-4">
+              {presentationData.questions.map(({ title, id }, index) => (
+                <div key={index} className="mb-4">
+                  <div
+                    className="bg-gray-200 p-3 rounded-lg cursor-pointer"
+                    onClick={() => toggleQuestion(id)}
+                  >
+                    <h4 className="font-medium">{title}</h4>
+                  </div>
+                  {expandedQuestions[id] && (
+                    <ul className="ml-6 mt-2 list-disc">
+                      {presentationData.responses.map((response, idx) => (
+                        response[id] && (
+                          <li key={idx} className="text-gray-700">
+                            {response[id]}
+                          </li>
+                        )
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>
       </div>
-    );
-  };
-  
-  export default ProjectAssessmentPopup;
-  
+    </div>
+  );
+};
+
+export default ProjectAssessmentPopup;
