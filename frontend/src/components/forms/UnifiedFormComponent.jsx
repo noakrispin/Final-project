@@ -61,12 +61,18 @@ export default function UnifiedFormComponent({
   }, [user, questions]);
 
   useEffect(() => {
-    if (user && questions.length > 0) {
+    console.log("Questions on load:", questions);
+    console.log("General Questions:", generalQuestions);
+    console.log("Student Questions:", studentQuestions);
+  
+    if (user && questions.length > 0 && generalQuestions.length > 0 && studentQuestions.length > 0) {
       fetchLastResponse(questions);
     } else {
       initializeFormData();
     }
   }, [user, questions]);
+
+  
 
   const fetchLastResponse = async () => {
     try {
@@ -75,19 +81,19 @@ export default function UnifiedFormComponent({
         user?.email,
         projectCode
       );
-
+  
       if (!lastResponse || !lastResponse.general || !lastResponse.students) {
         console.log("No last response found for the evaluator and project.");
         return;
       }
-
+  
       const initialData = {};
-
+  
       // Populate general questions
       generalQuestions.forEach((field) => {
         initialData[field.name] = lastResponse.general[field.name] || "";
       });
-
+  
       // Populate student-specific questions
       students.forEach((student) => {
         studentQuestions.forEach((field) => {
@@ -96,13 +102,15 @@ export default function UnifiedFormComponent({
             lastResponse.students[student.id]?.[field.name] || "";
         });
       });
-
-      setFormData(initialData);
-      updateProgress(initialData);
+  
+      console.log("Initial Form Data from Response:", initialData); // Debug log
+      setFormData(initialData); // Set the formData state
+      updateProgress(initialData); // Update progress bar
     } catch (error) {
       console.error("Error fetching last response:", error);
     }
   };
+  
 
   const initializeFormData = () => {
     const initialData = {};
@@ -365,7 +373,7 @@ export default function UnifiedFormComponent({
                 <FormField
                   key={field.name}
                   {...field}
-                  value={formData[field.name]}
+                  value={formData[field.name] || ""}
                   onChange={handleChange}
                   disabled={readOnly}
                 />
