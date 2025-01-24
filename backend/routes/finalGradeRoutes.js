@@ -15,7 +15,7 @@ const asyncHandler = (fn) => (req, res, next) => {
 
 // Input validation middleware
 const validateGradeInput = (req, res, next) => {
-  const { grade, studentId, projectId } = req.body;
+  const { grade, studentId, projectCode } = req.body;
   
   if (typeof grade !== 'number' || grade < 0 || grade > 100) {
     return res.status(400).json({
@@ -26,7 +26,7 @@ const validateGradeInput = (req, res, next) => {
     });
   }
 
-  if (!studentId || !projectId) {
+  if (!studentId || !projectCode) {
     return res.status(400).json({
       error: {
         message: 'Student ID and Project ID are required',
