@@ -13,7 +13,7 @@ export const emailAPI = {
         throw new Error("Schedule date and time are required to send reminders.");
       }
 
-      const response = await api.post("/user/schedule-reminders", {
+      const response = await api.post("/users/schedule-reminders", {
         scheduleDateTime, // Pass the combined date and time
         message, // Optional custom message
       });

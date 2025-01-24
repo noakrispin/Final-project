@@ -197,11 +197,11 @@ const processScheduledReminders = async () => {
   try {
     // Get all reminders that are pending and due for processing
     const remindersSnapshot = await admin
-      .firestore()
-      .collection("scheduled_reminders")
-      .where("status", "==", "pending")
-      .where("scheduleDate", "<=", new Date())
-      .get();
+    .firestore()
+    .collection("scheduled_reminders")
+    .where("status", "==", "pending")
+    .where("scheduleDateTime", "<=", new Date()) // Correct field name
+    .get();
 
     if (remindersSnapshot.empty) {
       console.log("No reminders to process.");
@@ -215,6 +215,9 @@ const processScheduledReminders = async () => {
 
     for (const reminder of reminders) {
       const { userEmails, message } = reminder;
+
+      // Log for debugging
+      console.log("Processing reminder for emails:", userEmails);
 
       if (!userEmails || userEmails.length === 0) {
         console.log(`No emails found for reminder ${reminder.id}. Skipping.`);
