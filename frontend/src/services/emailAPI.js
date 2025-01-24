@@ -7,40 +7,29 @@ export const emailAPI = {
    * @param {string|null} [scheduleDate] - The date to schedule reminders (optional).
    * @param {string|null} [message] - The custom reminder message (optional).
    */
-  sendRemindersToAll: async (supervisorEmails, scheduleDate = null, message = null) => {
+  sendRemindersToAll: async (scheduleDateTime, message = null) => {
     try {
-      // Input validation
-      if (!supervisorEmails || supervisorEmails.length === 0) {
-        throw new Error("Supervisor emails are required to send reminders.");
+      if (!scheduleDateTime) {
+        throw new Error("Schedule date and time are required to send reminders.");
       }
 
-      const payload = { supervisorEmails, scheduleDate };
-      if (message) {
-        payload.message = message; // Include only if provided
-      }
-
-      console.log("Sending reminders to all supervisors:", JSON.stringify(payload, null, 2));
-
-      const response = await api.post("/schedule-reminders-to-all", {
-        supervisorEmails,
-        scheduleDate,
-        message,
+      const response = await api.post("/user/schedule-reminders", {
+        scheduleDateTime, // Pass the combined date and time
+        message, // Optional custom message
       });
 
-      console.log("Reminders sent successfully:", response.data);
-
+      console.log("Reminders scheduled successfully:", response.data);
       return response;
     } catch (error) {
       console.error(
-        "Error sending reminders to all supervisors:",
+        "Error sending reminders to all users:",
         error.response?.data || error.message
       );
       throw new Error(
-        error.response?.data?.error || "An error occurred while sending reminders."
+        error.response?.data?.error || "An error occurred while scheduling reminders."
       );
     }
   },
-
   /**
    * Notify all supervisors about a global deadline.
    * @param {string} deadline - The global deadline to notify.

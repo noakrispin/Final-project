@@ -6,7 +6,6 @@ const {
   updateProject,
   deleteProject,
   setGlobalDeadlineAndNotify,
-  scheduleRemindersForAll,
 } = require("../controllers/projectController");
 
 const router = express.Router();
@@ -52,11 +51,6 @@ router.post("/global-deadline", asyncHandler(async (req, res) => {
   return result;
 }));
 
-// Route for scheduling reminders for all supervisors
-router.post("/schedule-reminders-to-all", asyncHandler(async (req, res) => {
-  const result = await scheduleRemindersForAll(req, res);
-  return result;
-}));
 
 // Error handling middleware
 router.use((err, req, res, next) => {
