@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Table } from "../../components/ui/Table";
 // import { exportToExcelFile } from "../../services/fileProcessingService";
-import ProjectDetailsPopup from "../../components/shared/ProjectDetailsPopup";
+
 import ProjectAssessmentPopup from "../../components/ui/ProjectAssessmentPopup";
 import { gradesApi } from "../../services/finalGradesAPI";
 import { projectsApi } from "../../services/projectsAPI";
@@ -15,7 +15,6 @@ const AdminGradesPage = () => {
   const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedProject, setSelectedProject] = useState(null);
   const [selectedGrade, setSelectedGrade] = useState(null);
 
   useEffect(() => {
@@ -365,25 +364,17 @@ const AdminGradesPage = () => {
             onRowClick={(row) => setSelectedGrade({ project: row })}
             useCustomColumns={false}
             showDescription={true}
-            description="Weighted grades for each student. Click on a row to view detailed project information."
+            description="Weighted grades for each student. Click on a row to view detailed project assessments."
           />
         </div>
       </div>
 
-      {/* {selectedProject && (
-        <ProjectDetailsPopup
-          project={selectedProject}
-          onClose={() => setSelectedProject(null)}
+      {selectedGrade && (
+        <ProjectAssessmentPopup
+          project={selectedGrade.project} // Pass the entire project details
+          onClose={() => setSelectedGrade(null)}
         />
-      )} */}
-
-{selectedGrade && (
-  <ProjectAssessmentPopup
-    project={selectedGrade.project} // Pass the entire project details
-    onClose={() => setSelectedGrade(null)}
-  />
-)}
-
+      )}
     </div>
   );
 };

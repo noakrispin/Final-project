@@ -109,7 +109,7 @@ const AppContent = () => {
         <Route
           path="/SupervisorGradesFeedback"
           element={
-            <ProtectedRoute adminOnly>
+            <ProtectedRoute allowedRoles={["Supervisor"]}>
               <SupervisorGradesFeedback />
             </ProtectedRoute>
           }
