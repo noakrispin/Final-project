@@ -4,15 +4,22 @@ export const evaluatorsApi = {
   /**
    * Add or update an evaluator.
    */
-  addOrUpdateEvaluator: async (id, data) => {
+  addOrUpdateEvaluator: async (data) => {
     try {
-      const response = await api.post("/evaluators", { id, ...data });
+      console.log("Data being sent to API:", data); // Log before API call
+      const response = await api.post("/evaluators", data);
+      console.log("API response data:", response.data); // Log the response
       return response.data;
     } catch (error) {
-      console.error("Error adding/updating evaluator:", error);
+      console.error("Error adding/updating evaluator:", error.response?.data || error.message);
+      if (error.response) {
+        console.error("Full error response from server:", error.response);
+      }
       throw error;
     }
   },
+
+
 
   /**
    * Get details of a specific evaluator by emailID.
