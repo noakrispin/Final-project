@@ -76,14 +76,12 @@ export default function UnifiedFormComponent({
 
   const fetchLastResponse = async () => {
     try {
-      const lastResponse = await formsApi.getLastResponse(
-        formID,
-        user?.email,
-        projectCode
-      );
+      // Fetch the last response from the API
+      const lastResponse = await formsApi.getLastResponse(formID, user?.email, projectCode);
   
+      // Check if the response is valid and contains data
       if (!lastResponse || !lastResponse.general || !lastResponse.students) {
-        console.log("No last response found for the evaluator and project.");
+        console.warn("No last response found for the evaluator and project.");
         return;
       }
   
@@ -91,25 +89,31 @@ export default function UnifiedFormComponent({
   
       // Populate general questions
       generalQuestions.forEach((field) => {
-        initialData[field.name] = lastResponse.general[field.name] || "";
+        initialData[field.name] = lastResponse.general[field.name] ?? ""; // Use nullish coalescing to handle undefined values
       });
   
       // Populate student-specific questions
       students.forEach((student) => {
         studentQuestions.forEach((field) => {
           const fieldName = `student${student.id}_${field.name}`;
-          initialData[fieldName] =
-            lastResponse.students[student.id]?.[field.name] || "";
+          initialData[fieldName] = lastResponse.students?.[student.id]?.[field.name] ?? ""; // Handle missing students gracefully
         });
       });
   
-      console.log("Initial Form Data from Response:", initialData); // Debug log
-      setFormData(initialData); // Set the formData state
-      updateProgress(initialData); // Update progress bar
+      // Debugging: Log the fetched data
+      console.log("Fetched Last Response:", lastResponse);
+      console.log("Processed Initial Form Data:", initialData);
+  
+      // Update form data and progress bar
+      setFormData(initialData);
+      updateProgress(initialData);
     } catch (error) {
-      console.error("Error fetching last response:", error);
+      // Log the error with additional details for debugging
+      console.error("Error fetching last response:", error.message);
+      console.error("Additional Error Details:", error);
     }
   };
+  
   
 
   const initializeFormData = () => {
