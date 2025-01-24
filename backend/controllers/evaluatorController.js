@@ -3,6 +3,7 @@ const admin = require("firebase-admin");
 // Add or update an evaluator
 exports.addOrUpdateEvaluator = async (req, res) => {
   const { formID, projectCode, status, evaluatorID } = req.body;
+  console.log("addOrUpdateEvaluator Request Body:", req.body);
 
   try {
     if (!evaluatorID || !formID || !projectCode) {

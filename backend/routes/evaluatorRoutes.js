@@ -18,9 +18,9 @@ const asyncHandler = (fn) => (req, res, next) => {
 
 // Input validation middleware
 const validateEvaluatorInput = (req, res, next) => {
-  const { name, email, department } = req.body;
+  const { name, evaluatorID , department } = req.body;
   
-  if (!email || !email.includes('@')) {
+  if (!evaluatorID  || !evaluatorID .includes('@')) {
     return res.status(400).json({
       error: {
         message: 'Valid email is required',
