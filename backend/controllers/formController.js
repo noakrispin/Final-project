@@ -568,6 +568,47 @@ deleteQuestion: async (req, res) => {
   },
 
 
+  getResponses: async (req, res) => {
+    const { formID } = req.params;
+  
+    if (!formID) {
+      return res.status(400).json({ message: "Form ID is required." });
+    }
+  
+    try {
+      console.log("Fetching responses for formID:", formID);
+  
+      const responsesSnapshot = await db
+        .collection("forms")
+        .doc(formID)
+        .collection("responses")
+        .get();
+  
+      if (responsesSnapshot.empty) {
+        console.warn(`No responses found for formID: ${formID}`);
+        return res.status(404).json({
+          error: {
+            message: "No responses found for the specified form.",
+            status: 404,
+          },
+        });
+      }
+  
+      const responses = responsesSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+  
+      console.log(`Fetched ${responses.length} responses for formID: ${formID}`);
+      res.status(200).json(responses);
+    } catch (error) {
+      console.error("Error fetching responses:", error.message);
+      res.status(500).json({ message: "Failed to fetch responses." });
+    }
+  },
+  
+  
+
   /* -------------------------form's evaluations (evaluations subCollection) --------------------------*/
 
 
@@ -645,9 +686,5 @@ deleteQuestion: async (req, res) => {
       res.status(500).json({ message: "Failed to fetch evaluations." });
     }
   },
-
-
-
-
 
 };

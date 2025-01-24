@@ -58,79 +58,81 @@ const AdminGradesPage = () => {
       console.log("Grades:", grades);
       console.log("Projects:", projects);
       console.log("Users:", users);
-  
+
       // Filter out placeholder grades
       const filteredGrades = grades.filter(
         (grade) =>
           grade.projectCode && grade.projectCode !== "placeholderProject"
       );
       console.log("Filtered Grades:", filteredGrades);
-  
+
       // Map grades to project and user details
-      return filteredGrades.map((grade) => {
-        const project = projects.find(
-          (proj) => proj.projectCode === grade.projectCode
-        );
-  
-        if (!project) {
-          console.warn(`Project not found for grade: ${grade.projectCode}`);
-          return null;
-        }
-  
-        const student = [project.Student1, project.Student2].find(
-          (s) => s && s.ID === grade.studentID
-        );
-  
-        // Find the student name dynamically
-        const studentName = [project.Student1, project.Student2]
-          .filter((student) => student && student.ID === grade.studentID)
-          .map(
-            (student) =>
-              student.fullName || `${student.firstName} ${student.lastName}`
-          )
-          .join(", ") || "Unknown Student";
-  
-        // Map supervisor IDs to full names from the `users` collection
-        const supervisors = [project.supervisor1, project.supervisor2]
-          .filter((id) => id) // Exclude null or empty supervisor IDs
-          .map((id) => {
-            const supervisor = users.find((user) => user.emailId === id);
-            return supervisor ? supervisor.fullName : `Supervisor ID ${id}`;
-          });
-        const projectSupervisors =
-          supervisors.length > 0 ? supervisors.join(", ") : "No Supervisors";
-  
-        const deadline =
-          project.deadline && project.deadline._seconds
-            ? new Date(project.deadline._seconds * 1000).toLocaleDateString()
-            : "No Deadline"; // Use a fallback for undefined deadlines
-  
-        console.log("Rendering status(in preprocess):", grade.status);
-  
-        return {
-          ...project, // Include project details
-          projectCode: grade.projectCode,
-          studentName,
-          supervisors: projectSupervisors,
-          presentationGrade: grade.CalculatedPresentationGrade || "N/A",
-          bookGrade: grade.CalculatedBookGrade || "N/A",
-          supervisorGrade: grade.CalculatedSupervisorGrade || "N/A",
-          finalGrade: grade.finalGrade || "N/A",
-          status: grade.status || "Not graded",
-          deadline: deadline, // Add fallback value for undefined deadline
-        };
-      }).filter(Boolean); // Filter out null values
+      return filteredGrades
+        .map((grade) => {
+          const project = projects.find(
+            (proj) => proj.projectCode === grade.projectCode
+          );
+
+          if (!project) {
+            console.warn(`Project not found for grade: ${grade.projectCode}`);
+            return null;
+          }
+
+          const student = [project.Student1, project.Student2].find(
+            (s) => s && s.ID === grade.studentID
+          );
+
+          // Find the student name dynamically
+          const studentName =
+            [project.Student1, project.Student2]
+              .filter((student) => student && student.ID === grade.studentID)
+              .map(
+                (student) =>
+                  student.fullName || `${student.firstName} ${student.lastName}`
+              )
+              .join(", ") || "Unknown Student";
+
+          // Map supervisor IDs to full names from the `users` collection
+          const supervisors = [project.supervisor1, project.supervisor2]
+            .filter((id) => id) // Exclude null or empty supervisor IDs
+            .map((id) => {
+              const supervisor = users.find((user) => user.emailId === id);
+              return supervisor ? supervisor.fullName : `Supervisor ID ${id}`;
+            });
+          const projectSupervisors =
+            supervisors.length > 0 ? supervisors.join(", ") : "No Supervisors";
+
+          const deadline =
+            project.deadline && project.deadline._seconds
+              ? new Date(project.deadline._seconds * 1000).toLocaleDateString()
+              : "No Deadline"; // Use a fallback for undefined deadlines
+
+          console.log("Rendering status(in preprocess):", grade.status);
+
+          return {
+            ...project, // Include project details
+            projectCode: grade.projectCode,
+            studentName,
+            supervisors: projectSupervisors,
+            presentationGrade: grade.CalculatedPresentationGrade || "N/A",
+            bookGrade: grade.CalculatedBookGrade || "N/A",
+            supervisorGrade: grade.CalculatedSupervisorGrade || "N/A",
+            finalGrade: grade.finalGrade || "N/A",
+            status: grade.status || "Not graded",
+            deadline: deadline, // Add fallback value for undefined deadline
+          };
+        })
+        .filter(Boolean); // Filter out null values
     } catch (error) {
       console.error("Error preprocessing projects:", error.message);
       throw new Error("Failed to preprocess project data.");
     }
   };
-  
 
   const renderGradeStatus = (status) => {
-    console.log("status in render status:",status)
-    
-    if (!status ) {
+    console.log("status in render status:", status);
+
+    if (!status) {
       return (
         <span
           className="inline-block px-3 py-1 text-sm rounded-full text-center bg-gray-100 text-gray-500"
@@ -151,9 +153,8 @@ const AdminGradesPage = () => {
       "Not graded": "bg-red-100 text-red-700",
     };
 
-    const statusClass =
-      statusClasses[status] || "bg-gray-100 text-gray-500";
-    
+    const statusClass = statusClasses[status] || "bg-gray-100 text-gray-500";
+
     return (
       <span
         className={`inline-block px-3 py-1 text-sm rounded-full text-center ${statusClass}`}
@@ -248,7 +249,7 @@ const AdminGradesPage = () => {
   const prepareExportData = (projects) => {
     const exportData = [];
     const seenStudentIds = new Set(); // Track processed student IDs
-  
+
     projects.forEach((project) => {
       // Add Student 1 data if not already added
       if (project.Student1 && !seenStudentIds.has(project.Student1.ID)) {
@@ -260,7 +261,7 @@ const AdminGradesPage = () => {
           "Student Final Grade": project.Student1.finalGrade || "N/A",
         });
       }
-  
+
       // Add Student 2 data if not already added
       if (project.Student2 && !seenStudentIds.has(project.Student2.ID)) {
         seenStudentIds.add(project.Student2.ID);
@@ -272,11 +273,10 @@ const AdminGradesPage = () => {
         });
       }
     });
-  
+
     return exportData;
   };
-  
-  
+
   //
   /*
   const handleExport = () => {
@@ -294,17 +294,17 @@ const AdminGradesPage = () => {
     try {
       // Prepare data for export with the selected columns
       const exportData = prepareExportData(projects);
-  
+
       // Create a new workbook and add the data
       const workbook = XLSX.utils.book_new();
       const worksheet = XLSX.utils.json_to_sheet(exportData);
-  
+
       // Append worksheet to workbook
       XLSX.utils.book_append_sheet(workbook, worksheet, "Projects");
-  
+
       // Export the workbook
       XLSX.writeFile(workbook, "projects_export.xlsx");
-  
+
       toast.success("Data exported successfully!");
     } catch (error) {
       console.error("Error exporting data:", error);
@@ -362,27 +362,28 @@ const AdminGradesPage = () => {
             data={tableData}
             columns={projectColumns}
             rowClassName="hover:bg-gray-50 transition duration-200"
-            onRowClick={(row) => setSelectedProject(row)}
+            onRowClick={(row) => setSelectedGrade({ project: row })}
             useCustomColumns={false}
-            showDescription = {true}
-            description = "Weighted grades for each student. Click on a row to view detailed project information."
+            showDescription={true}
+            description="Weighted grades for each student. Click on a row to view detailed project information."
           />
         </div>
       </div>
 
-      {selectedProject && (
+      {/* {selectedProject && (
         <ProjectDetailsPopup
           project={selectedProject}
           onClose={() => setSelectedProject(null)}
         />
-      )}
+      )} */}
 
-      {selectedGrade && (
-        <ProjectAssessmentPopup
-          project={selectedGrade.project}
-          onClose={() => setSelectedGrade(null)}
-        />
-      )}
+{selectedGrade && (
+  <ProjectAssessmentPopup
+    project={selectedGrade.project} // Pass the entire project details
+    onClose={() => setSelectedGrade(null)}
+  />
+)}
+
     </div>
   );
 };

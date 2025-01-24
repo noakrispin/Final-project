@@ -61,6 +61,13 @@ router.get("/evaluations/all", asyncHandler(async (req, res) => {
   return result;
 }));
 
+// Response Routes
+router.get("/:formID/responses", asyncHandler(async (req, res) => {
+  const result = await formController.getResponses(req, res);
+  return result;
+}));
+
+
 router.get("/:formID/last-response", asyncHandler(async (req, res) => {
   const result = await formController.getLastResponse(req, res);
   return result;
