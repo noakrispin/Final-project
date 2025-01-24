@@ -534,7 +534,7 @@ deleteQuestion: async (req, res) => {
   getLastResponse: async (req, res) => {
     const { formID } = req.params;
     const { evaluatorID, projectCode } = req.query;
-
+    console.log("params in controller GET_LAST_RESPONSE:", { evaluatorID, projectCode,formID });
     if (!formID || !evaluatorID || !projectCode) {
       return res.status(400).json({ message: "Form ID, Evaluator ID, and Project Code are required." });
     }
