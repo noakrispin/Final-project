@@ -8,7 +8,7 @@ export const emailAPI = {
   sendRemindersToAll: async (message = null) => {
     try {
       const response = await api.post("/users/schedule-reminders", {
-        message, // Optional custom message
+        message: message || "Default reminder message for all users.",
       });
 
       console.log("Reminders sent successfully:", response.data);

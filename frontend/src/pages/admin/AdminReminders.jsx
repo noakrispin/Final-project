@@ -163,26 +163,24 @@ const AdminReminders = () => {
 
   // Handle sending reminders
   const handleSendReminders = async () => {
-    if (!emailMessage.trim()) {
-      toast.error("Please enter a reminder message.");
-      return;
-    }
-  
     try {
-      // Send reminders immediately
-      await emailAPI.sendRemindersToAll(emailMessage);
+      if (!emailMessage.trim()) {
+        toast.error("Please enter a reminder message.");
+        return;
+      }
   
-      // Show success toast
+      // Call the email API to send reminders
+      await emailAPI.sendRemindersToAll(emailMessage.trim());
+  
       toast.success("Reminders sent successfully.");
   
-      // Clear the message box
+      // Clear the message input after sending reminders
       setEmailMessage("");
     } catch (error) {
       console.error("Error sending reminders:", error);
       toast.error("Failed to send reminders.");
     }
   };
-  
   const projectColumns = useMemo(
     () => [
       {

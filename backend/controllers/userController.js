@@ -157,11 +157,7 @@ const updateUserRole = async (req, res) => {
 };
 
 const scheduleRemindersForAll = async (req, res) => {
-  const { scheduleDateTime, message } = req.body;
-
-  if (!scheduleDateTime) {
-    return res.status(400).json({ error: "Schedule date and time are required to send reminders." });
-  }
+  const { message } = req.body;
 
   const defaultTemplate =
     "This is a reminder to review the project's status. Please log in to the system to take action.";
@@ -185,12 +181,9 @@ const scheduleRemindersForAll = async (req, res) => {
       )
     );
 
-    // Log successful emails
-    console.log(`Reminders sent immediately to ${userEmails.length} users.`);
-
     res.status(201).json({
       success: true,
-      message: `Reminders sent immediately to ${userEmails.length} users.`,
+      message: `Reminders sent successfully to ${userEmails.length} users.`,
     });
   } catch (error) {
     console.error("Error sending reminders immediately:", error.message);
