@@ -255,8 +255,24 @@ const AdminProjects = () => {
     setIsDeleting(true); // Disable the delete button while processing
   
     try {
-      const response = await projectsApi.deleteProject(projectCode); // Ensure the API is correct
-      if (response) {
+      // Delete evaluators associated with the project
+      const evaluatorsResponse = await evaluatorsApi.getEvaluatorsByProject(projectCode);
+      for (const evaluator of evaluatorsResponse) {
+        await evaluatorsApi.deleteEvaluator(evaluator.id);
+        console.log(`Deleted evaluator with ID: ${evaluator.id}`);
+      }
+  
+      // Delete grades associated with the project
+      const gradesResponse = await gradesApi.getAllGrades();
+      const gradesToDelete = gradesResponse.filter((grade) => grade.projectCode === projectCode);
+      for (const grade of gradesToDelete) {
+        await gradesApi.deleteGrade(grade.id);
+        console.log(`Deleted grade with ID: ${grade.id}`);
+      }
+  
+      // Delete the project itself
+      const projectResponse = await projectsApi.deleteProject(projectCode);
+      if (projectResponse) {
         setProjects((current) =>
           current.filter((project) => project.projectCode !== projectCode)
         );
@@ -266,12 +282,13 @@ const AdminProjects = () => {
         console.error("Failed to delete project.");
       }
     } catch (err) {
-      console.error("Error deleting project:", err.message);
-      alert("An error occurred while deleting the project.");
+      console.error("Error deleting project and related data:", err.message);
+      alert("An error occurred while deleting the project and its related data.");
     } finally {
       setIsDeleting(false); // Re-enable the delete button
     }
   };
+
   return (
     <div className="relative bg-white min-h-screen overflow-hidden">
       <BlurElements />
