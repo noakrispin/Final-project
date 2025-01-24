@@ -155,4 +155,97 @@ const updateUserRole = async (req, res) => {
   }
 };
 
-module.exports = { addUser, getUser, getAllUsers, deleteUser, updateUserRole };
+const scheduleRemindersForAll = async (req, res) => {
+  const { scheduleDate, message } = req.body;
+
+  if (!scheduleDate) {
+    return res.status(400).json({ error: "Schedule date is required to send reminders." });
+  }
+
+  const defaultTemplate =
+    "This is a reminder to review the project's status. Please log in to the system to take action.";
+  const finalMessage = message || defaultTemplate;
+
+  try {
+    // Fetch all users
+    const usersSnapshot = await admin.firestore().collection("users").get();
+    const userEmails = usersSnapshot.docs
+      .map((doc) => doc.data().email)
+      .filter(Boolean); // Ensure only valid emails are included
+
+    if (userEmails.length === 0) {
+      return res.status(404).json({ error: "No users found to send reminders." });
+    }
+
+    // Save the scheduled reminder
+    const remindersCollection = admin.firestore().collection("scheduled_reminders");
+    const reminderData = {
+      userEmails,
+      scheduleDate: new Date(scheduleDate),
+      message: finalMessage,
+      status: "pending",
+      createdAt: new Date(),
+    };
+
+    await remindersCollection.add(reminderData);
+    res.status(201).json({ success: true, message: "Reminders scheduled successfully for all users." });
+  } catch (error) {
+    console.error("Error scheduling reminders:", error.message);
+    res.status(500).json({ error: "Failed to schedule reminders for all users." });
+  }
+};
+
+const processScheduledReminders = async () => {
+  try {
+    // Get all reminders that are pending and due for processing
+    const remindersSnapshot = await admin
+      .firestore()
+      .collection("scheduled_reminders")
+      .where("status", "==", "pending")
+      .where("scheduleDate", "<=", new Date())
+      .get();
+
+    if (remindersSnapshot.empty) {
+      console.log("No reminders to process.");
+      return;
+    }
+
+    const reminders = remindersSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    for (const reminder of reminders) {
+      const { userEmails, message } = reminder;
+
+      if (!userEmails || userEmails.length === 0) {
+        console.log(`No emails found for reminder ${reminder.id}. Skipping.`);
+        continue;
+      }
+
+      // Send reminder emails
+      await Promise.all(
+        userEmails.map((email) => sendEmail(email, "Reminder Notification", message))
+      );
+
+      // Mark reminder as sent
+      await admin.firestore().collection("scheduled_reminders").doc(reminder.id).update({
+        status: "sent",
+        sentAt: new Date(),
+      });
+    }
+  } catch (error) {
+    console.error("Error processing reminders:", error.message);
+  }
+};
+
+
+module.exports = {
+  addUser,
+  getUser,
+  getAllUsers,
+  deleteUser,
+  updateUserRole,
+  scheduleRemindersForAll, 
+  processScheduledReminders,
+ }
