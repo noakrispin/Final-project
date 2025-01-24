@@ -2,23 +2,16 @@ import { api } from "./api";
 
 export const emailAPI = {
   /**
-   * Send reminders to all supervisors.
-   * @param {Array<string>} supervisorEmails - The emails of all supervisors.
-   * @param {string|null} [scheduleDate] - The date to schedule reminders (optional).
+   * Send reminders to all supervisors immediately.
    * @param {string|null} [message] - The custom reminder message (optional).
    */
-  sendRemindersToAll: async (scheduleDateTime, message = null) => {
+  sendRemindersToAll: async (message = null) => {
     try {
-      if (!scheduleDateTime) {
-        throw new Error("Schedule date and time are required to send reminders.");
-      }
-
       const response = await api.post("/users/schedule-reminders", {
-        scheduleDateTime, // Pass the combined date and time
         message, // Optional custom message
       });
 
-      console.log("Reminders scheduled successfully:", response.data);
+      console.log("Reminders sent successfully:", response.data);
       return response;
     } catch (error) {
       console.error(
@@ -26,10 +19,11 @@ export const emailAPI = {
         error.response?.data || error.message
       );
       throw new Error(
-        error.response?.data?.error || "An error occurred while scheduling reminders."
+        error.response?.data?.error || "An error occurred while sending reminders."
       );
     }
   },
+
   /**
    * Notify all supervisors about a global deadline.
    * @param {string} deadline - The global deadline to notify.
