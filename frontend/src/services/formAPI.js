@@ -62,12 +62,16 @@ export const formsApi = {
       const response = await api.post(`/forms/${formID}/questions`, questionData);
   
       // Ensure a valid response structure
-      if (!response || !response.data || !response.data.questionData) {
+      if (!response || !response.questionData || !response.questionData.id) {
+        console.log("Invalid server response(API):", response);
+        console.log("Invalid server response(API):", response.questionData);
+        console.log("Invalid server response(API):", response.questionData.questionID);
+        console.log("Invalid server response(API):", response.questionData.id);
         throw new Error("Invalid response from server when adding question.");
       }
   
       console.log("API response after adding question:", response);
-      return response;
+      return response.questionData;
     } catch (error) {
       console.error("Error adding question:", error.response?.data || error.message);
       throw error;
