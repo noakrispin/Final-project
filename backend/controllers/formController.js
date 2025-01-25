@@ -155,31 +155,35 @@ module.exports = {
 
 
   // Add a new question to a form
-addQuestion: async (req, res) => {
-  const { formID } = req.params;
-  const questionData = req.body;
-
-  if (!formID || !questionData) {
-    return res.status(400).json({ message: "Form ID and question data are required." });
-  }
-
-  try {
-    const newQuestion = await db
-      .collection("forms")
-      .doc(formID)
-      .collection("questions")
-      .add(questionData);
-
-    res.status(201).json({
-      message: "Question added successfully.",
-      id: newQuestion.id,
-      questionData,
-    });
-  } catch (error) {
-    console.error("Error adding question:", error.message);
-    res.status(500).json({ message: "Failed to add question." });
-  }
-},
+  addQuestion: async (req, res) => {
+    const { formID } = req.params;
+    const questionData = req.body;
+  
+    if (!formID || !questionData) {
+      return res.status(400).json({ message: "Form ID and question data are required." });
+    }
+  
+    try {
+      const newQuestion = await db
+        .collection("forms")
+        .doc(formID)
+        .collection("questions")
+        .add(questionData);
+  
+      // Ensure the response includes all required fields
+      res.status(201).json({
+        message: "Question added successfully.",
+        questionData: {
+          id: newQuestion.id, // Firebase-generated ID
+          ...questionData,    // All the question data
+        },
+      });
+    } catch (error) {
+      console.error("Error adding question:", error.message);
+      res.status(500).json({ message: "Failed to add question." });
+    }
+  },
+  
 
 
   // Update a specific question in a form
