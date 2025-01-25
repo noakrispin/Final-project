@@ -14,40 +14,40 @@ const asyncHandler = (fn) => (req, res, next) => {
 };
 
 // Input validation middleware
-const validateGradeInput = (req, res, next) => {
-  const { grade, studentId, projectCode } = req.body;
+// const validateGradeInput = (req, res, next) => {
+//   const { grade, studentId, projectCode } = req.body;
 
-  // Validate grade: must be null, undefined, or a number between 0 and 100
-  if (
-    grade !== undefined &&
-    grade !== null &&
-    (typeof grade !== "number" || grade < 0 || grade > 100)
-  ) {
-    return res.status(400).json({
-      error: {
-        message: "Invalid grade value. Grade must be a number between 0 and 100 or null.",
-        status: 400,
-      },
-    });
-  }
+//   // Validate grade: must be null, undefined, or a number between 0 and 100
+//   if (
+//     grade !== undefined &&
+//     grade !== null &&
+//     (typeof grade !== "number" || grade < 0 || grade > 100)
+//   ) {
+//     return res.status(400).json({
+//       error: {
+//         message: "Invalid grade value. Grade must be a number between 0 and 100 or null.",
+//         status: 400,
+//       },
+//     });
+//   }
 
-  // Validate studentId and projectCode: must be present
-  if (!studentId || !projectCode) {
-    return res.status(400).json({
-      error: {
-        message: "Student ID and Project Code are required.",
-        status: 400,
-      },
-    });
-  }
+//   // Validate studentId and projectCode: must be present
+//   if (!studentId || !projectCode) {
+//     return res.status(400).json({
+//       error: {
+//         message: "Student ID and Project Code are required.",
+//         status: 400,
+//       },
+//     });
+//   }
 
-  next(); // Continue to the next middleware or route handler
-};
+//   next(); // Continue to the next middleware or route handler
+// };
 
 
 
 // Add or update a grade
-router.post("/", validateGradeInput, asyncHandler(async (req, res) => {
+router.post("/", asyncHandler(async (req, res) => {
   const result = await addOrUpdateGrade(req, res);
   return result;
 }));
