@@ -65,23 +65,26 @@ export default function UnifiedFormComponent({
     console.log("General Questions:", generalQuestions);
     console.log("Student Questions:", studentQuestions);
   
-    if (user && questions.length > 0 && generalQuestions.length > 0 && studentQuestions.length > 0) {
-      fetchLastResponse(questions);
-    } else {
+    if (user && generalQuestions.length > 0 && studentQuestions.length > 0) {
+      // Fetch the last response once questions are ready
+      fetchLastResponse();
+    } else if (questions && questions.length > 0) {
+      // Initialize empty form data if questions exist but no response is available
       initializeFormData();
     }
-  }, [user, questions]);
-
+  }, [user, generalQuestions, studentQuestions]);
   
+
 
   const fetchLastResponse = async () => {
     try {
       // Fetch the last response from the API
       const lastResponse = await formsApi.getLastResponse(formID, user?.email, projectCode);
   
-      // Check if the response is valid and contains data
-      if (!lastResponse || !lastResponse.general || !lastResponse.students) {
-        console.warn("No last response found for the evaluator and project.");
+      // Check if the response contains valid data
+      if (!lastResponse) {
+        console.warn("No last response data found. Initializing empty form data.");
+        initializeFormData(); // Initialize empty data if no response
         return;
       }
   
@@ -89,52 +92,54 @@ export default function UnifiedFormComponent({
   
       // Populate general questions
       generalQuestions.forEach((field) => {
-        initialData[field.name] = lastResponse.general[field.name] ?? ""; // Use nullish coalescing to handle undefined values
+        initialData[field.name] = lastResponse.general?.[field.name] || ""; // Use null-safe access
       });
   
       // Populate student-specific questions
       students.forEach((student) => {
         studentQuestions.forEach((field) => {
           const fieldName = `student${student.id}_${field.name}`;
-          initialData[fieldName] = lastResponse.students?.[student.id]?.[field.name] ?? ""; // Handle missing students gracefully
+          initialData[fieldName] = lastResponse.students?.[student.id]?.[field.name] || ""; // Handle missing fields gracefully
         });
       });
   
-      // Debugging: Log the fetched data
+      // Debugging logs
       console.log("Fetched Last Response:", lastResponse);
       console.log("Processed Initial Form Data:", initialData);
   
-      // Update form data and progress bar
+      // Update state
       setFormData(initialData);
       updateProgress(initialData);
     } catch (error) {
-      // Log the error with additional details for debugging
       console.error("Error fetching last response:", error.message);
-      console.error("Additional Error Details:", error);
+      initializeFormData(); // Fallback to initialize empty form data
     }
   };
+  
   
   
 
   const initializeFormData = () => {
     const initialData = {};
-
+  
     // Initialize general questions
     generalQuestions.forEach((field) => {
-      initialData[field.name] = ""; // Initialize with empty string
+      initialData[field.name] = ""; // Default to empty string
     });
-
+  
     // Initialize student-specific questions
     students.forEach((student) => {
       studentQuestions.forEach((field) => {
         const fieldName = `student${student.id}_${field.name}`;
-        initialData[fieldName] = ""; // Initialize with empty string
+        initialData[fieldName] = ""; // Default to empty string
       });
     });
-
+  
+    console.log("Initialized Form Data:", initialData);
     setFormData(initialData);
-    updateProgress(initialData); // Ensure progress is updated after initialization
+    updateProgress(initialData); // Update progress bar
   };
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
