@@ -45,12 +45,10 @@ const ProjectAssessmentPopup = ({ project, onClose }) => {
         return
       }
 
-      // Fetch book form questions and responses
       const bookQuestions = await formsApi.getQuestions(bookForm)
       const bookFormResponses = await formsApi.getResponses(bookForm)
       const filteredBookResponses = bookFormResponses.filter((response) => response.projectCode === project.projectCode)
 
-      // Fetch presentation form questions and responses
       const presentationQuestions = await formsApi.getQuestions(presentationForm)
       const presentationFormResponses = await formsApi.getResponses(presentationForm)
       const filteredPresentationResponses = presentationFormResponses.filter(
@@ -100,26 +98,52 @@ const ProjectAssessmentPopup = ({ project, onClose }) => {
 
   const renderStudentResponses = (responses, questionID) => {
     const studentMap = project.students.reduce((acc, student) => {
-      acc[student.id] = student.name
-      return acc
-    }, {})
-
-    const studentResponses = responses
-      .flatMap((response) =>
-        Object.entries(response.students || {}).map(([studentID, studentData]) => ({
-          studentName: studentMap[studentID] || `Student ID: ${studentID}`,
-          value: studentData[questionID],
-        })),
-      )
-      .filter(({ value }) => value)
-
-    return studentResponses.map(({ studentName, value }, idx) => (
+      acc[student.id] = student.name;
+      return acc;
+    }, {});
+  
+    const aggregatedResponses = responses.reduce((acc, response) => {
+      Object.entries(response.students || {}).forEach(([studentID, studentData]) => {
+        if (!acc[studentID]) {
+          acc[studentID] = {
+            studentName: studentMap[studentID] || `Student ID: ${studentID}`,
+            values: [],
+          };
+        }
+        if (studentData[questionID]) {
+          acc[studentID].values.push(studentData[questionID]);
+        }
+      });
+      return acc;
+    }, {});
+  
+    const responseElements = Object.values(aggregatedResponses).map(({ studentName, values }, idx) => (
       <div key={idx} className="mb-4 bg-gray-50 p-3 rounded-md">
         <h6 className="font-medium text-gray-800 mb-2">{studentName}</h6>
-        <p className="text-gray-700">{value}</p>
+        <ul className="list-disc pl-5">
+          {values.length > 0 ? (
+            values.map((value, index) => (
+              <li key={index} className="text-gray-700">{value}</li>
+            ))
+          ) : (
+            <li className="text-gray-500 italic">No responses available</li>
+          )}
+        </ul>
       </div>
-    ))
-  }
+    ));
+  
+    // Handle case where no responses exist for any student
+    if (responseElements.length === 0) {
+      return (
+        <div className="mb-4 bg-gray-50 p-3 rounded-md">
+          <h6 className="font-medium text-gray-800 mb-2">No student responses available</h6>
+        </div>
+      );
+    }
+  
+    return responseElements;
+  };
+  
 
   if (loading) {
     return (
@@ -156,10 +180,10 @@ const ProjectAssessmentPopup = ({ project, onClose }) => {
             </div>
             {expandedSections["book"] && (
               <div className="mt-4 space-y-4">
-                {bookData.questions.map(({ title, id }) => (
+                {bookData.questions.map(({ title, id, reference }) => (
                   <div key={id} className="border border-gray-200 rounded-lg overflow-hidden">
                     <div
-                      className="bg-gray-50 p-3 cursor-pointer flex justify-between items-center"
+                      className="bg-gray-50 hover:bg-gray-100 p-3 cursor-pointer flex justify-between items-center"
                       onClick={() => toggleQuestion(id)}
                     >
                       <h4 className="font-medium text-gray-800">{title}</h4>
@@ -171,19 +195,22 @@ const ProjectAssessmentPopup = ({ project, onClose }) => {
                     </div>
                     {expandedQuestions[id] && (
                       <div className="p-4 bg-white">
-                        <h5 className="font-medium mb-2 text-gray-700"></h5>
-                        <ul className="list-disc pl-5 mb-4">
-                          {renderGeneralResponses(bookData.responses, id).length > 0 ? (
-                            renderGeneralResponses(bookData.responses, id)
-                          ) : (
-                            <li className="text-gray-500 italic">No responses available</li>
-                          )}
-                        </ul>
-                        {renderStudentResponses(bookData.responses, id).length > 0 && (
-                          <div>
+                        {reference === "general" ? (
+                          <>
+                            <h5 className="font-medium mb-2 text-gray-700"></h5>
+                            <ul className="list-disc pl-5">
+                              {renderGeneralResponses(bookData.responses, id).length > 0 ? (
+                                renderGeneralResponses(bookData.responses, id)
+                              ) : (
+                                <li className="text-gray-500 italic">No responses available</li>
+                              )}
+                            </ul>
+                          </>
+                        ) : (
+                          <>
                             <h5 className="font-medium mb-2 text-gray-700"></h5>
                             {renderStudentResponses(bookData.responses, id)}
-                          </div>
+                          </>
                         )}
                       </div>
                     )}
@@ -196,7 +223,7 @@ const ProjectAssessmentPopup = ({ project, onClose }) => {
           {/* Presentation Section */}
           <div>
             <div
-              className="bg-green-50 p-4 rounded-lg flex justify-between items-center cursor-pointer transition-colors hover:bg-green-100"
+              className="bg-green-50  p-4 rounded-lg flex justify-between items-center cursor-pointer transition-colors hover:bg-green-100"
               onClick={() => toggleSection("presentation")}
             >
               <h3 className="text-lg font-semibold text-green-800">Presentation Form Responses</h3>
@@ -208,10 +235,10 @@ const ProjectAssessmentPopup = ({ project, onClose }) => {
             </div>
             {expandedSections["presentation"] && (
               <div className="mt-4 space-y-4">
-                {presentationData.questions.map(({ title, id }) => (
+                {presentationData.questions.map(({ title, id, reference }) => (
                   <div key={id} className="border border-gray-200 rounded-lg overflow-hidden">
                     <div
-                      className="bg-gray-50 p-3 cursor-pointer flex justify-between items-center"
+                      className="bg-gray-50 hover:bg-gray-100 p-3 cursor-pointer flex justify-between items-center"
                       onClick={() => toggleQuestion(id)}
                     >
                       <h4 className="font-medium text-gray-800">{title}</h4>
@@ -223,22 +250,22 @@ const ProjectAssessmentPopup = ({ project, onClose }) => {
                     </div>
                     {expandedQuestions[id] && (
                       <div className="p-4 bg-white">
-                        {renderStudentResponses(presentationData.responses, id).length > 0 ? (
-                          <div>
+                        {reference === "general" ? (
+                          <>
+                            <h5 className="font-medium mb-2 text-gray-700"></h5>
+                            <ul className="list-disc pl-5">
+                              {renderGeneralResponses(presentationData.responses, id).length > 0 ? (
+                                renderGeneralResponses(presentationData.responses, id)
+                              ) : (
+                                <li className="text-gray-500 italic">No responses available</li>
+                              )}
+                            </ul>
+                          </>
+                        ) : (
+                          <>
                             <h5 className="font-medium mb-2 text-gray-700"></h5>
                             {renderStudentResponses(presentationData.responses, id)}
-                          </div>
-                        ) : (
-                          <ul className="list-disc pl-5">
-                            {renderGeneralResponses(presentationData.responses, id).length > 0 ? (
-                              <>
-                                <h5 className="font-medium mb-2 text-gray-700"></h5>
-                                {renderGeneralResponses(presentationData.responses, id)}
-                              </>
-                            ) : (
-                              <li className="text-gray-500 italic">No responses available</li>
-                            )}
-                          </ul>
+                          </>
                         )}
                       </div>
                     )}
@@ -254,4 +281,3 @@ const ProjectAssessmentPopup = ({ project, onClose }) => {
 }
 
 export default ProjectAssessmentPopup
-

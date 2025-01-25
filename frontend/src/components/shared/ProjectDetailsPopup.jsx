@@ -57,8 +57,10 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
     user.email === project.supervisor1 ||
     user.email === project.supervisor2;
 
+
+    
   const handleSaveGitLink = async () => {
-    if (gitLink.trim()) {
+    
       try {
         await api.updateProject(project.id, { gitLink });
         alert("Git link saved successfully!");
@@ -67,9 +69,7 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
         console.error("Error saving Git link:", error);
         alert("Failed to save Git link.");
       }
-    } else {
-      alert("Please enter a valid Git link.");
-    }
+    
   };
 
   const handleSaveNotes = async () => {
