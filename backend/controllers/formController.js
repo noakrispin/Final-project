@@ -158,21 +158,21 @@ module.exports = {
   addQuestion: async (req, res) => {
     const { formID } = req.params;
     const questionData = req.body; // Get the question data from the request body
-  
+
     if (!formID || !questionData) {
       return res.status(400).json({ message: "Form ID and question data are required." });
     }
-  
+
     try {
       console.log("Adding question to form:", { formID, questionData });
-  
+
       // Use questionID as the Firestore document ID
       const questionRef = db
         .collection("forms")
         .doc(formID)
         .collection("questions")
         .doc(questionData.questionID);
-  
+
       // Save the entire questionData object, ensuring all fields are included
       await questionRef.set({
         id: questionData.questionID, // Explicitly set `id` to match `questionID`
@@ -184,9 +184,9 @@ module.exports = {
         response_type: questionData.response_type || "text",
         weight: questionData.weight || 0,
       });
-  
+
       console.log("Question successfully added:", questionData);
-  
+
       res.status(201).json({
         message: "Question added successfully.",
         questionData: {
@@ -230,7 +230,7 @@ module.exports = {
   },
 
 
-    // Delete a specific question from a form
+  // Delete a specific question from a form
   deleteQuestion: async (req, res) => {
     const { formID, questionId } = req.params;
 
@@ -416,17 +416,20 @@ module.exports = {
       }
 
       console.log("Evaluation saved successfully.");
-//////////////////////////////////////////////////////////////////
+      //////////////////////////////////////////////////////////////////
 
       console.log("Updating finalGrades...");
 
       const finalGradesSnapshot = await db
         .collection("finalGrades")
         .where("projectCode", "==", projectCode)
+        // .where("part", "==", part)
         .get();
 
+      console.log("finalGradesSnapshot:", finalGradesSnapshot);
+
       if (!finalGradesSnapshot.empty) {
-        finalGradesSnapshot.forEach(async (doc) => {
+        for (const doc of finalGradesSnapshot.docs) {
           const finalGradeDoc = doc.data();
           const studentID = finalGradeDoc.studentID;
 
@@ -438,6 +441,7 @@ module.exports = {
             .where("projectCode", "==", projectCode)
             .get();
 
+            console.log("evaluatorsSnapshot:", evaluatorsSnapshot);
           let totalSupervisorGrade = 0;
           let totalPresentationGrade = 0;
           let totalBookGrade = 0;
@@ -446,9 +450,9 @@ module.exports = {
           let presentationCount = 0;
           let bookCount = 0;
 
-          evaluatorsSnapshot.forEach(async (evaluatorDoc) => {
+          for (const evaluatorDoc of evaluatorsSnapshot.docs) {
             const evaluator = evaluatorDoc.data();
-
+            console.log("evaluator:", evaluator);
             if (evaluator.status === "Submitted") {
               const evaluationSnapshot = await db
                 .collection("forms")
@@ -458,21 +462,32 @@ module.exports = {
                 .where("projectCode", "==", projectCode)
                 .get();
 
-              evaluationSnapshot.forEach((evaluationDoc) => {
+              for (const evaluationDoc of evaluationSnapshot.docs) {
                 const evaluation = evaluationDoc.data();
                 const grades = evaluation.grades || {};
-
+                console.log("grades:", grades);
+                console.log("evaluation(in loop):", evaluation);
                 if (grades[studentID] !== undefined) {
                   switch (evaluator.formID) {
                     case "SupervisorForm":
+                      console.log("SupervisorForm:grades[studentID]", grades[studentID]);
                       totalSupervisorGrade += grades[studentID];
                       supervisorCount++;
                       break;
-                    case "PresentationForm":
+                    case "PresentationFormA":
                       totalPresentationGrade += grades[studentID];
                       presentationCount++;
                       break;
-                    case "BookForm":
+                    case "PresentationFormB":
+                      console.log("PresentationFormB:grades[studentID]", grades[studentID]);
+                      totalPresentationGrade += grades[studentID];
+                      presentationCount++;
+                      break;
+                    case "bookReviewerFormA":
+                      totalBookGrade += grades[studentID];
+                      bookCount++;
+                      break;
+                    case "bookReviewerFormB":
                       totalBookGrade += grades[studentID];
                       bookCount++;
                       break;
@@ -480,9 +495,9 @@ module.exports = {
                       console.log(`Unknown formID: ${evaluator.formID}`);
                   }
                 }
-              });
+              }
             }
-          });
+          }
 
           const calculatedSupervisorGrade =
             supervisorCount > 0 ? totalSupervisorGrade / supervisorCount : null;
@@ -533,10 +548,13 @@ module.exports = {
             finalGrade,
             status,
           });
-        });
+        }
+
+        console.log("finalGrades updated successfully.");
       } else {
         console.log("No matching finalGrades document found for the project and student.");
       }
+
 
       res.status(200).json({
         message: "Form submitted successfully with calculated evaluations&final grades.",
@@ -552,7 +570,7 @@ module.exports = {
   getLastResponse: async (req, res) => {
     const { formID } = req.params;
     const { evaluatorID, projectCode } = req.query;
-    console.log("params in controller GET_LAST_RESPONSE:", { evaluatorID, projectCode,formID });
+    console.log("params in controller GET_LAST_RESPONSE:", { evaluatorID, projectCode, formID });
     if (!formID || !evaluatorID || !projectCode) {
       return res.status(400).json({ message: "Form ID, Evaluator ID, and Project Code are required." });
     }
@@ -588,20 +606,20 @@ module.exports = {
 
   getResponses: async (req, res) => {
     const { formID } = req.params;
-  
+
     if (!formID) {
       return res.status(400).json({ message: "Form ID is required." });
     }
-  
+
     try {
       console.log("Fetching responses for formID:", formID);
-  
+
       const responsesSnapshot = await db
         .collection("forms")
         .doc(formID)
         .collection("responses")
         .get();
-  
+
       if (responsesSnapshot.empty) {
         console.warn(`No responses found for formID: ${formID}`);
         return res.status(404).json({
@@ -611,12 +629,12 @@ module.exports = {
           },
         });
       }
-  
+
       const responses = responsesSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
-  
+
       console.log(`Fetched ${responses.length} responses for formID: ${formID}`);
       res.status(200).json(responses);
     } catch (error) {
@@ -624,8 +642,8 @@ module.exports = {
       res.status(500).json({ message: "Failed to fetch responses." });
     }
   },
-  
-  
+
+
 
   /* -------------------------form's evaluations (evaluations subCollection) --------------------------*/
 

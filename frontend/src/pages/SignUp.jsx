@@ -14,7 +14,7 @@ function SignUp() {
 
   const validateEmail = (email) => {
     if (!email) return "Email is required";
-    if (!email.endsWith("@e.braude.ac.il")) return "Email must end with @e.braude.ac.il";
+    if (!email.endsWith("@braude.ac.il")) return "Email must end with @braude.ac.il";
     return true;
   };
 
@@ -71,7 +71,7 @@ function SignUp() {
             register={register}
             required="Email is required"
             pattern={{
-              value: /^[a-zA-Z0-9._%+-]+@e\.braude\.ac\.il$/,
+              value: /^[^\s@]+@(e\.)?braude\.ac\.il$/,
               message: "Email must end with @e.braude.ac.il"
             }}
             errors={errors}
