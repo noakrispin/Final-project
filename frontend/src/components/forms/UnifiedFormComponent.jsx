@@ -5,7 +5,7 @@ import FormField from "./FormField";
 import { Button } from "../ui/Button";
 import { formsApi } from "../../services/formAPI";
 import { evaluatorsApi } from "../../services/evaluatorsAPI";
-import { finalGradesApi } from "../../services/finalgradesAPI";
+import { gradesApi } from "../../services/finalgradesAPI";
 
 export default function UnifiedFormComponent({
   formTitle,
@@ -181,7 +181,7 @@ export default function UnifiedFormComponent({
       await formsApi.submitForm(formID, responses);
       console.log("Form submitted successfully");
       //update final grade
-      await finalGradesApi.addOrUpdateGrade( formID, responses);
+      await gradesApi.addOrUpdateGrade( formID, responses);
       console.log("Final grade uptaded successfully");
       
       // Add or update evaluator status in Evaluators collection
