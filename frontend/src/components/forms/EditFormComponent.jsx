@@ -8,47 +8,30 @@ import { formsApi } from "../../services/formAPI";
 function QuestionEditor({ questions, setQuestions, reference ,formID}) {
   const handleAddQuestion = async () => {
     const newQuestion = {
-      id: `new_${Date.now()}`,
+      id: `q_${Date.now()}`, // Generate unique ID for Firestore
+      questionID: `q_${Date.now()}`, // Match the `id` field
       title: "New Question",
       description: "",
       order: questions.length + 1,
-      questionID: `q_${Date.now()}`,
       reference,
       required: false,
       response_type: "text",
       weight: 0,
     };
   
-    const existingQuestion = questions.find((q) => q.questionID === newQuestion.questionID);
-    if (existingQuestion) {
-      alert("This question already exists.");
-      return;
-    }
-  
     setQuestions((prev) => [...prev, newQuestion]); // Optimistic update
   
     try {
       const response = await formsApi.addQuestion(formID, newQuestion);
-      // Validate backend response structure
-      if (!response ) {
-        throw new Error("Server returned an invalid response.");
-      }
-      console.log("Response after adding question:", response);
-      console.log("Response.id after adding question:", response.id);
-      // Update with server-provided ID
-      const updatedQuestion = { ...newQuestion, id: response.id };
-      console.log("updatedQuestion.id after adding question:", updatedQuestion.id);
-
+      if (!response) throw new Error("Failed to add question on the server.");
       setQuestions((prev) => [
-        ...prev.filter((q) => q.id !== newQuestion.id),
-        updatedQuestion,
+        ...prev.filter((q) => q.id !== newQuestion.id), // Remove temporary question
+        response, // Use server-confirmed question data
       ]);
     } catch (error) {
       console.error("Error adding question:", error.message);
       alert("Failed to add question. Please try again.");
-  
-      // Revert optimistic update
-      setQuestions((prev) => prev.filter((q) => q.id !== newQuestion.id));
+      setQuestions((prev) => prev.filter((q) => q.id !== newQuestion.id)); // Revert optimistic update
     }
   };
   
