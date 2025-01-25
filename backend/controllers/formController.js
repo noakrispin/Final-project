@@ -164,13 +164,19 @@ module.exports = {
     }
   
     try {
+      console.log("Adding question to form:", { formID, questionData });
+    
       const newQuestion = await db
         .collection("forms")
         .doc(formID)
         .collection("questions")
         .add(questionData);
-  
-      // Ensure the response includes all required fields
+    
+      console.log("Question successfully added:", {
+        id: newQuestion.id,
+        ...questionData,
+      });
+    
       res.status(201).json({
         message: "Question added successfully.",
         questionData: {
@@ -182,6 +188,7 @@ module.exports = {
       console.error("Error adding question:", error.message);
       res.status(500).json({ message: "Failed to add question." });
     }
+    
   },
   
 
