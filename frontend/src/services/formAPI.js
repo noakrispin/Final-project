@@ -58,14 +58,23 @@ export const formsApi = {
    */
   addQuestion: async (formID, questionData) => {
     try {
+      console.log("Sending request to add question:", { formID, questionData });
       const response = await api.post(`/forms/${formID}/questions`, questionData);
-      console.log("API response after adding question:", response.data); // Debug log
-      return response.data; // Ensure this returns the data
+  
+      // Ensure a valid response structure
+      if (!response || !response.data || !response.data.questionData) {
+        throw new Error("Invalid response from server when adding question.");
+      }
+  
+      console.log("API response after adding question:", response);
+      return response;
     } catch (error) {
-      console.error("Error adding question:", error.message);
+      console.error("Error adding question:", error.response?.data || error.message);
       throw error;
     }
   },
+  
+  
   
   
 

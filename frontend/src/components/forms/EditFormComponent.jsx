@@ -29,24 +29,33 @@ function QuestionEditor({ questions, setQuestions, reference ,formID}) {
   
     try {
       const response = await formsApi.addQuestion(formID, newQuestion);
-  
-      // Ensure the response is valid
-      if (!response || !response.id) {
-        throw new Error("Invalid response from server. Question was not added.");
+    
+      // Validate backend response structure
+      if (
+        !response ||
+        !response.data ||
+        !response.data.questionData ||
+        !response.data.questionData.id
+      ) {
+        throw new Error("Server returned an invalid response.");
       }
-  
+    
       console.log("Response after adding question:", response);
-  
-      // Update the question list with the server-provided question
-      setQuestions((prev) =>
-        prev.map((q) => (q.id === newQuestion.id ? { ...newQuestion, id: response.id } : q))
-      );
+    
+      // Update with server-provided ID
+      const updatedQuestion = { ...newQuestion, id: response.data.questionData.id };
+      setQuestions((prev) => [
+        ...prev.filter((q) => q.id !== newQuestion.id),
+        updatedQuestion,
+      ]);
     } catch (error) {
       console.error("Error adding question:", error.message);
       alert("Failed to add question. Please try again.");
+    
       // Revert optimistic update
       setQuestions((prev) => prev.filter((q) => q.id !== newQuestion.id));
     }
+    
   };
   
   

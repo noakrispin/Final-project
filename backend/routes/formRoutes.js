@@ -35,9 +35,12 @@ router.put("/:formID/questions/:questionId", asyncHandler(async (req, res) => {
 }));
 
 router.post("/:formID/questions", asyncHandler(async (req, res) => {
+  console.log("Received request to add question:", req.body);
   const result = await formController.addQuestion(req, res);
+  console.log("Response sent for add question:", result);
   return result;
 }));
+
 
 router.delete("/:formID/questions/:questionId", asyncHandler(async (req, res) => {
   const result = await formController.deleteQuestion(req, res);
