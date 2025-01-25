@@ -180,10 +180,12 @@ module.exports = {
       res.status(201).json({
         message: "Question added successfully.",
         questionData: {
+          ...questionData,
           id: newQuestion.id, // Firebase-generated ID
-          ...questionData,    // All the question data
+          questionID: questionData.questionID, // Ensure questionID is returned
         },
       });
+      
     } catch (error) {
       console.error("Error adding question:", error.message);
       res.status(500).json({ message: "Failed to add question." });
