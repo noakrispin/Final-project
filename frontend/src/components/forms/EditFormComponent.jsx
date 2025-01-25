@@ -3,12 +3,10 @@ import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { FaTrashAlt, FaPlus } from "react-icons/fa";
 import { Button } from "../ui/Button";
-//import FormField from "./FormField";
 import { formsApi } from "../../services/formAPI";
-//import { FaInfoCircle } from "react-icons/fa";
 
-function QuestionEditor({ questions, setQuestions, reference }) {
-  const handleAddQuestion = () => {
+function QuestionEditor({ questions, setQuestions, reference ,formID}) {
+  const handleAddQuestion = async () => {
     const newQuestion = {
       id: `new_${Date.now()}`,
       title: "New Question",
@@ -27,14 +25,33 @@ function QuestionEditor({ questions, setQuestions, reference }) {
       return;
     }
   
-    setQuestions((prev) => [...prev, newQuestion]);
+    setQuestions((prev) => [...prev, newQuestion]); // Optimistic update
+  
     try {
-      const response = formsApi.addQuestion(formID, newQuestionData);
-      setQuestions((prev) => [...prev, response.data.question]);
+      const response = await formsApi.addQuestion(formID, newQuestion);
+  
+      // Ensure the response is valid
+      if (!response || !response.id) {
+        throw new Error("Invalid response from server. Question was not added.");
+      }
+  
+      console.log("Response after adding question:", response);
+  
+      // Update the question list with the server-provided question
+      setQuestions((prev) =>
+        prev.map((q) => (q.id === newQuestion.id ? { ...newQuestion, id: response.id } : q))
+      );
     } catch (error) {
       console.error("Error adding question:", error.message);
+      alert("Failed to add question. Please try again.");
+      // Revert optimistic update
+      setQuestions((prev) => prev.filter((q) => q.id !== newQuestion.id));
     }
   };
+  
+  
+  
+  
 
   const handleDeleteQuestion = async (index) => {
     const confirmDelete = window.confirm(
@@ -47,6 +64,7 @@ function QuestionEditor({ questions, setQuestions, reference }) {
     try {
       if (!questionToDelete.id.startsWith("new_")) {
         // Only delete from DB if it exists there
+        console.log("Deleting question(question ID):", questionToDelete.id);
         await formsApi.deleteQuestion(formID, questionToDelete.id);
       }
       // Remove from local state
@@ -63,13 +81,14 @@ function QuestionEditor({ questions, setQuestions, reference }) {
     setQuestions((prev) =>
       prev.map((q, i) => (i === index ? updatedQuestion : q))
     );
-
+    console.log("Updated question.id:", updatedQuestion.id);
     try {
       await formsApi.updateQuestion(
         formID,
         updatedQuestion.id,
         updatedQuestion
       );
+      
     } catch (error) {
       console.error("Error updating question:", error.message);
     }
@@ -466,6 +485,7 @@ export default function EditFormComponent({
               questions={generalQuestions}
               setQuestions={setGeneralQuestions}
               reference="general"
+              formID={formID}
             />
           ) : (
             <QuestionViewer questions={generalQuestions} />
@@ -481,6 +501,7 @@ export default function EditFormComponent({
               questions={studentQuestions}
               setQuestions={setStudentQuestions}
               reference="student"
+              formID={formID}
             />
           ) : (
             <QuestionViewer questions={studentQuestions} />
