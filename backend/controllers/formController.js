@@ -413,125 +413,125 @@ deleteQuestion: async (req, res) => {
       console.log("Evaluation saved successfully.");
 //////////////////////////////////////////////////////////////////
 
-      // console.log("Updating finalGrades...");
+      console.log("Updating finalGrades...");
 
-      // const finalGradesSnapshot = await db
-      //   .collection("finalGrades")
-      //   .where("projectCode", "==", projectCode)
-      //   .get();
+      const finalGradesSnapshot = await db
+        .collection("finalGrades")
+        .where("projectCode", "==", projectCode)
+        .get();
 
-      // if (!finalGradesSnapshot.empty) {
-      //   finalGradesSnapshot.forEach(async (doc) => {
-      //     const finalGradeDoc = doc.data();
-      //     const studentID = finalGradeDoc.studentID;
+      if (!finalGradesSnapshot.empty) {
+        finalGradesSnapshot.forEach(async (doc) => {
+          const finalGradeDoc = doc.data();
+          const studentID = finalGradeDoc.studentID;
 
-      //     console.log(`Processing final grades for studentID: ${studentID}`);
+          console.log(`Processing final grades for studentID: ${studentID}`);
 
-      //     // Calculate averages for each grade component
-      //     const evaluatorsSnapshot = await db
-      //       .collection("evaluators")
-      //       .where("projectCode", "==", projectCode)
-      //       .get();
+          // Calculate averages for each grade component
+          const evaluatorsSnapshot = await db
+            .collection("evaluators")
+            .where("projectCode", "==", projectCode)
+            .get();
 
-      //     let totalSupervisorGrade = 0;
-      //     let totalPresentationGrade = 0;
-      //     let totalBookGrade = 0;
+          let totalSupervisorGrade = 0;
+          let totalPresentationGrade = 0;
+          let totalBookGrade = 0;
 
-      //     let supervisorCount = 0;
-      //     let presentationCount = 0;
-      //     let bookCount = 0;
+          let supervisorCount = 0;
+          let presentationCount = 0;
+          let bookCount = 0;
 
-      //     evaluatorsSnapshot.forEach(async (evaluatorDoc) => {
-      //       const evaluator = evaluatorDoc.data();
+          evaluatorsSnapshot.forEach(async (evaluatorDoc) => {
+            const evaluator = evaluatorDoc.data();
 
-      //       if (evaluator.status === "Submitted") {
-      //         const evaluationSnapshot = await db
-      //           .collection("forms")
-      //           .doc(evaluator.formID)
-      //           .collection("evaluations")
-      //           .where("evaluatorID", "==", evaluator.evaluatorID)
-      //           .where("projectCode", "==", projectCode)
-      //           .get();
+            if (evaluator.status === "Submitted") {
+              const evaluationSnapshot = await db
+                .collection("forms")
+                .doc(evaluator.formID)
+                .collection("evaluations")
+                .where("evaluatorID", "==", evaluator.evaluatorID)
+                .where("projectCode", "==", projectCode)
+                .get();
 
-      //         evaluationSnapshot.forEach((evaluationDoc) => {
-      //           const evaluation = evaluationDoc.data();
-      //           const grades = evaluation.grades || {};
+              evaluationSnapshot.forEach((evaluationDoc) => {
+                const evaluation = evaluationDoc.data();
+                const grades = evaluation.grades || {};
 
-      //           if (grades[studentID] !== undefined) {
-      //             switch (evaluator.formID) {
-      //               case "SupervisorForm":
-      //                 totalSupervisorGrade += grades[studentID];
-      //                 supervisorCount++;
-      //                 break;
-      //               case "PresentationForm":
-      //                 totalPresentationGrade += grades[studentID];
-      //                 presentationCount++;
-      //                 break;
-      //               case "BookForm":
-      //                 totalBookGrade += grades[studentID];
-      //                 bookCount++;
-      //                 break;
-      //               default:
-      //                 console.log(`Unknown formID: ${evaluator.formID}`);
-      //             }
-      //           }
-      //         });
-      //       }
-      //     });
+                if (grades[studentID] !== undefined) {
+                  switch (evaluator.formID) {
+                    case "SupervisorForm":
+                      totalSupervisorGrade += grades[studentID];
+                      supervisorCount++;
+                      break;
+                    case "PresentationForm":
+                      totalPresentationGrade += grades[studentID];
+                      presentationCount++;
+                      break;
+                    case "BookForm":
+                      totalBookGrade += grades[studentID];
+                      bookCount++;
+                      break;
+                    default:
+                      console.log(`Unknown formID: ${evaluator.formID}`);
+                  }
+                }
+              });
+            }
+          });
 
-      //     const calculatedSupervisorGrade =
-      //       supervisorCount > 0 ? totalSupervisorGrade / supervisorCount : null;
-      //     const calculatedPresentationGrade =
-      //       presentationCount > 0 ? totalPresentationGrade / presentationCount : null;
-      //     const calculatedBookGrade =
-      //       bookCount > 0 ? totalBookGrade / bookCount : null;
+          const calculatedSupervisorGrade =
+            supervisorCount > 0 ? totalSupervisorGrade / supervisorCount : null;
+          const calculatedPresentationGrade =
+            presentationCount > 0 ? totalPresentationGrade / presentationCount : null;
+          const calculatedBookGrade =
+            bookCount > 0 ? totalBookGrade / bookCount : null;
 
-      //     console.log(`Grade Averages for student ${studentID}:`, {
-      //       calculatedSupervisorGrade,
-      //       calculatedPresentationGrade,
-      //       calculatedBookGrade,
-      //     });
+          console.log(`Grade Averages for student ${studentID}:`, {
+            calculatedSupervisorGrade,
+            calculatedPresentationGrade,
+            calculatedBookGrade,
+          });
 
-      //     // Determine status
-      //     let status = "Partially graded";
+          // Determine status
+          let status = "Partially graded";
 
-      //     const allSubmitted = evaluatorsSnapshot.docs.every(
-      //       (evaluatorDoc) => evaluatorDoc.data().status === "Submitted"
-      //     );
-      //     const noneSubmitted = evaluatorsSnapshot.docs.every(
-      //       (evaluatorDoc) => evaluatorDoc.data().status !== "Submitted"
-      //     );
+          const allSubmitted = evaluatorsSnapshot.docs.every(
+            (evaluatorDoc) => evaluatorDoc.data().status === "Submitted"
+          );
+          const noneSubmitted = evaluatorsSnapshot.docs.every(
+            (evaluatorDoc) => evaluatorDoc.data().status !== "Submitted"
+          );
 
-      //     if (allSubmitted) {
-      //       status = "Fully graded";
-      //     } else if (noneSubmitted) {
-      //       status = "Not graded";
-      //     }
+          if (allSubmitted) {
+            status = "Fully graded";
+          } else if (noneSubmitted) {
+            status = "Not graded";
+          }
 
-      //     // Calculate final grade
-      //     const finalGrade =
-      //       (calculatedSupervisorGrade || 0) * 0.5 +
-      //       (calculatedPresentationGrade || 0) * 0.25 +
-      //       (calculatedBookGrade || 0) * 0.25;
+          // Calculate final grade
+          const finalGrade =
+            (calculatedSupervisorGrade || 0) * 0.5 +
+            (calculatedPresentationGrade || 0) * 0.25 +
+            (calculatedBookGrade || 0) * 0.25;
 
-      //     // Update finalGrades document
-      //     await db.collection("finalGrades").doc(doc.id).update({
-      //       CalculatedSupervisorGrade: calculatedSupervisorGrade,
-      //       CalculatedPresentationGrade: calculatedPresentationGrade,
-      //       CalculatedBookGrade: calculatedBookGrade,
-      //       finalGrade,
-      //       status,
-      //       updated_at: new Date().toISOString(),
-      //     });
+          // Update finalGrades document
+          await db.collection("finalGrades").doc(doc.id).update({
+            CalculatedSupervisorGrade: calculatedSupervisorGrade,
+            CalculatedPresentationGrade: calculatedPresentationGrade,
+            CalculatedBookGrade: calculatedBookGrade,
+            finalGrade,
+            status,
+            updated_at: new Date().toISOString(),
+          });
 
-      //     console.log(`Updated final grade for student ${studentID}:`, {
-      //       finalGrade,
-      //       status,
-      //     });
-      //   });
-      // } else {
-      //   console.log("No matching finalGrades document found for the project and student.");
-      // }
+          console.log(`Updated final grade for student ${studentID}:`, {
+            finalGrade,
+            status,
+          });
+        });
+      } else {
+        console.log("No matching finalGrades document found for the project and student.");
+      }
 
       res.status(200).json({
         message: "Form submitted successfully with calculated evaluations&final grades.",

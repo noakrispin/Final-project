@@ -29,17 +29,16 @@ function QuestionEditor({ questions, setQuestions, reference ,formID}) {
   
     try {
       const response = await formsApi.addQuestion(formID, newQuestion);
-    
       // Validate backend response structure
-      if (!response || !response.data || !response.data.questionData || !response.data.questionData.id) {
-        console.error("Invalid server response:", response);
+      if (!response ) {
         throw new Error("Server returned an invalid response.");
       }
-      
       console.log("Response after adding question:", response);
-    
+      console.log("Response.id after adding question:", response.id);
       // Update with server-provided ID
-      const updatedQuestion = { ...newQuestion, id: response.data.questionData.id };
+      const updatedQuestion = { ...newQuestion, id: response.id };
+      console.log("updatedQuestion.id after adding question:", updatedQuestion.id);
+
       setQuestions((prev) => [
         ...prev.filter((q) => q.id !== newQuestion.id),
         updatedQuestion,
@@ -47,17 +46,13 @@ function QuestionEditor({ questions, setQuestions, reference ,formID}) {
     } catch (error) {
       console.error("Error adding question:", error.message);
       alert("Failed to add question. Please try again.");
-    
+  
       // Revert optimistic update
       setQuestions((prev) => prev.filter((q) => q.id !== newQuestion.id));
     }
-    
   };
   
   
-  
-  
-
   const handleDeleteQuestion = async (index) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this question?"
@@ -81,23 +76,14 @@ function QuestionEditor({ questions, setQuestions, reference ,formID}) {
   };
   
 
-  const handleUpdateQuestion = async (index, key, value) => {
+  const handleUpdateQuestion = (index, key, value) => {
     const updatedQuestion = { ...questions[index], [key]: value };
     setQuestions((prev) =>
       prev.map((q, i) => (i === index ? updatedQuestion : q))
     );
-    console.log("Updated question.id:", updatedQuestion.id);
-    try {
-      await formsApi.updateQuestion(
-        formID,
-        updatedQuestion.id,
-        updatedQuestion
-      );
-      
-    } catch (error) {
-      console.error("Error updating question:", error.message);
-    }
+    console.log("Updated question locally:", updatedQuestion);
   };
+  
 
   return (
     <div className="space-y-6">
@@ -360,14 +346,9 @@ export default function EditFormComponent({
 
   const handleSave = async () => {
     try {
-      const updatedGeneralQuestions = generalQuestions.map((q) => ({
+      const updatedQuestions = questions.map((q) => ({
         ...q,
-        order: parseInt(q.order), // Ensure order is an integer
-        weight: parseFloat(q.weight), // Ensure weight is a float
-      }));
-      const updatedStudentQuestions = studentQuestions.map((q) => ({
-        ...q,
-        order: parseInt(q.order), // Ensure order is an integer
+        order: parseInt(q.order, 10), // Ensure order is an integer
         weight: parseFloat(q.weight), // Ensure weight is a float
       }));
   
@@ -378,30 +359,39 @@ export default function EditFormComponent({
       });
   
       // Sync Questions with Database
-      const syncQuestions = async (questions, reference) => {
+      const syncQuestions = async (questions) => {
+        console.log("Syncing questions with database:", questions);
         for (const question of questions) {
+          
           try {
-            if (question.id.startsWith("new_")) {
-              // Add new question
-              const response = await formsApi.addQuestion(formID, question);
-              question.id = response.data.id; // Update local ID with database ID
-            } else {
-              // Update existing question
-              await formsApi.updateQuestion(formID, question.id, question);
-            }
+            await formsApi.updateQuestion(formID, question.id, question);
+            // if (question.id.startsWith("new_")) {
+            //   // Add new question
+            //   const response = await formsApi.addQuestion(formID, question);
+            //   question.id = response.id; // Update local ID with database ID
+            // } else {
+            //   // Update existing question
+            //   await formsApi.updateQuestion(formID, question.id, question);
+            // }
           } catch (error) {
-            console.error(`Error syncing ${reference} question:`, error.message);
+            console.error(`Error syncing question: ${question.title}`, error.message);
           }
         }
       };
   
-      // Sync General and Student Questions
-      await syncQuestions(updatedGeneralQuestions, "general");
-      await syncQuestions(updatedStudentQuestions, "student");
+      await syncQuestions(updatedQuestions);
   
       // Refresh Local State with Questions from DB
       const allQuestions = await formsApi.getQuestions(formID);
-      const formattedQuestions = allQuestions.data.sort((a, b) => a.order - b.order);
+      console.log("All Questions after save:", allQuestions);
+      if (allQuestions.length === 0) {
+        console.warn("No questions found in API response.");
+        setGeneralQuestions([]);
+        setStudentQuestions([]);
+        return; // Exit early
+      }
+  
+      const formattedQuestions = allQuestions.sort((a, b) => a.order - b.order);
   
       setGeneralQuestions(formattedQuestions.filter((q) => q.reference === "general"));
       setStudentQuestions(formattedQuestions.filter((q) => q.reference === "student"));
@@ -414,6 +404,8 @@ export default function EditFormComponent({
       alert("Failed to save changes. Please try again.");
     }
   };
+  
+  
   
   
   return (
