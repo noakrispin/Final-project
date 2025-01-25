@@ -156,8 +156,8 @@ module.exports = {
 
   // Add a new question to a form
   addQuestion: async (req, res) => {
-    const { formID } = req.params;
-    const questionData = req.body;
+    const { formID } = req.params; // Extract form ID from URL parameters
+    const questionData = req.body; // Extract question data from the request body
   
     if (!formID || !questionData) {
       return res.status(400).json({ message: "Form ID and question data are required." });
@@ -166,80 +166,84 @@ module.exports = {
     try {
       console.log("Adding question to form:", { formID, questionData });
   
+      // Use questionID as the Firestore document ID
       const questionRef = db
         .collection("forms")
         .doc(formID)
         .collection("questions")
-        .doc(questionData.questionID); // Use questionID as the document ID
+        .doc(questionData.questionID);
   
-      await questionRef.set(questionData); // Save the question data
+      // Save the entire questionData object
+      await questionRef.set({
+        ...questionData, // Spread the question data to include all fields
+        id: questionData.questionID, // Ensure `id` matches `questionID`
+      });
   
       console.log("Question successfully added:", questionData);
   
       res.status(201).json({
         message: "Question added successfully.",
-        questionData: { ...questionData, id: questionData.questionID }, // Return the full question
+        questionData: { ...questionData, id: questionData.questionID },
       });
     } catch (error) {
       console.error("Error adding question:", error.message);
       res.status(500).json({ message: "Failed to add question." });
     }
-  },  
+  },
   
 
-
   // Update a specific question in a form
-updateQuestion: async (req, res) => {
-  const { formID, questionId } = req.params;
-  const updatedData = req.body;
+  updateQuestion: async (req, res) => {
+    const { formID, questionId } = req.params;
+    const updatedData = req.body;
 
-  if (!formID || !questionId || !updatedData) {
-    return res
-      .status(400)
-      .json({ message: "Form ID, question ID, and updated data are required." });
-  }
+    if (!formID || !questionId || !updatedData) {
+      return res
+        .status(400)
+        .json({ message: "Form ID, question ID, and updated data are required." });
+    }
 
-  try {
-    await db
-      .collection("forms")
-      .doc(formID)
-      .collection("questions")
-      .doc(questionId)
-      .update(updatedData);
+    try {
+      await db
+        .collection("forms")
+        .doc(formID)
+        .collection("questions")
+        .doc(questionId)
+        .update(updatedData);
 
-    res.status(200).json({
-      message: "Question updated successfully.",
-      updatedData,
-    });
-  } catch (error) {
-    console.error("Error updating question:", error.message);
-    res.status(500).json({ message: "Failed to update question." });
-  }
-},
+      res.status(200).json({
+        message: "Question updated successfully.",
+        updatedData,
+      });
+    } catch (error) {
+      console.error("Error updating question:", error.message);
+      res.status(500).json({ message: "Failed to update question." });
+    }
+  },
 
 
-  // Delete a specific question from a form
-deleteQuestion: async (req, res) => {
-  const { formID, questionId } = req.params;
+    // Delete a specific question from a form
+  deleteQuestion: async (req, res) => {
+    const { formID, questionId } = req.params;
 
-  if (!formID || !questionId) {
-    return res.status(400).json({ message: "Form ID and question ID are required." });
-  }
+    if (!formID || !questionId) {
+      return res.status(400).json({ message: "Form ID and question ID are required." });
+    }
 
-  try {
-    await db
-      .collection("forms")
-      .doc(formID)
-      .collection("questions")
-      .doc(questionId)
-      .delete();
+    try {
+      await db
+        .collection("forms")
+        .doc(formID)
+        .collection("questions")
+        .doc(questionId)
+        .delete();
 
-    res.status(200).json({ message: "Question deleted successfully." });
-  } catch (error) {
-    console.error("Error deleting question:", error.message);
-    res.status(500).json({ message: "Failed to delete question." });
-  }
-},
+      res.status(200).json({ message: "Question deleted successfully." });
+    } catch (error) {
+      console.error("Error deleting question:", error.message);
+      res.status(500).json({ message: "Failed to delete question." });
+    }
+  },
 
 
 
