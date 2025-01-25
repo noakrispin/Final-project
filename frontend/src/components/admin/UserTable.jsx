@@ -9,14 +9,14 @@ const UserTable = ({ users, onDelete, onEditRole }) => {
   console.log("Users passed to UserTable:", users);
 
   const userColumns = [
-    
     { key: "fullName", header: "Full Name", sortable: true },
     { key: "email", header: "Email", sortable: true },
     {
       key: "role",
       header: "Role",
-      render: (value, user) => (user.isAdmin === true ? "Admin" : "Supervisor"), // Ensure boolean check for isAdmin
-      sortable: true,
+      render: (value, user) => (user.isAdmin === true ? "Admin" : "Supervisor"), // Display role
+      sortable: true, // Enable sorting
+      sortAccessor: (user) => (user.isAdmin === true ? "Admin" : "Supervisor"), // Sort by role
     },
     {
       key: "actions",
@@ -43,6 +43,7 @@ const UserTable = ({ users, onDelete, onEditRole }) => {
       ),
     },
   ];
+  
 
   if (!users || users.length === 0) {
     console.error("No valid user data provided to UserTable:", users);
@@ -61,7 +62,7 @@ const UserTable = ({ users, onDelete, onEditRole }) => {
         showTabs={false}
         onRowClick={(row) => console.log("Row clicked:", row)}
         showDescription = {true}
-        description = "add description (in UserTable)"
+        description = "Click the Edit icon to assign or modify a user's role, or click Delete to remove the user from the system."
       />
     </Card>
   );

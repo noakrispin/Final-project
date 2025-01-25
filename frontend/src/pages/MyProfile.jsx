@@ -104,7 +104,13 @@ export default function MyProfile() {
 
           {/* Pending Reviews */}
           <button
-            onClick={() => navigate("/MyProjectsReview")}
+            onClick={() =>
+              navigate(
+                supervisedProjectsCount > 0
+                  ? "/MyProjectsReview"
+                  : "/OtherProjectsReview"
+              )
+            }
             className="block bg-green-100 hover:bg-green-200 text-center p-6 rounded-lg shadow hover:shadow-md transition-shadow"
           >
             <h2 className="text-4xl font-bold text-green-600">{pendingReviewsCount}</h2>

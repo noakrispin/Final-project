@@ -59,12 +59,14 @@ export const formsApi = {
   addQuestion: async (formID, questionData) => {
     try {
       const response = await api.post(`/forms/${formID}/questions`, questionData);
-      return response;
+      console.log("API response after adding question:", response.data); // Debug log
+      return response.data; // Ensure this returns the data
     } catch (error) {
       console.error("Error adding question:", error.message);
       throw error;
     }
   },
+  
   
 
   /**
@@ -72,8 +74,9 @@ export const formsApi = {
    */
   updateQuestion: async (formID, questionId, updatedData) => {
     try {
-      const response = await api.put(`/forms/${formID}/questions/${questionId}`, updatedData)
-      return response
+      const response = await api.put(`/forms/${formID}/questions/${questionId}`, updatedData);
+      console.log("Update question response:", response) // Debug log
+      return response;
     } catch (error) {
       console.error("Error updating question:", error)
       throw error
@@ -85,8 +88,9 @@ export const formsApi = {
    */
   deleteQuestion: async (formID, questionId) => {
     try {
-      const response = await api.delete(`/forms/${formID}/questions/${questionId}`)
-      return response
+      const response = await api.delete(`/forms/${formID}/questions/${questionId}`);
+      console.log("Delete question response:", response) // Debug log
+      return response;
     } catch (error) {
       console.error("Error deleting question:", error)
       throw error
@@ -100,8 +104,8 @@ export const formsApi = {
    */
   submitForm: async (formID, formData) => {
     try {
-      const response = await api.post(`/forms/${formID}/submit`, formData)
-      return response
+      const response = await api.post(`/forms/${formID}/submit`, formData);
+      return response;
     } catch (error) {
       console.error("Error submitting form:", error)
       throw error
@@ -156,14 +160,6 @@ export const formsApi = {
   },
   
   
-
-  /**
-   * Update a specific response in a form.
-   */
-  // updateResponse: async (formID, responseId, updatedData) => {
-  //   return await api.put(`/forms/${formID}/responses/${responseId}`, updatedData);
-  // },
-
   /**
    * Delete a specific response from a form.
    */
