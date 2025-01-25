@@ -159,6 +159,7 @@ const updateUserRole = async (req, res) => {
 const scheduleRemindersForAll = async (req, res) => {
   const { message } = req.body;
 
+  // Default reminder message
   const defaultTemplate =
     "This is a reminder to review the project's status. Please log in to the system to take action.";
   const finalMessage = message || defaultTemplate;
@@ -168,29 +169,38 @@ const scheduleRemindersForAll = async (req, res) => {
     const usersSnapshot = await admin.firestore().collection("users").get();
     const userEmails = usersSnapshot.docs
       .map((doc) => doc.data().email)
-      .filter(Boolean);
+      .filter(Boolean); // Exclude null or undefined emails
+
+    console.log(`Fetched ${userEmails.length} user emails.`);
 
     if (userEmails.length === 0) {
       return res.status(404).json({ error: "No users found to send reminders." });
     }
 
-    // Send emails immediately
-    await Promise.all(
+    // Send emails to all users and log failures
+    const results = await Promise.allSettled(
       userEmails.map((email) =>
         sendEmail(email, "Reminder Notification", finalMessage)
       )
     );
 
+    const successCount = results.filter((result) => result.status === "fulfilled").length;
+    const failureCount = results.filter((result) => result.status === "rejected").length;
+
+    if (failureCount > 0) {
+      console.error(`Failed to send emails to ${failureCount} users.`);
+    }
+
+    // Respond with a summary
     res.status(201).json({
       success: true,
-      message: `Reminders sent successfully to ${userEmails.length} users.`,
+      message: `Reminders sent to ${successCount} users. ${failureCount} failed.`,
     });
   } catch (error) {
     console.error("Error sending reminders immediately:", error.message);
-    res.status(500).json({ error: "Failed to send reminders." });
+    res.status(500).json({ error: "Failed to send reminders.", details: error.message });
   }
 };
-
 
 
 module.exports = {
