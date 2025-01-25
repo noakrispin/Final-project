@@ -1,6 +1,6 @@
 import ExcelJS from 'exceljs';
 
-const emailRegex = /^[^\s@]+@e\.braude\.ac\.il$/;
+const emailRegex = /^[^\s@]+@(e\.)?braude\.ac\.il$/;
 
 export const processExcelFile = async (file) => {
   try {

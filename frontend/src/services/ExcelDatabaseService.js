@@ -27,102 +27,131 @@ export const ExcelDatabaseService = {
   },
 
 //insert new projects' Supervisors as evaluators of SupervisorForm to evaluators collection from excel file
-  insertSupervisorsEvaluators: async (projects) => {
-    try {
-      const batch = writeBatch(db);
-      projects.forEach((project) => {
-        if (project.supervisor1) {
+insertSupervisorsEvaluators: async (projects) => {
+  try {
+    // Fetch all existing evaluators and map by unique combination of evaluatorID, projectCode, and formID
+    const evaluatorsSnapshot = await getDocs(collection(db, "evaluators"));
+    const existingEvaluatorsSet = new Set(
+      evaluatorsSnapshot.docs.map((doc) =>
+        JSON.stringify({
+          evaluatorID: doc.data().evaluatorID,
+          projectCode: doc.data().projectCode,
+          formID: doc.data().formID,
+        })
+      )
+    );
+
+    const batch = writeBatch(db);
+
+    projects.forEach((project) => {
+      if (project.supervisor1) {
+        const evaluatorRecord1 = {
+          evaluatorID: project.supervisor1,
+          projectCode: project.projectCode,
+          formID: "SupervisorForm",
+        };
+
+        if (!existingEvaluatorsSet.has(JSON.stringify(evaluatorRecord1))) {
           const evaluatorRef1 = doc(collection(db, "evaluators"));
           batch.set(evaluatorRef1, {
-            evaluatorID: project.supervisor1,
-            formID: "SupervisorForm",
-            projectCode: project.projectCode,
+            ...evaluatorRecord1,
             status: "Not Submitted",
           });
         }
+      }
 
-        if (project.supervisor2) {
+      if (project.supervisor2) {
+        const evaluatorRecord2 = {
+          evaluatorID: project.supervisor2,
+          projectCode: project.projectCode,
+          formID: "SupervisorForm",
+        };
+
+        if (!existingEvaluatorsSet.has(JSON.stringify(evaluatorRecord2))) {
           const evaluatorRef2 = doc(collection(db, "evaluators"));
           batch.set(evaluatorRef2, {
-            evaluatorID: project.supervisor2,
-            formID: "SupervisorForm",
-            projectCode: project.projectCode,
+            ...evaluatorRecord2,
             status: "Not Submitted",
           });
         }
-      });
-      await batch.commit();
-      console.log("Evaluators successfully inserted.");
-    } catch (error) {
-      console.error("Error inserting evaluators:", error.message);
-      throw new Error("Database error: " + error.message);
-    }
-  },
+      }
+    });
+
+    await batch.commit();
+    console.log("Evaluators successfully inserted (excluding duplicates).");
+  } catch (error) {
+    console.error("Error inserting evaluators:", error.message);
+    throw new Error("Database error: " + error.message);
+  }
+},
+
 
   insertStudentsToFinalGrades: async (projects) => {
     try {
-        // Fetch all existing finalGrades and map by unique combination of studentID and projectCode
-        const finalGradesSnapshot = await getDocs(collection(db, "finalGrades"));
-        const existingFinalGradesSet = new Set(
-            finalGradesSnapshot.docs.map((doc) =>
-                JSON.stringify({
-                    studentID: doc.data().studentID,
-                    projectCode: doc.data().projectCode,
-                })
-            )
-        );
-
-        const batch = writeBatch(db);
-
-        projects.forEach((project) => {
-            // Add Student 1 to finalGrades if they exist and not already added
-            if (project.Student1 && project.Student1.ID) {
-                const finalGradeRecord = {
-                    studentID: project.Student1.ID,
-                    projectCode: project.projectCode,
-                };
-
-                if (!existingFinalGradesSet.has(JSON.stringify(finalGradeRecord))) {
-                    const finalGradeRef = doc(collection(db, "finalGrades"));
-                    batch.set(finalGradeRef, {
-                        ...finalGradeRecord,
-                        status: "Not graded", // Default status
-                        CalculatedBookGrade: null,
-                        CalculatedPresentationGrade: null,
-                        CalculatedSupervisorGrade: null,
-                        finalGrade: null,
-                    });
-                }
-            }
-
-            // Add Student 2 to finalGrades if they exist and not already added
-            if (project.Student2 && project.Student2.ID) {
-                const finalGradeRecord = {
-                    studentID: project.Student2.ID,
-                    projectCode: project.projectCode,
-                };
-
-                if (!existingFinalGradesSet.has(JSON.stringify(finalGradeRecord))) {
-                    const finalGradeRef = doc(collection(db, "finalGrades"));
-                    batch.set(finalGradeRef, {
-                        ...finalGradeRecord,
-                        status: "Not graded", // Default status
-                        CalculatedBookGrade: null,
-                        CalculatedPresentationGrade: null,
-                        CalculatedSupervisorGrade: null,
-                        finalGrade: null,
-                    });
-                }
-            }
-        });
-
-        await batch.commit();
-        console.log("Students successfully added to finalGrades (excluding duplicates).");
+      // Fetch all existing finalGrades and map by unique combination of studentID, projectCode, and part
+      const finalGradesSnapshot = await getDocs(collection(db, "finalGrades"));
+      const existingFinalGradesSet = new Set(
+        finalGradesSnapshot.docs.map((doc) =>
+          JSON.stringify({
+            studentID: doc.data().studentID,
+            projectCode: doc.data().projectCode,
+            part: doc.data().part,
+          })
+        )
+      );
+  
+      const batch = writeBatch(db);
+  
+      projects.forEach((project) => {
+        if (project.Student1 && project.Student1.ID) {
+          const finalGradeRecord1 = {
+            studentID: project.Student1.ID,
+            projectCode: project.projectCode,
+            part: project.part,
+          };
+  
+          if (!existingFinalGradesSet.has(JSON.stringify(finalGradeRecord1))) {
+            const finalGradeRef1 = doc(collection(db, "finalGrades"));
+            batch.set(finalGradeRef1, {
+              ...finalGradeRecord1,
+              status: "Not graded", // Default status
+              CalculatedBookGrade: null,
+              CalculatedPresentationGrade: null,
+              CalculatedSupervisorGrade: null,
+              finalGrade: null,
+            });
+          }
+        }
+  
+        if (project.Student2 && project.Student2.ID) {
+          const finalGradeRecord2 = {
+            studentID: project.Student2.ID,
+            projectCode: project.projectCode,
+            part: project.part,
+          };
+  
+          if (!existingFinalGradesSet.has(JSON.stringify(finalGradeRecord2))) {
+            const finalGradeRef2 = doc(collection(db, "finalGrades"));
+            batch.set(finalGradeRef2, {
+              ...finalGradeRecord2,
+              status: "Not graded", // Default status
+              CalculatedBookGrade: null,
+              CalculatedPresentationGrade: null,
+              CalculatedSupervisorGrade: null,
+              finalGrade: null,
+            });
+          }
+        }
+      });
+  
+      await batch.commit();
+      console.log("Students successfully added to finalGrades (excluding duplicates).");
     } catch (error) {
-        console.error("Error adding students to finalGrades:", error.message);
-        throw new Error("Database error: " + error.message);
+      console.error("Error adding students to finalGrades:", error.message);
+      throw new Error("Database error: " + error.message);
     }
-},
+  },
+  
 
 
   //functions for Evaluators Upload files

@@ -10,6 +10,8 @@ import EditFieldModal from "../../components/actions/EditTitleModal";
 import { useProjectModals } from "../../hooks/useProjectModals";
 import { projectsApi } from "../../services/projectsAPI";
 import { userApi } from "../../services/userAPI";
+import { evaluatorsApi } from "../../services/evaluatorsAPI";
+import { gradesApi } from "../../services/finalGradesAPI";
 import { db } from "../../firebaseConfig";
 import {
   collection,
@@ -48,11 +50,8 @@ const AdminProjects = () => {
     notesModal,
     studentModal,
     editModal,
-    setNotesModal,
-    setStudentModal,
     setEditModal,
     handleAddNote,
-    handleSaveNote,
     handleStudentClick,
     handleEditField,
     handleSaveField,
@@ -124,7 +123,7 @@ const AdminProjects = () => {
           return {
               ...project,
               supervisor1: supervisorMap[project.supervisor1] || "Unknown",
-              supervisor2: supervisorMap[project.supervisor2] || "Unknown",
+              supervisor2: supervisorMap[project.supervisor2] ,
               students,
               deadline,
           };

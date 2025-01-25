@@ -257,7 +257,7 @@ const AdminReminders = () => {
               type="date"
               value={deadline}
               onChange={(e) => setDeadline(e.target.value)}
-              className="border p-2 rounded-md w-full"
+              className="border p-2 rounded-md w-200"
             />
           </div>
           <div>

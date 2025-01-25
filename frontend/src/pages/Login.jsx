@@ -63,8 +63,8 @@ function Login() {
               {...register('email', { 
                 required: 'Email is required', 
                 pattern: {
-                  value: /^[a-zA-Z0-9._%+-]+@e\.braude\.ac\.il$/,
-                  message: "Email must end with @e.braude.ac.il"
+                  value: /^[^\s@]+@(e\.)?braude\.ac\.il$/,
+                  message: "Email must end with @braude.ac.il"
                 }
               })}
               className="w-full h-[55px] px-4 border border-[#dadada] rounded-md"
