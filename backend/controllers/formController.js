@@ -165,33 +165,26 @@ module.exports = {
   
     try {
       console.log("Adding question to form:", { formID, questionData });
-    
-      const newQuestion = await db
+  
+      const questionRef = db
         .collection("forms")
         .doc(formID)
         .collection("questions")
-        .add(questionData);
-    
-      console.log("Question successfully added:", {
-        id: newQuestion.id,
-        ...questionData,
-      });
-    
+        .doc(questionData.questionID); // Use questionID as the document ID
+  
+      await questionRef.set(questionData); // Save the question data
+  
+      console.log("Question successfully added:", questionData);
+  
       res.status(201).json({
         message: "Question added successfully.",
-        questionData: {
-          ...questionData,
-          id: newQuestion.id, // Firebase-generated ID
-          questionID: questionData.questionID, // Ensure questionID is returned
-        },
+        questionData: { ...questionData, id: questionData.questionID }, // Return the full question
       });
-      
     } catch (error) {
       console.error("Error adding question:", error.message);
       res.status(500).json({ message: "Failed to add question." });
     }
-    
-  },
+  },  
   
 
 
