@@ -156,8 +156,8 @@ module.exports = {
 
   // Add a new question to a form
   addQuestion: async (req, res) => {
-    const { formID } = req.params; // Extract form ID from URL parameters
-    const questionData = req.body; // Extract question data from the request body
+    const { formID } = req.params;
+    const questionData = req.body; // Get the question data from the request body
   
     if (!formID || !questionData) {
       return res.status(400).json({ message: "Form ID and question data are required." });
@@ -173,24 +173,32 @@ module.exports = {
         .collection("questions")
         .doc(questionData.questionID);
   
-      // Save the entire questionData object
+      // Save the entire questionData object, ensuring all fields are included
       await questionRef.set({
-        ...questionData, // Spread the question data to include all fields
-        id: questionData.questionID, // Ensure `id` matches `questionID`
+        id: questionData.questionID, // Explicitly set `id` to match `questionID`
+        title: questionData.title || "New Question", // Use default if missing
+        description: questionData.description || "", // Default to an empty string if not provided
+        order: questionData.order || 0,
+        reference: questionData.reference || "general",
+        required: questionData.required || false,
+        response_type: questionData.response_type || "text",
+        weight: questionData.weight || 0,
       });
   
       console.log("Question successfully added:", questionData);
   
       res.status(201).json({
         message: "Question added successfully.",
-        questionData: { ...questionData, id: questionData.questionID },
+        questionData: {
+          ...questionData,
+          id: questionData.questionID,
+        },
       });
     } catch (error) {
       console.error("Error adding question:", error.message);
       res.status(500).json({ message: "Failed to add question." });
     }
   },
-  
 
   // Update a specific question in a form
   updateQuestion: async (req, res) => {
