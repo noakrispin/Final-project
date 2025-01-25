@@ -350,7 +350,7 @@ const AdminGradesPage = () => {
 
           <Button
             onClick={handleExportToExcel}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg mt-4"
+            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md sm:rounded-lg mt-2 sm:mt-4 text-sm sm:text-base w-full sm:w-auto"
           >
             Export to Excel
           </Button>
