@@ -61,40 +61,51 @@ export const formsApi = {
       console.log("Sending request to add question:", { formID, questionData });
       const response = await api.post(`/forms/${formID}/questions`, questionData);
   
-      // Ensure a valid response structure
       if (!response || !response.questionData || !response.questionData.id) {
-        console.log("Invalid server response(API):", response);
-        console.log("Invalid server response(API):", response.questionData);
-        console.log("Invalid server response(API):", response.questionData.questionID);
-        console.log("Invalid server response(API):", response.questionData.id);
+        console.error("Invalid server response:", response);
         throw new Error("Invalid response from server when adding question.");
       }
   
       console.log("API response after adding question:", response);
       return response.questionData;
     } catch (error) {
-      console.error("Error adding question:", error.response?.data || error.message);
+      console.error("Error adding question:", error.message);
       throw error;
     }
-  },
-  
-  
+  },  
   
   
 
-  /**
-   * Update a specific question in a form.
-   */
-  updateQuestion: async (formID, questionId, updatedData) => {
-    try {
-      const response = await api.put(`/forms/${formID}/questions/${questionId}`, updatedData);
-      console.log("Update question response:", response) // Debug log
-      return response;
-    } catch (error) {
-      console.error("Error updating question:", error)
-      throw error
+/**
+ * Update a specific question in a form.
+ */
+updateQuestion: async (formID, questionId, updatedData) => {
+  try {
+    console.log("Sending update request:", { formID, questionId, updatedData });
+
+    // Sending the PUT request
+    const response = await api.put(`/forms/${formID}/questions/${questionId}`, updatedData);
+
+    // Debugging log
+    console.log("Update question response:", response);
+
+    // Adjust validation logic
+    if (!response || !response.updatedData) {
+      throw new Error("Invalid response from server while updating question.");
     }
-  },
+
+    return response.updatedData; // Return the updated question data
+  } catch (error) {
+    console.error(
+      `Error updating question (ID: ${questionId}, Title: ${updatedData?.title || "N/A"}):`,
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+},
+
+
+
 
   /**
    * Delete a specific question from a form.

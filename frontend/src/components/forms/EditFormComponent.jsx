@@ -5,11 +5,11 @@ import { FaTrashAlt, FaPlus } from "react-icons/fa";
 import { Button } from "../ui/Button";
 import { formsApi } from "../../services/formAPI";
 
-function QuestionEditor({ questions, setQuestions, reference ,formID}) {
+function QuestionEditor({ questions, setQuestions, reference, formID }) {
   const handleAddQuestion = async () => {
     const newQuestion = {
-      id: `q_${Date.now()}`, // Generate unique ID for Firestore
-      questionID: `q_${Date.now()}`, // Match the `id` field
+      id: `new_${Date.now()}`,
+      questionID: `q_${Date.now()}`,
       title: "New Question",
       description: "",
       order: questions.length + 1,
@@ -18,36 +18,40 @@ function QuestionEditor({ questions, setQuestions, reference ,formID}) {
       response_type: "text",
       weight: 0,
     };
-  
-    setQuestions((prev) => [...prev, newQuestion]); // Optimistic update
-  
+
+    // Optimistic update
+    setQuestions((prev) => [...prev, newQuestion]);
+
     try {
       const response = await formsApi.addQuestion(formID, newQuestion);
-      if (!response) throw new Error("Failed to add question on the server.");
-      setQuestions((prev) => [
-        ...prev.filter((q) => q.id !== newQuestion.id), // Remove temporary question
-        response, // Use server-confirmed question data
-      ]);
+      if (!response || !response.id) {
+        throw new Error("Failed to add question on the server.");
+      }
+
+      // Update local state with server-confirmed data
+      const updatedQuestion = { ...newQuestion, id: response.id };
+      setQuestions((prev) =>
+        prev.map((q) => (q.id === newQuestion.id ? updatedQuestion : q))
+      );
     } catch (error) {
       console.error("Error adding question:", error.message);
       alert("Failed to add question. Please try again.");
-      setQuestions((prev) => prev.filter((q) => q.id !== newQuestion.id)); // Revert optimistic update
+      // Revert optimistic update
+      setQuestions((prev) => prev.filter((q) => q.id !== newQuestion.id));
     }
   };
-  
-  
+
   const handleDeleteQuestion = async (index) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this question?"
     );
     if (!confirmDelete) return;
-  
+
     const questionToDelete = questions[index];
-  
+
     try {
+      // Delete from DB if it exists there
       if (!questionToDelete.id.startsWith("new_")) {
-        // Only delete from DB if it exists there
-        console.log("Deleting question(question ID):", questionToDelete.id);
         await formsApi.deleteQuestion(formID, questionToDelete.id);
       }
       // Remove from local state
@@ -57,10 +61,12 @@ function QuestionEditor({ questions, setQuestions, reference ,formID}) {
       alert("Failed to delete question. Please try again.");
     }
   };
-  
 
   const handleUpdateQuestion = (index, key, value) => {
-    const updatedQuestion = { ...questions[index], [key]: value };
+    const updatedValue =
+      key === "order" || key === "weight" ? Number(value) : value;
+  
+    const updatedQuestion = { ...questions[index], [key]: updatedValue };
     setQuestions((prev) =>
       prev.map((q, i) => (i === index ? updatedQuestion : q))
     );
@@ -70,20 +76,20 @@ function QuestionEditor({ questions, setQuestions, reference ,formID}) {
 
   return (
     <div className="space-y-6">
-      {questions.map((field, index) => (
-        <div
-          key={field.id || field.name}
-          className="p-6 bg-white border border-gray-300 rounded-lg shadow-sm"
-        >
+        {questions.map((field, index) => (
+          <div
+            key={field.id || `question-${index}`} // Ensure unique key
+            className="p-6 bg-white border border-gray-300 rounded-lg shadow-sm"
+          >
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl text-blue-900 font-semibold">
-            {field.reference} Question #{index + 1}
+              {field.reference} Question #{index + 1}
             </h3>
             <button
               onClick={() => handleDeleteQuestion(index)}
               className="text-red-500 hover:text-red-700 text-2xl"
             >
-              <FaTrashAlt className="mr-2" />
+              <FaTrashAlt />
             </button>
           </div>
 
@@ -99,7 +105,6 @@ function QuestionEditor({ questions, setQuestions, reference ,formID}) {
               onChange={(e) =>
                 handleUpdateQuestion(index, "title", e.target.value)
               }
-              placeholder="Enter question title"
             />
           </div>
 
@@ -114,40 +119,23 @@ function QuestionEditor({ questions, setQuestions, reference ,formID}) {
               onChange={(e) =>
                 handleUpdateQuestion(index, "description", e.target.value)
               }
-              placeholder="Provide more details about this question"
             />
           </div>
 
-          {/* Order, Reference, and Response Type */}
-          <div className="grid grid-cols-3 gap-4 mb-4">
+          {/* Other Fields */}
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-gray-700 font-medium mb-2">
-                Order in Form
+                Order
               </label>
               <input
                 type="number"
                 className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 shadow-sm"
                 value={field.order}
                 onChange={(e) =>
-                  handleUpdateQuestion(index, "order", e.target.value)
+                  handleUpdateQuestion(index, "order", parseInt(e.target.value))
                 }
-                placeholder="Order"
               />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Reference
-              </label>
-              <select
-                className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 shadow-sm"
-                value={field.reference}
-                onChange={(e) =>
-                  handleUpdateQuestion(index, "reference", e.target.value)
-                }
-              >
-                <option value="general">General</option>
-                <option value="student">Student</option>
-              </select>
             </div>
             <div>
               <label className="block text-gray-700 font-medium mb-2">
@@ -160,42 +148,27 @@ function QuestionEditor({ questions, setQuestions, reference ,formID}) {
                   handleUpdateQuestion(index, "response_type", e.target.value)
                 }
               >
+                <option value="text">Text</option>
                 <option value="number">Number</option>
-                <option value="textarea">Text</option>
               </select>
             </div>
-          </div>
-
-          {/* Required and Weight */}
-          <div className="grid grid-cols-3 gap-2 items-center">
             <div>
               <label className="block text-gray-700 font-medium mb-2">
-                Question Weight
+                Weight
               </label>
               <input
                 type="number"
-                className="w-40 p-3 border rounded focus:ring-2 focus:ring-blue-500 shadow-sm"
+                className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 shadow-sm"
                 value={field.weight}
                 onChange={(e) =>
-                  handleUpdateQuestion(index, "weight", e.target.value)
+                  handleUpdateQuestion(index, "weight", parseFloat(e.target.value))
                 }
-                placeholder="Weight"
               />
             </div>
-            <label className="flex items-center text-gray-700 font-medium">
-              <input
-                type="checkbox"
-                className="mr-2"
-                checked={field.required}
-                onChange={(e) =>
-                  handleUpdateQuestion(index, "required", e.target.checked)
-                }
-              />
-              Required
-            </label>
           </div>
         </div>
       ))}
+
       <Button
         onClick={handleAddQuestion}
         className="bg-green-500 text-white mt-4 flex items-center hover:bg-green-600 transition duration-200"
@@ -207,63 +180,53 @@ function QuestionEditor({ questions, setQuestions, reference ,formID}) {
   );
 }
 
+
 function QuestionViewer({ questions }) {
   return (
     <div className="space-y-6">
       {questions.map((field, index) => (
-        <div
-          key={field.id || field.name}
-          className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300"
-        >
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl text-blue-900 font-semibold flex items-center">
-              <span className="mr-2 font-semibold bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-base">
-                #{index + 1}
-              </span>
-              {field.title}
-            </h3>
-            <span className="text-sm text-gray-500">
-              {field.reference} question
+      <div
+        key={field.id ? `question-${field.id}` : `question-${index}`} // Ensure a unique key for each question
+        className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300"
+      >
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl text-blue-900 font-semibold flex items-center">
+            <span className="mr-2 font-semibold bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-base">
+              #{index + 1}
+            </span>
+            {field.title}
+          </h3>
+          <span className="text-sm text-gray-500">{field.reference} question</span>
+        </div>
+
+        <p className="text-gray-600 mb-4">{field.description}</p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="flex items-center">
+            <span className="font-medium mr-2">Response Type:</span>
+            <span className="text-gray-700 capitalize">{field.response_type}</span>
+          </div>
+          <div className="flex items-center">
+            <span className="font-medium mr-2">Required:</span>
+            <span
+              className={`px-2 py-1 rounded-full text-sm font-medium ${
+                field.required ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+              }`}
+            >
+              {field.required ? "Yes" : "No"}
             </span>
           </div>
-
-          <p className="text-gray-600 mb-4">{field.description}</p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="flex items-center">
-              <span className="font-medium mr-2">Response Type:</span>
-              <span className="text-gray-700 capitalize">
-                {field.response_type}
-              </span>
-            </div>
-            <div className="flex items-center">
-              <span className="font-medium mr-2">Required:</span>
-              <span
-                className={`px-2 py-1 rounded-full text-sm font-medium ${
-                  field.required
-                    ? "bg-green-100 text-green-800"
-                    : "bg-red-100 text-red-800"
-                }`}
-              >
-                {field.required ? "Yes" : "No"}
-              </span>
-            </div>
-            <div className="flex items-center">
-              <span className="font-medium mr-2">Weight:</span>
-              <span className="text-gray-700">{field.weight}</span>
-            </div>
-            <div className="flex items-center">
-              <span className="font-medium mr-2">Order:</span>
-              <span className="text-gray-700">{field.order}</span>
-            </div>
+          <div className="flex items-center">
+            <span className="font-medium mr-2">Weight:</span>
+            <span className="text-gray-700">{field.weight}</span>
           </div>
-
-          {/* <div className="mt-4 pt-4 border-t border-gray-200 flex items-center text-sm text-gray-500">
-            <FaInfoCircle className="mr-2" />
-            <span>Question ID: {field.questionID}</span>
-          </div> */}
+          <div className="flex items-center">
+            <span className="font-medium mr-2">Order:</span>
+            <span className="text-gray-700">{field.order}</span>
+          </div>
         </div>
-      ))}
+      </div>
+    ))}
     </div>
   );
 }
@@ -329,65 +292,49 @@ export default function EditFormComponent({
 
   const handleSave = async () => {
     try {
-      const updatedQuestions = questions.map((q) => ({
+      const updatedQuestions = [...generalQuestions, ...studentQuestions].map((q) => ({
         ...q,
-        order: parseInt(q.order, 10), // Ensure order is an integer
-        weight: parseFloat(q.weight), // Ensure weight is a float
+        order: parseInt(q.order, 10), // Ensure `order` is an integer
+        weight: parseFloat(q.weight), // Ensure `weight` is a float
       }));
   
-      // Update Form Metadata (name and description)
-      await formsApi.updateForm(formID, {
-        formName: editedFormName,
-        description: editedFormDescription,
-      });
+      console.log("Saving updated questions:", updatedQuestions);
   
-      // Sync Questions with Database
-      const syncQuestions = async (questions) => {
-        console.log("Syncing questions with database:", questions);
-        for (const question of questions) {
-          
-          try {
-            await formsApi.updateQuestion(formID, question.id, question);
-            // if (question.id.startsWith("new_")) {
-            //   // Add new question
-            //   const response = await formsApi.addQuestion(formID, question);
-            //   question.id = response.id; // Update local ID with database ID
-            // } else {
-            //   // Update existing question
-            //   await formsApi.updateQuestion(formID, question.id, question);
-            // }
-          } catch (error) {
-            console.error(`Error syncing question: ${question.title}`, error.message);
-          }
+      for (const question of updatedQuestions) {
+        // Validate question data
+        if (!question.title || !question.reference) {
+          console.warn("Skipping invalid question:", question);
+          alert(`Invalid question data for "${question.title || 'Untitled'}". Please check all fields.`);
+          continue;
         }
-      };
   
-      await syncQuestions(updatedQuestions);
-  
-      // Refresh Local State with Questions from DB
-      const allQuestions = await formsApi.getQuestions(formID);
-      console.log("All Questions after save:", allQuestions);
-      if (allQuestions.length === 0) {
-        console.warn("No questions found in API response.");
-        setGeneralQuestions([]);
-        setStudentQuestions([]);
-        return; // Exit early
+        try {
+          if (question.id.startsWith("new_")) {
+            console.log("Adding new question:", question);
+            const response = await formsApi.addQuestion(formID, question);
+            question.id = response.id; // Update the local ID with the database ID
+          } else {
+            console.log("Updating question:", question);
+            const updatedResponse = await formsApi.updateQuestion(formID, question.id, question);
+            console.log("Updated question data:", updatedResponse);
+          }
+        } catch (error) {
+          console.error(`Error syncing question: "${question.title}"`, error);
+          alert(`Failed to sync question: "${question.title}". Please try again.`);
+        }
       }
   
-      const formattedQuestions = allQuestions.sort((a, b) => a.order - b.order);
-  
-      setGeneralQuestions(formattedQuestions.filter((q) => q.reference === "general"));
-      setStudentQuestions(formattedQuestions.filter((q) => q.reference === "student"));
+      // Refetch updated questions from the server
+      const allQuestions = await formsApi.getQuestions(formID);
+      setGeneralQuestions(allQuestions.filter((q) => q.reference === "general"));
+      setStudentQuestions(allQuestions.filter((q) => q.reference === "student"));
   
       alert("Form updated successfully!");
-      setIsEditMode(false);
-      setHasUnsavedChanges(false);
     } catch (error) {
-      console.error("Error saving form updates:", error.message);
-      alert("Failed to save changes. Please try again.");
+      console.error("Error saving form:", error.message);
+      alert(error.message || "Failed to save form. Please try again.");
     }
   };
-  
   
   
   
