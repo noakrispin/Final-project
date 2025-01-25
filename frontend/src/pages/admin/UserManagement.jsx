@@ -12,7 +12,10 @@ const UserManagement = () => {
   const [error, setError] = useState("");
   const [roleFilter, setRoleFilter] = useState("All");
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, user: null });
-  const [editRoleModal, setEditRoleModal] = useState({ isOpen: false, user: null });
+  const [editRoleModal, setEditRoleModal] = useState({
+    isOpen: false,
+    user: null,
+  });
   const [selectedRole, setSelectedRole] = useState(""); // State for the selected role
 
   const tabs = ["User Management", "Forms Management"];
@@ -39,14 +42,16 @@ const UserManagement = () => {
 
   // Filter users whenever `users` or `roleFilter` changes
   useEffect(() => {
+    
     const updatedUsers = users
       .filter((user) => user && user.emailId) // Ensure valid users
       .filter((user) => {
-        if (roleFilter === "All") return true; // No filtering for "All"
-        return user.role === roleFilter; // Filter by role
+        if (!selectedRole || selectedRole === "All") return true; // No filtering for "All" or empty selection
+        const role = user.isAdmin ? "Admin" : "Supervisor"; // Map isAdmin to Admin/Supervisor
+        return role === selectedRole; // Match the selected role
       });
     setFilteredUsers(updatedUsers);
-  }, [users, roleFilter]);
+  }, [users, selectedRole]);
 
   // Open the delete modal
   const openDeleteModal = (user) => {
@@ -112,19 +117,21 @@ const UserManagement = () => {
       console.error("No user is selected for role editing.");
       return;
     }
-  
+
     const userId = editRoleModal.user.emailId;
     const isAdmin = selectedRole === "Admin"; // Check if Admin is selected
     const role = "Supervisor"; // Admins retain 'Supervisor' as their role
-  
-    console.log(`Updating user: email: ${userId}, Role: ${role}, isAdmin: ${isAdmin}`);
-  
+
+    console.log(
+      `Updating user: email: ${userId}, Role: ${role}, isAdmin: ${isAdmin}`
+    );
+
     try {
       const response = await userApi.updateUserRole(userId, { role, isAdmin });
       if (response) {
         setUsers((currentUsers) =>
           currentUsers.map((user) =>
-            user.emailId=== userId ? { ...user, role, isAdmin } : user
+            user.emailId === userId ? { ...user, role, isAdmin } : user
           )
         );
         setFilteredUsers((currentFilteredUsers) =>
@@ -178,34 +185,44 @@ const UserManagement = () => {
       {activeTab === "User Management" && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <h1 className="text-2xl font-bold mb-4">User Management</h1>
+          <p className="text-gray-600 mt-2">
+            Manage users in the system. You can promote users to Admin or delete
+            them as needed.
+          </p>
           <div className="mb-4 flex space-x-4">
-          <select
-            className="border p-2 rounded-md w-full mt-4"
-            value={selectedRole}
-            onChange={(e) => setSelectedRole(e.target.value)}
-          >
-            <option value="">Select Role</option>
-            <option value="Admin">Admin</option>
-            <option value="Supervisor">Supervisor</option>
-          </select>
+            <select
+              className="border p-2 rounded-md w-200 mt-4"
+              value={selectedRole}
+              onChange={(e) => setSelectedRole(e.target.value)}
+            >
+              <option value="All">Select Role</option>
+              <option value="Admin">Admin</option>
+              <option value="Supervisor">Supervisor</option>
+            </select>
           </div>
-          <UserTable
-            users={filteredUsers}
-            onDelete={openDeleteModal}
-            onEditRole={openEditRoleModal} // Pass the role editing function
-          />
+          {filteredUsers.length === 0 ? (
+            <div className="text-center text-gray-600">
+              No users match the selected role.
+            </div>
+          ) : (
+            <UserTable
+              users={filteredUsers}
+              onDelete={openDeleteModal}
+              onEditRole={openEditRoleModal} // Pass the role editing function
+            />
+          )}
         </div>
       )}
 
       {deleteModal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h2 className="text-lg font-bold mb-4">Confirm Deletion</h2>
+            <h2 className="text-xl font-bold mb-4">Confirm Deletion</h2>
             <p>
               Are you sure you want to delete{" "}
               {deleteModal.user?.fullName || "this user"}?
             </p>
-            <div className="flex justify-end mt-4">
+            <div className="flex justify-end mt-4 space-x-2">
               <button
                 onClick={closeDeleteModal}
                 className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
