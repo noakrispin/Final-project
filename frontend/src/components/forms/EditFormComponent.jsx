@@ -31,15 +31,11 @@ function QuestionEditor({ questions, setQuestions, reference ,formID}) {
       const response = await formsApi.addQuestion(formID, newQuestion);
     
       // Validate backend response structure
-      if (
-        !response ||
-        !response.data ||
-        !response.data.questionData ||
-        !response.data.questionData.id
-      ) {
+      if (!response || !response.data || !response.data.questionData || !response.data.questionData.id) {
+        console.error("Invalid server response:", response);
         throw new Error("Server returned an invalid response.");
       }
-    
+      
       console.log("Response after adding question:", response);
     
       // Update with server-provided ID
