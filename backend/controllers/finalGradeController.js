@@ -123,10 +123,10 @@ exports.addOrUpdateGrade = async (req, res) => {
  
         // Update finalGrades document
         await db.collection("finalGrades").doc(doc.id).update({
-          CalculatedSupervisorGrade: calculatedSupervisorGrade,
-          CalculatedPresentationGrade: calculatedPresentationGrade,
-          CalculatedBookGrade: calculatedBookGrade,
-          finalGrade,
+          CalculatedSupervisorGrade: calculatedSupervisorGrade || null,
+  CalculatedPresentationGrade: calculatedPresentationGrade || null,
+  CalculatedBookGrade: calculatedBookGrade || null,
+  finalGrade: finalGrade || null,
           status,
           updated_at: new Date().toISOString(),
         });

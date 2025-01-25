@@ -17,11 +17,15 @@ const asyncHandler = (fn) => (req, res, next) => {
 const validateGradeInput = (req, res, next) => {
   const { grade, studentId, projectCode } = req.body;
 
-  // Validate grade: must be null or a number between 0 and 100
-  if (grade !== null && (typeof grade !== 'number' || grade < 0 || grade > 100)) {
+  // Validate grade: must be null, undefined, or a number between 0 and 100
+  if (
+    grade !== undefined &&
+    grade !== null &&
+    (typeof grade !== "number" || grade < 0 || grade > 100)
+  ) {
     return res.status(400).json({
       error: {
-        message: 'Invalid grade value. Grade must be a number between 0 and 100 or null.',
+        message: "Invalid grade value. Grade must be a number between 0 and 100 or null.",
         status: 400,
       },
     });
@@ -31,7 +35,7 @@ const validateGradeInput = (req, res, next) => {
   if (!studentId || !projectCode) {
     return res.status(400).json({
       error: {
-        message: 'Student ID and Project Code are required.',
+        message: "Student ID and Project Code are required.",
         status: 400,
       },
     });
@@ -39,6 +43,7 @@ const validateGradeInput = (req, res, next) => {
 
   next(); // Continue to the next middleware or route handler
 };
+
 
 
 // Add or update a grade
