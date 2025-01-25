@@ -17,7 +17,7 @@ const asyncHandler = (fn) => (req, res, next) => {
 const validateGradeInput = (req, res, next) => {
   const { grade, studentId, projectCode } = req.body;
   
-  if (typeof grade !== 'number' || grade < 0 || grade > 100) {
+  if (typeof grade !== 'number' || grade < 0 || grade > 100||typeof grade !== null ) {
     return res.status(400).json({
       error: {
         message: 'Invalid grade value. Grade must be a number between 0 and 100',
