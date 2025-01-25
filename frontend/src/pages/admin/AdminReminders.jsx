@@ -78,36 +78,31 @@ const AdminReminders = () => {
           return null;
         }
   
-        const student = project
-          ? [project.Student1, project.Student2].find(
-              (s) => s && s.ID === grade.studentID
+        const student = [project.Student1, project.Student2].find(
+          (s) => s && s.ID === grade.studentID
+        );
+
+        // Find the student name dynamically
+        const studentName =
+          [project.Student1, project.Student2]
+            .filter((student) => student && student.ID === grade.studentID)
+            .map(
+              (student) =>
+                student.fullName || `${student.firstName} ${student.lastName}`
             )
-          : null;
-  
-        // Ensure student object has a fullName fallback
-        const studentName = project
-          ? [project.Student1, project.Student2]
-              .filter((student) => student && student.ID === grade.studentID)
-              .map(
-                (student) =>
-                  student.fullName || `${student.firstName} ${student.lastName}`
-              )
-              .join(", ") || "Unknown Student"
-          : "Unknown Student";
+            .join(", ") || "Unknown Student";
+
   
         // Map supervisor IDs to full names from the `users` collection
-        const supervisors = project
-          ? [project.supervisor1, project.supervisor2]
-              .filter((id) => id) // Exclude null or empty supervisor IDs
-              .map((id) => {
-                const supervisor = users.find((user) => user.id === id);
-                return supervisor
-                  ? supervisor.fullName
-                  : `${id}`;
-              })
-          : [];
+        const supervisors = [project.supervisor1, project.supervisor2]
+        .filter((id) => id) // Exclude null or empty supervisor IDs
+        .map((id) => {
+          const supervisor = users.find((user) => user.emailId === id);
+          return supervisor ? supervisor.fullName : `Supervisor ID ${id}`;
+        });
         const projectSupervisors =
-          supervisors.length > 0 ? supervisors.join(", ") : "No Supervisors";
+        supervisors.length > 0 ? supervisors.join(", ") : "No Supervisors";
+
   
         // Use fallback for undefined or missing deadlines
         const deadline =
@@ -164,13 +159,11 @@ const AdminReminders = () => {
   // Handle sending reminders
   const handleSendReminders = async () => {
     try {
-      if (!emailMessage.trim()) {
-        toast.error("Please enter a reminder message.");
-        return;
-      }
+      // Trim the email message and allow sending null if empty
+      const reminderMessage = emailMessage.trim() || null;
   
       // Call the email API to send reminders
-      await emailAPI.sendRemindersToAll(emailMessage.trim());
+      await emailAPI.sendRemindersToAll(reminderMessage);
   
       toast.success("Reminders sent successfully.");
   
@@ -181,6 +174,9 @@ const AdminReminders = () => {
       toast.error("Failed to send reminders.");
     }
   };
+  
+
+
   const projectColumns = useMemo(
     () => [
       {
@@ -220,6 +216,12 @@ const AdminReminders = () => {
         className: "text-base",
         render: (project) =>
           project.supervisorGrade !== undefined ? project.supervisorGrade : " ",
+      },
+      {
+        key: "deadline",
+        header: "Deadline",
+        className: "text-base",
+        sortable: true,
       },
     ],
     []

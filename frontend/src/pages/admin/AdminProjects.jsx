@@ -178,40 +178,58 @@ const AdminProjects = () => {
   const exportToExcel = async () => {
     try {
       const partBProjects = projects.filter((project) => project.part === "B");
-
+  
       if (partBProjects.length === 0) {
         alert("No projects in Part B to export.");
         return;
       }
-
+  
       // Prepare data for Excel
       const worksheet = XLSX.utils.json_to_sheet(partBProjects);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Part B Projects");
-
+  
       // Export to Excel
       XLSX.writeFile(workbook, "PartB_Projects.xlsx");
       console.log("Exported Part B projects to Excel");
-
-      // Delete Part B Projects from Firestore
-      const batch = writeBatch(db);
-      partBProjects.forEach((project) => {
-        const projectRef = doc(db, "projects", project.id);
-        batch.delete(projectRef);
-      });
-      await batch.commit();
-
+  
+      // Delete related data for Part B Projects
+      for (const project of partBProjects) {
+        const projectCode = project.projectCode;
+  
+        // Delete evaluators associated with the project
+        const evaluators = await evaluatorsApi.getEvaluatorsByProject(projectCode);
+        for (const evaluator of evaluators) {
+          await evaluatorsApi.deleteEvaluator(evaluator.id);
+          console.log(`Deleted evaluator with ID: ${evaluator.id}`);
+        }
+  
+        // Delete grades associated with the project
+        const allGrades = await gradesApi.getAllGrades();
+        const projectGrades = allGrades.filter((grade) => grade.projectCode === projectCode);
+        for (const grade of projectGrades) {
+          await gradesApi.deleteGrade(grade.id);
+          console.log(`Deleted grade with ID: ${grade.id}`);
+        }
+  
+        // Delete the project itself
+        await projectsApi.deleteProject(projectCode);
+        console.log(`Deleted project with projectCode: ${projectCode}`);
+      }
+  
       // Update state to remove Part B projects
       setProjects((current) =>
         current.filter((project) => project.part !== "B")
       );
-      alert("Part B projects exported and deleted successfully.");
+  
+      alert("Part B projects and related data exported and deleted successfully.");
     } catch (err) {
-      console.error("Error exporting Part B projects:", err);
+      console.error("Error exporting and deleting Part B projects:", err);
       alert("An error occurred while exporting projects.");
     }
   };
 
+  
   if (loading) {
     return <div className="text-center py-10">Loading...</div>;
   }

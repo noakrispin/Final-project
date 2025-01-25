@@ -17,15 +17,17 @@ const Navbar = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
 
+
   console.log("Navbar received user:", user); // Debugging log
 
-  
-  // Clear search state on route change
+  // Close the menu whenever the route changes
   useEffect(() => {
+    setMenuOpen(false);
     setSearchQuery("");
     setSearchResults([]);
     setShowResults(false);
-  }, [location.pathname]); // Run this whenever the route changes
+  }, [location.pathname]); // Close menu on route change
+
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
@@ -69,6 +71,7 @@ const Navbar = () => {
     setSearchQuery(""); // Clear the search query
     setSearchResults([]); // Clear the search results
     setShowResults(false); // Close the dropdown
+    setMenuOpen(false); // Close the mobile menu
   };
 
   return (
@@ -86,14 +89,22 @@ const Navbar = () => {
 
         <MobileMenu isOpen={menuOpen} setIsOpen={setMenuOpen}>
           <ul className="flex flex-col lg:flex-row items-center gap-2 lg:gap-12 font-medium text-gray-800 text-sm">
-            <NavLink to="/projectsSupervisors">MY PROJECTS</NavLink>
+            <NavLink 
+            to="/projectsSupervisors"
+            onClick={() => setMenuOpen(false)} >
+              MY PROJECTS
+              </NavLink>
             <NavLink
               to="/MyProjectsReview"
               activePaths={["/MyProjectsReview", "/OtherProjectsReview"]}
-            >
+              onClick={() => setMenuOpen(false)}>
               PROJECTS TO REVIEW
             </NavLink>
-            <NavLink to="/SupervisorGradesFeedback">GRADES</NavLink> 
+            <NavLink 
+            to="/SupervisorGradesFeedback"
+            onClick={() => setMenuOpen(false)}>
+              GRADES
+            </NavLink> 
           </ul>
         </MobileMenu>
 

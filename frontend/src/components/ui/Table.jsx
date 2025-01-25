@@ -42,16 +42,24 @@ export const Table = ({
   const filteredData = useMemo(() => {
     if (!Array.isArray(data)) return [];
     return data.filter((item) => {
-      const matchesSearch = Object.values(item).some(
-        (val) =>
-          typeof val === "string" &&
-          val.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-
+      // Filter only the visible columns for search
+      const visibleColumnKeys = columns
+        .filter((col) => visibleColumns.includes(col.key))
+        .map((col) => col.key);
+  
+      const matchesSearch = visibleColumnKeys.some((key) => {
+        const value = item[key];
+        return (
+          value &&
+          value.toString().toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      });
+  
       if (selectedFilter === "All") return matchesSearch;
       return matchesSearch && item.part === selectedFilter.split(" ")[1];
     });
-  }, [data, searchTerm, selectedFilter]);
+  }, [data, searchTerm, selectedFilter, visibleColumns, columns]);
+  
 
   const sortedData = useMemo(() => {
     return sortData(filteredData, columns, sortColumn, sortDirection);
