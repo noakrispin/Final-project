@@ -9,7 +9,8 @@ export const gradesApi = {
     console.log("Received data(finalGradesAPI):", data);  
     console.log("Received id(finalGradesAPI):", id);
     try {
-      const response = await api.post(`/grades`, { id, ...data });
+      const response = await api.post(`/grades/${id}`, { data });
+
       console.log("response(finalGradesAPI):", response);
       console.log("response.data(finalGradesAPI):", response.data);
       return response.data;
