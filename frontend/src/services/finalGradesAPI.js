@@ -20,8 +20,8 @@ export const gradesApi = {
     try {
       // Make the API request to the backend
       const response = await api.post(`/grades`, data);
-      console.log("Response from addOrUpdateGrade:", response.data);
-      return response.data;
+      console.log("Response from addOrUpdateGrade:", response);
+      return response;
     } catch (error) {
       console.error(
         "Error adding/updating grade:",
@@ -37,7 +37,7 @@ export const gradesApi = {
 
 
 
-  
+
   
   /**
    * Get a specific grade by ID.
