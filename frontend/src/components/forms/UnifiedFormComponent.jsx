@@ -193,41 +193,7 @@ export default function UnifiedFormComponent({
       await evaluatorsApi.addOrUpdateEvaluator(evaluatorData);
       console.log("Evaluator status updated successfully");
 
-      // Step 2: Fetch evaluation data
-      const evaluation = await formsApi.getEvaluationByEvaluatorAndProject(
-        user.email,
-        projectCode
-      );
-      console.log("Fetched Evaluation:", evaluation);
-
-      // Step 3: Loop through each student's grade in the evaluation and update it
-      const grades = evaluation.grades;
-      if (!grades || Object.keys(grades).length === 0) {
-        console.warn("No grades found in evaluation.");
-        return;
-      }
-
-      for (const [studentID, grade] of Object.entries(grades)) {
-        console.log(
-          `Processing grade for studentID: ${studentID}, grade: ${grade}`
-        );
-
-        // Prepare the data for the API
-        const gradeData = {
-          studentID,
-          projectCode,
-          grade,
-          formID,
-        };
-
-        console.log(
-          `Updating grade for studentID: ${studentID}with grade:${grade},projectCode:${projectCode}`
-        );
-        await gradesApi.addOrUpdateGrade(gradeData);
-      }
-
-      console.log("Final grades updated successfully");
-
+      
       alert("Form submitted successfully!");
       navigate(-1); // Redirect to the previous page
     } catch (error) {

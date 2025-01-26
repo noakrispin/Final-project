@@ -8,6 +8,7 @@ import { userApi } from "../../services/userAPI";
 import { Button } from "../../components/ui/Button";
 import * as XLSX from "xlsx";
 import { toast } from "react-toastify";
+import { LuRefreshCcw } from "react-icons/lu";
 import "react-toastify/dist/ReactToastify.css";
 
 const AdminGradesPage = () => {
@@ -129,109 +130,89 @@ const AdminGradesPage = () => {
 
   const handleRefreshClick = async () => {
     try {
-      setIsLoading(true);
-      toast.info("Refreshing grades...");
+        setIsLoading(true);
+        toast.info("Refreshing grades...");
 
-      // Iterate through each project
-      for (const project of projects) {
-        const { projectCode } = project;
+        for (const project of projects) {
+            const { projectCode } = project;
+            const evaluationsByForm = [];
 
-        // Initialize a structure to group evaluations by formID
-        const evaluationsByForm = [];
-
-        for (const formID of [
-          "SupervisorForm",
-          "PresentationFormA",
-          "PresentationFormB",
-          "bookReviewerFormA",
-          "bookReviewerFormB",
-        ]) {
-          try {
-            // Fetch evaluations for the current formID
-            const response = await formsApi.getEvaluations(formID);
-            console.log(`Fetched evaluations for formID: ${formID}`, response);
-
-            // Filter evaluations by projectCode
-            const filteredEvaluations = response?.filter(
-              (evaluation) => evaluation.projectCode === projectCode
-            );
-            console.log("filtered evaluations:", filteredEvaluations);
-            // Group evaluations by studentID and add them to the evaluationsByForm structure
-            const gradesByStudent = {};
-            filteredEvaluations.forEach((evaluation) => {
-              Object.entries(evaluation.grades).forEach(
-                ([studentID, grade]) => {
-                  if (!gradesByStudent[studentID]) {
-                    gradesByStudent[studentID] = [];
-                  }
-                  gradesByStudent[studentID].push(grade);
+            for (const formID of [
+                "SupervisorForm",
+                "PresentationFormA",
+                "PresentationFormB",
+                "bookReviewerFormA",
+                "bookReviewerFormB",
+            ]) {
+                try {
+                    const response = await formsApi.getEvaluations(formID);
+                    const filteredEvaluations = response?.filter(
+                        (evaluation) => evaluation.projectCode === projectCode
+                    );
+                    const gradesByStudent = {};
+                    filteredEvaluations.forEach((evaluation) => {
+                        Object.entries(evaluation.grades).forEach(
+                            ([studentID, grade]) => {
+                                if (!gradesByStudent[studentID]) {
+                                    gradesByStudent[studentID] = [];
+                                }
+                                gradesByStudent[studentID].push(grade);
+                            }
+                        );
+                    });
+                    evaluationsByForm.push({
+                        formID,
+                        grades: Object.entries(gradesByStudent).map(
+                            ([studentID, grades]) => ({ studentID, grades })
+                        ),
+                    });
+                } catch (error) {
+                    console.error(
+                        `Error fetching evaluations for formID: ${formID}`,
+                        error.message
+                    );
                 }
-              );
-            });
-            console.log("grades by student:", gradesByStudent);
+            }
 
-            // Add the grouped grades under the current formID
-            evaluationsByForm.push({
-              formID,
-              grades: Object.entries(gradesByStudent).map(
-                ([studentID, grades]) => ({
-                  studentID,
-                  grades,
-                })
-              ),
-            });
-            console.log("evaluations by form:", evaluationsByForm);
-            console.log(
-              `Grouped evaluations for formID: ${formID}`,
-              gradesByStudent
-            );
-          } catch (error) {
-            console.error(
-              `Error fetching evaluations for formID: ${formID}`,
-              error.message
-            );
-          }
+            if (evaluationsByForm.length > 0) {
+                try {
+                    await gradesApi.addOrUpdateGrade({
+                        projectCode,
+                        evaluationsByForm,
+                    });
+                } catch (error) {
+                    toast.error(
+                        `Failed to update grades for project ${projectCode}.`
+                    );
+                }
+            }
         }
 
-        // If evaluationsByForm is populated, send the data to addOrUpdateGrade
-        if (evaluationsByForm.length > 0) {
-          try {
-            console.log(
-              `Sending evaluationsByForm for projectCode: ${projectCode}`,
-              evaluationsByForm
-            );
+        const updatedProjects = await gradesApi.getAllGrades();
+        const allProjects = await projectsApi.getAllProjects();
+        const allUsers = await userApi.getAllUsers();
+        console.log("Updated Projects after Refresh:", updatedProjects);
 
-            // Call addOrUpdateGrade with the new structure
-            await gradesApi.addOrUpdateGrade({
-              projectCode,
-              evaluationsByForm,
-            });
-
-            console.log(`Grades updated for projectCode: ${projectCode}`);
-          } catch (error) {
-            console.error(
-              `Failed to update grades for projectCode: ${projectCode}`,
-              error.message
+        if (updatedProjects.data && updatedProjects.data.length > 0) {
+            const processedData = preprocessProjects(
+                updatedProjects.data,
+                allProjects,
+                allUsers
             );
-            toast.error(`Failed to update grades for project ${projectCode}.`);
-          }
+            setProjects(processedData);
+            toast.success("Grades refreshed successfully!");
         } else {
-          console.warn(`No evaluations found for projectCode: ${projectCode}`);
+            toast.warn("No projects found after refreshing grades.");
         }
-      }
-
-      // Refresh the projects data after grades are updated
-      const updatedProjects = await gradesApi.getAllGrades();
-      setProjects(updatedProjects.data || []); // Update the state with the new data
-
-      toast.success("Grades refreshed successfully!");
     } catch (error) {
-      console.error("Error refreshing grades:", error.message);
-      toast.error("Failed to refresh grades.");
+        console.error("Error refreshing grades:", error.message);
+        toast.error("Failed to refresh grades.");
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
-  };
+};
+
+  
 
   const renderGradeStatus = (status) => {
     console.log("status in render status:", status);
@@ -463,23 +444,28 @@ const AdminGradesPage = () => {
             Export to Excel
           </button> */}
 
-          <div className="flex space-x-4">
+          <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0">
             {/* Export to Excel Button */}
             <Button
               onClick={handleExportToExcel}
-              className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md sm:rounded-lg mt-2 sm:mt-4 text-sm sm:text-base w-full sm:w-auto"
+              className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md sm:rounded-lg text-sm sm:text-base w-full sm:w-auto"
             >
-              Export to Excel
+              <span>Export to Excel</span>
             </Button>
 
-            {/* Refresh Button */}
-            <Button
-              onClick={handleRefreshClick}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md sm:rounded-lg mt-2 sm:mt-4 text-sm sm:text-base w-full sm:w-auto"
-            >
-              Refresh Grades
-            </Button>
-            <p> click to see the updated grades</p>
+            {/* Refresh Grades Button */}
+            <div className="flex flex-col items-center">
+              <Button
+                onClick={handleRefreshClick}
+                className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md sm:rounded-lg text-sm sm:text-base w-full sm:w-auto"
+              >
+                <LuRefreshCcw className="w-5 h-5 mr-2" />
+                <span>Refresh Grades</span>
+              </Button>
+              <p className="text-gray-600 text-sm mt-2">
+                Click to see the updated grades
+              </p>
+            </div>
           </div>
         </div>
 
