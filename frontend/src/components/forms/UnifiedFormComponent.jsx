@@ -5,7 +5,7 @@ import FormField from "./FormField";
 import { Button } from "../ui/Button";
 import { formsApi } from "../../services/formAPI";
 import { evaluatorsApi } from "../../services/evaluatorsAPI";
-import { gradesApi } from "../../services/finalgradesAPI";
+import { gradesApi } from "../../services/finalGradesAPI";
 
 export default function UnifiedFormComponent({
   formTitle,
