@@ -147,9 +147,7 @@ export default function UnifiedFormComponent({
     e.preventDefault();
   
     if (!isFormValid()) {
-      alert(
-        "Please fill in all required fields. Text areas must have at least 5 words."
-      );
+      alert("Please fill in all required fields. Text areas must have at least 5 words.");
       return;
     }
   
@@ -183,23 +181,26 @@ export default function UnifiedFormComponent({
       console.log("Responses submitted successfully");
   
       // Step 2: Fetch evaluation data
-      const evaluation = await formsApi.getEvaluationByEvaluatorAndProject(
-        user.email,
-        projectCode
-      );
+      const evaluation = await formsApi.getEvaluationByEvaluatorAndProject(user.email, projectCode);
       console.log("Fetched Evaluation:", evaluation);
   
-      // Step 3: Send grades to the backend for processing
+      // Step 3: Prepare grades data
+      const gradeDocId = evaluation.grades?.id; // Assuming evaluation.grades contains the ID
+      if (!gradeDocId) {
+        console.warn("Final grade ID not found. Creating a new grade document.");
+      }
+  
       const gradesData = {
         evaluatorID: user.email,
-        grades: evaluation.grades, // Pass the fetched grades
+        grades: evaluation.grades, // Ensure this matches the backend format
         formID,
         projectCode,
       };
   
-      console.log("Sending grades data to the backend:", gradesData);
+      console.log("Sending grades data:", gradesData);
   
-      await gradesApi.addOrUpdateGrade(gradesData);
+      // Call addOrUpdateGrade
+      await gradesApi.addOrUpdateGrade(gradeDocId || null, gradesData);
       console.log("Final grade updated successfully");
   
       // Step 4: Update evaluator status

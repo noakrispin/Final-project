@@ -28,25 +28,13 @@ exports.addOrUpdateGrade = async (req, res) => {
       let gradeDocId;
 
       if (!gradeSnapshot.empty) {
-        // If the document exists, retrieve its ID
         gradeDocId = gradeSnapshot.docs[0].id;
         console.log(`Found grade document for studentID ${studentID}: ${gradeDocId}`);
       } else {
-        // If no matching document is found, create a new one
-        const newDocRef = await admin.firestore().collection("finalGrades").add({
-          studentID,
-          projectCode,
-          status: "Not graded",
-          CalculatedSupervisorGrade: 0,
-          CalculatedPresentationGrade: 0,
-          CalculatedBookGrade: 0,
-          finalGrade: 0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        });
-        gradeDocId = newDocRef.id;
-        console.log(`Created new grade document for studentID ${studentID}: ${gradeDocId}`);
+        console.warn(`No grade document found for studentID: ${studentID}. Skipping.`);
+        continue; // Skip to the next student
       }
+      
 
       // Recalculate grades based on evaluations
       const evaluatorsSnapshot = await admin
@@ -147,10 +135,6 @@ exports.addOrUpdateGrade = async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to update grades." });
   }
 };
-
-
-
-
 
 
 // Get a specific grade by ID

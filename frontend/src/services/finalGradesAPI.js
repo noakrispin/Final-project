@@ -2,26 +2,37 @@ import { api } from "./api"; // Import the shared API utilities
 
 export const gradesApi = {
   /**
-   * Add or update a grade.
+   * Add or update a grade by its ID.
+   * 
+   * @param {string} id - The unique ID of the grade document.
+   * @param {Object} data - The payload containing evaluatorID, formID, and grades.
    */
-  aaddOrUpdateGrade: async (gradeDocId, data) => {
+  addOrUpdateGrade: async (id, data) => {
     console.log("Adding/updating grade...");
+    console.log("Using grade ID:", id);
     console.log("Received data:", data);
-    console.log("Using gradeDocId:", gradeDocId); // Use the document ID as required by the backend
+
+    if (!id || !data) {
+      throw new Error("Grade ID and data are required for updating a grade.");
+    }
 
     try {
-      // The backend expects the gradeDocId as part of the URL
-      const response = await api.post(`/grades/${gradeDocId}`, data);
+      // Make the API request to the backend
+      const response = await api.post(`/grades/${id}`, data);
       console.log("Response from addOrUpdateGrade:", response.data);
       return response.data;
     } catch (error) {
-      console.error("Error adding/updating grade:", error);
-      throw error;
+      console.error(
+        "Error adding/updating grade:",
+        error.response?.data || error.message
+      );
+      throw new Error(
+        `Failed to update grade: ${
+          error.response?.data?.error?.message || error.message
+        }`
+      );
     }
   },
-
-  
-  
   /**
    * Get a specific grade by ID.
    */
