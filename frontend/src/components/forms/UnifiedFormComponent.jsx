@@ -194,6 +194,7 @@ export default function UnifiedFormComponent({
         evaluatorID: user.email,
         projectCode,
         grades: evaluation.grades, // Pass the fetched grades
+        formID,
       };
       console.log("trying to update final grade with(unified form):", gradesData);
       await gradesApi.addOrUpdateGrade(formID, gradesData);
