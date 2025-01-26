@@ -268,7 +268,7 @@ export const formsApi = {
         `/forms/evaluations/by-evaluator-project?evaluatorID=${evaluatorID}&projectCode=${projectCode}`
       );
       console.log("API Response (formAPI):", response); // Log the raw response
-      return response.data; // Adjust response handling based on your API format
+      return response; // Adjust response handling based on your API format
     } catch (error) {
       console.error("Error fetching evaluations by evaluator and project:", error.message);
       throw error;
