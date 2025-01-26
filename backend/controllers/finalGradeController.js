@@ -26,6 +26,7 @@ exports.addOrUpdateGrade = async (req, res) => {
         .get();
 
       let gradeDocId;
+      console.log("gradeSnapshot",gradeSnapshot);
 
       if (!gradeSnapshot.empty) {
         gradeDocId = gradeSnapshot.docs[0].id;
