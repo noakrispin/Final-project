@@ -4,13 +4,13 @@ export const gradesApi = {
   /**
    * Add or update a grade.
    */
-  addOrUpdateGrade: async (id, data) => {
+  addOrUpdateGrade: async (projectCode, data) => {
     console.log("Adding/updating grade(finalGradesAPI)...");
-    console.log("Received data(finalGradesAPI):", data);  
-    console.log("Received id(finalGradesAPI):", id);
+    console.log("Received data(finalGradesAPI):", data);
+    console.log("Received projectCode(finalGradesAPI):", projectCode);
+  
     try {
-      const response = await api.post(`/grades/${id}`, { data });
-
+      const response = await api.post(`/grades/${projectCode}`, data);
       console.log("response(finalGradesAPI):", response);
       console.log("response.data(finalGradesAPI):", response.data);
       return response.data;
@@ -19,6 +19,7 @@ export const gradesApi = {
       throw error;
     }
   },
+  
 
   /**
    * Get a specific grade by ID.
