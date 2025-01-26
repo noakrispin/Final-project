@@ -47,10 +47,13 @@ const asyncHandler = (fn) => (req, res, next) => {
 
 
 // Add or update a grade
-router.post("/", asyncHandler(async (req, res) => {
+router.post("/:projectCode", asyncHandler(async (req, res) => {
+  const { projectCode } = req.params;
+  console.log("Received projectCode in route:", projectCode);
   const result = await addOrUpdateGrade(req, res);
-  return result;
+  return res.status(200).json(result);
 }));
+
 
 // Get a specific grade
 router.get("/:id", asyncHandler(async (req, res) => {

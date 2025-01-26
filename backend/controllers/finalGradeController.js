@@ -2,9 +2,13 @@ const admin = require("firebase-admin");
 
 // Add or update a grade
 exports.addOrUpdateGrade = async (req, res) => {
-  const { formID } = req.params;
-  const { evaluatorID, projectCode, grades } = req.body;
-
+  const { projectCode } = req.params;
+  const { evaluatorID, formID, grades } = req.body;
+  console.log("Updating finalGrades(controller)...");
+  console.log("Received grades:", grades);
+  console.log("Received evaluatorID:", evaluatorID);
+  console.log("Received projectCode:", projectCode);
+  console.log("Received formID:", formID);
   try {
     console.log("Updating finalGrades...");
     console.log("Received grades:", grades);
@@ -34,10 +38,10 @@ exports.addOrUpdateGrade = async (req, res) => {
           studentID,
           projectCode,
           status: "Not graded",
-          CalculatedSupervisorGrade: null,
-          CalculatedPresentationGrade: null,
-          CalculatedBookGrade: null,
-          finalGrade: null,
+          CalculatedSupervisorGrade: 0,
+          CalculatedPresentationGrade: 0,
+          CalculatedBookGrade: 0,
+          finalGrade: 0,
           updated_at: new Date().toISOString(),
         });
         finalGradeDocId = newDocRef.id;
