@@ -585,52 +585,60 @@ module.exports = {
   },
 
   // Fetch evaluations by evaluatorID and projectCode
-getEvaluationByEvaluatorAndProject : async (req, res) => {
-  const { evaluatorID, projectCode } = req.query;
-  console.log("Received params in getEvaluationByEvaluatorAndProject:", { evaluatorID, projectCode});
-  try {
-    console.log("Fetching evaluations for:", { evaluatorID, projectCode });
-
-    // Fetch all forms to iterate through evaluations
-    const formsSnapshot = await db.collection("forms").get();
-
-    if (formsSnapshot.empty) {
-      return res.status(404).json({
-        message: "No forms found in the database.",
+  getEvaluationByEvaluatorAndProject: async (req, res) => {
+    const { evaluatorID, projectCode } = req.query;
+    console.log("Received params in getEvaluationByEvaluatorAndProject:", { evaluatorID, projectCode });
+  
+    if (!evaluatorID || !projectCode) {
+      return res.status(400).json({
+        message: "Evaluator ID and Project Code are required.",
       });
     }
-
-    const evaluations = [];
-    for (const formDoc of formsSnapshot.docs) {
-      const evaluationsSnapshot = await db
-        .collection("forms")
-        .doc(formDoc.id)
-        .collection("evaluations")
-        .where("evaluatorID", "==", evaluatorID)
-        .where("projectCode", "==", projectCode)
-        .get();
-
-      evaluationsSnapshot.forEach((doc) => {
-        evaluations.push({
-          formID: formDoc.id,
-          evaluationID: doc.id,
-          ...doc.data(),
+  
+    try {
+      console.log("Fetching evaluations for:", { evaluatorID, projectCode });
+  
+      // Fetch all forms to find the matching evaluation
+      const formsSnapshot = await db.collection("forms").get();
+  
+      if (formsSnapshot.empty) {
+        return res.status(404).json({
+          message: "No forms found in the database.",
         });
-      });
-    }
-
-    if (evaluations.length === 0) {
+      }
+  
+      // Iterate through forms to find the evaluation
+      for (const formDoc of formsSnapshot.docs) {
+        const evaluationsSnapshot = await db
+          .collection("forms")
+          .doc(formDoc.id)
+          .collection("evaluations")
+          .where("evaluatorID", "==", evaluatorID)
+          .where("projectCode", "==", projectCode)
+          .limit(1) // Limit to only one document
+          .get();
+  
+        if (!evaluationsSnapshot.empty) {
+          const evaluationDoc = evaluationsSnapshot.docs[0];
+          const evaluation = {
+            formID: formDoc.id,
+            evaluationID: evaluationDoc.id,
+            ...evaluationDoc.data(),
+          };
+  
+          return res.status(200).json(evaluation); // Return the first matching evaluation
+        }
+      }
+  
       return res.status(404).json({
-        message: "No evaluations found for the given evaluator and project.",
+        message: "No evaluation found for the given evaluator and project.",
       });
+    } catch (error) {
+      console.error("Error fetching evaluation:", error);
+      res.status(500).json({ message: "Failed to fetch evaluation." });
     }
-
-    res.status(200).json(evaluations);
-  } catch (error) {
-    console.error("Error fetching evaluations:", error);
-    res.status(500).json({ message: "Failed to fetch evaluations." });
-  }
-},
+  },
+  
 
   
 

@@ -184,7 +184,6 @@ export default function UnifiedFormComponent({
 
       // Fetch evaluation based on user and projectCode
       const evaluation = await formsApi.getEvaluationByEvaluatorAndProject(
-        formID,
         user.email,
         projectCode
       );
@@ -194,7 +193,7 @@ export default function UnifiedFormComponent({
       const gradesData = {
         evaluatorID: user.email,
         projectCode,
-        grades: evaluation.grades, // Pass the fetched grades
+        grades: evaluation, // Pass the fetched grades
       };
 
       await gradesApi.addOrUpdateGrade(formID, gradesData);
