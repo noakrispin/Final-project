@@ -192,12 +192,11 @@ export default function UnifiedFormComponent({
       // Use fetched grades for the grade update
       const gradesData = {
         evaluatorID: user.email,
-        projectCode,
         grades: evaluation.grades, // Pass the fetched grades
         formID,
       };
       console.log("trying to update final grade with(unified form):", gradesData);
-      await gradesApi.addOrUpdateGrade(formID, gradesData);
+      await gradesApi.addOrUpdateGrade(projectCode, gradesData);
       console.log("Final grade updated successfully");
 
       // Add or update evaluator status in Evaluators collection

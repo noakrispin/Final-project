@@ -38,10 +38,10 @@ exports.addOrUpdateGrade = async (req, res) => {
           studentID,
           projectCode,
           status: "Not graded",
-          CalculatedSupervisorGrade: null,
-          CalculatedPresentationGrade: null,
-          CalculatedBookGrade: null,
-          finalGrade: null,
+          CalculatedSupervisorGrade: 0,
+          CalculatedPresentationGrade: 0,
+          CalculatedBookGrade: 0,
+          finalGrade: 0,
           updated_at: new Date().toISOString(),
         });
         finalGradeDocId = newDocRef.id;
