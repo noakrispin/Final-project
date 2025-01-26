@@ -143,87 +143,41 @@ export default function UnifiedFormComponent({
     updateProgress(initialData); // Update progress bar
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!isFormValid()) {
-      alert(
-        "Please fill in all required fields. Text areas must have at least 5 words."
-      );
-      return;
-    }
-
-    const responses = {
-      evaluatorID: user.email, // Ensure evaluatorID is correct
-      projectCode,
-      general: {},
-      students: {},
-    };
-
-    // Populate general responses
-    generalQuestions.forEach((field) => {
-      responses.general[field.name] = formData[field.name];
-    });
-
-    // Populate student-specific responses
-    students.forEach((student) => {
-      const studentResponses = {};
-      studentQuestions.forEach((field) => {
-        const fieldName = `student${student.id}_${field.name}`;
-        studentResponses[field.name] = formData[fieldName] || ""; // Use field name without prefix
-      });
-      responses.students[student.id] = studentResponses;
-    });
-
+  const handleSubmit = async () => {
     try {
-      console.log("Submitting form data:", responses);
-
-      // Submit the form responses
-      await formsApi.submitForm(formID, responses);
-      console.log("Responses submitted successfully");
-
-      // Fetch evaluation based on user and projectCode
-      const evaluation = await formsApi.getEvaluationByEvaluatorAndProject(
-        user.email,
-        projectCode
-      );
-      console.log("Fetched Evaluation:", evaluation);
-      console.log("Fetched Evaluation.grades:", evaluation.grades);
-      // Use fetched grades for the grade update
-      const gradesData = {
-        evaluatorID: user.email,
-        grades: evaluation.grades, // Pass the fetched grades
-        formID,
-      };
-      console.log("trying to update final grade with(unified form):", gradesData);
-      await gradesApi.addOrUpdateGrade(projectCode, gradesData);
-      console.log("Final grade updated successfully");
-
-      // Add or update evaluator status in Evaluators collection
-      const evaluatorData = {
-        evaluatorID: user.email.trim(), // Ensure evaluatorID is accurate
-        formID,
-        projectCode,
-        status: "Submitted",
-      };
-      console.log("Preparing evaluator data for submission:", {
-        evaluatorID: user.email.trim(),
-        formID,
-        projectCode,
-        status: "Submitted",
-      });
-
-      console.log("Evaluator data to update:", evaluatorData);
-
-      await evaluatorsApi.addOrUpdateEvaluator(evaluatorData);
-      console.log("Evaluator status updated successfully");
-      console.log("form submitted successfully");
-      // Redirect after successful submission
-      navigate(-1); // Go back to the previous page
+      // Process grades for each student
+      for (const [studentID, grade] of Object.entries(grades)) {
+        // Query Firestore for the grade document ID
+        const gradeSnapshot = await db
+          .collection("finalGrades")
+          .where("projectCode", "==", projectCode)
+          .where("studentID", "==", studentID)
+          .get();
+  
+        if (!gradeSnapshot.empty) {
+          const gradeDocId = gradeSnapshot.docs[0].id; // Retrieve document ID
+          console.log(`Updating grade for studentID ${studentID}, gradeDocId: ${gradeDocId}`);
+  
+          // Call the updated addOrUpdateGrade function with gradeDocId
+          await gradesApi.addOrUpdateGrade(gradeDocId, {
+            evaluatorID: user.email,
+            grades: { [studentID]: grade },
+            formID,
+          });
+  
+          console.log(`Grade updated successfully for student: ${studentID}`);
+        } else {
+          console.error(`No grade document found for student: ${studentID}`);
+        }
+      }
+  
+      alert("Form submitted successfully!");
     } catch (error) {
-      console.error("Error submitting form or updating evaluator:", error);
+      console.error("Error submitting grades:", error);
+      alert("Failed to submit the evaluation. Please try again.");
     }
   };
+  
 
   const updateProgress = (updatedFormData = formData) => {
     const staticFields = ["projectCode", "title", "evaluatorName"]; // Non-editable fields
