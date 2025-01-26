@@ -143,37 +143,80 @@ export default function UnifiedFormComponent({
     updateProgress(initialData); // Update progress bar
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+  
+    if (!isFormValid()) {
+      alert(
+        "Please fill in all required fields. Text areas must have at least 5 words."
+      );
+      return;
+    }
+  
+    const responses = {
+      evaluatorID: user.email, // Ensure evaluatorID is correct
+      projectCode,
+      general: {},
+      students: {},
+    };
+  
+    // Populate general responses
+    generalQuestions.forEach((field) => {
+      responses.general[field.name] = formData[field.name];
+    });
+  
+    // Populate student-specific responses
+    students.forEach((student) => {
+      const studentResponses = {};
+      studentQuestions.forEach((field) => {
+        const fieldName = `student${student.id}_${field.name}`;
+        studentResponses[field.name] = formData[fieldName] || ""; // Use field name without prefix
+      });
+      responses.students[student.id] = studentResponses;
+    });
+  
     try {
-      // Process grades for each student
-      for (const [studentID, grade] of Object.entries(grades)) {
-        // Query Firestore for the grade document ID
-        const gradeSnapshot = await db
-          .collection("finalGrades")
-          .where("projectCode", "==", projectCode)
-          .where("studentID", "==", studentID)
-          .get();
+      console.log("Submitting form data:", responses);
   
-        if (!gradeSnapshot.empty) {
-          const gradeDocId = gradeSnapshot.docs[0].id; // Retrieve document ID
-          console.log(`Updating grade for studentID ${studentID}, gradeDocId: ${gradeDocId}`);
+      // Step 1: Submit the form responses
+      await formsApi.submitForm(formID, responses);
+      console.log("Responses submitted successfully");
   
-          // Call the updated addOrUpdateGrade function with gradeDocId
-          await gradesApi.addOrUpdateGrade(gradeDocId, {
-            evaluatorID: user.email,
-            grades: { [studentID]: grade },
-            formID,
-          });
+      // Step 2: Fetch evaluation data
+      const evaluation = await formsApi.getEvaluationByEvaluatorAndProject(
+        user.email,
+        projectCode
+      );
+      console.log("Fetched Evaluation:", evaluation);
   
-          console.log(`Grade updated successfully for student: ${studentID}`);
-        } else {
-          console.error(`No grade document found for student: ${studentID}`);
-        }
-      }
+      // Step 3: Send grades to the backend for processing
+      const gradesData = {
+        evaluatorID: user.email,
+        grades: evaluation.grades, // Pass the fetched grades
+        formID,
+        projectCode,
+      };
+  
+      console.log("Sending grades data to the backend:", gradesData);
+  
+      await gradesApi.addOrUpdateGrade(gradesData);
+      console.log("Final grade updated successfully");
+  
+      // Step 4: Update evaluator status
+      const evaluatorData = {
+        evaluatorID: user.email.trim(),
+        formID,
+        projectCode,
+        status: "Submitted",
+      };
+  
+      await evaluatorsApi.addOrUpdateEvaluator(evaluatorData);
+      console.log("Evaluator status updated successfully");
   
       alert("Form submitted successfully!");
+      navigate(-1); // Redirect to the previous page
     } catch (error) {
-      console.error("Error submitting grades:", error);
+      console.error("Error submitting form or updating evaluator:", error);
       alert("Failed to submit the evaluation. Please try again.");
     }
   };
