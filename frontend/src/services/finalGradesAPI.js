@@ -8,13 +8,13 @@ export const gradesApi = {
    * @param {Object} data - The payload containing evaluatorID, formID, and grades.
    */
   addOrUpdateGrade: async (data) => {
-    console.log("Adding/updating grade...");
+    console.log("Adding/updating grades...");
     console.log("Received data:", data);
   
     // Ensure the required fields are present
-    const { studentID, projectCode, grade, formID } = data;
-    if (!studentID || !projectCode || grade === undefined || !formID) {
-      throw new Error("Missing required fields: studentID, projectCode, grade, or formID.");
+    const { projectCode, evaluationsByForm } = data;
+    if (!projectCode || !evaluationsByForm || evaluationsByForm.length === 0) {
+      throw new Error("Missing required fields: projectCode or evaluationsByForm.");
     }
   
     try {
@@ -24,19 +24,17 @@ export const gradesApi = {
       return response;
     } catch (error) {
       console.error(
-        "Error adding/updating grade:",
+        "Error adding/updating grades:",
         error.response?.data || error.message
       );
       throw new Error(
-        `Failed to update grade: ${
+        `Failed to update grades: ${
           error.response?.data?.error?.message || error.message
         }`
       );
     }
-  }, 
-
-
-
+  },
+  
 
   
   /**

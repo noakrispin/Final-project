@@ -47,22 +47,25 @@ const asyncHandler = (fn) => (req, res, next) => {
 
 // Add or update grades for a project 
 router.post("/", asyncHandler(async (req, res) => {
-  const { studentID, projectCode, grade, formID } = req.body;
+  const { projectCode, evaluationsByForm } = req.body;
 
   // Validate required fields
-  if (!studentID || !projectCode || grade === undefined || !formID) {
+  if (!projectCode || !evaluationsByForm || evaluationsByForm.length === 0) {
     return res.status(400).json({
       error: {
-        message: "Missing required fields: studentID, projectCode, grade, or formID.",
+        message: "Missing required fields: projectCode or evaluationsByForm.",
         status: 400,
       },
     });
   }
 
-  console.log(`Received request to update grade for studentID: ${studentID}`);
-  const result = await addOrUpdateGrade(req, res); // Call the controller
+  console.log(`Received request to update grades for projectCode: ${projectCode}`);
+  
+  // Call the updated addOrUpdateGrade controller
+  const result = await addOrUpdateGrade(req, res);
   return res.status(200).json(result);
 }));
+
 
 
 // Get a specific grade by ID
