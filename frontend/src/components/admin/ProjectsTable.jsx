@@ -11,7 +11,7 @@ const ProjectsTable = ({
   onEditField, 
   onAddNote, 
   onStudentClick,
-  onDelete // Ensure onDelete is destructured here
+  onDelete 
 }) => {
   const renderEditableCell = (value, row, field, fieldName, fieldType = 'text', options = []) => (
     <div className="group relative">
@@ -28,30 +28,16 @@ const ProjectsTable = ({
     </div>
   );
 
-  const renderSupervisorCell = (supervisor1, supervisor2, row) => (
-    console.log('Rendering supervisor cell:', { supervisor1, supervisor2, row }),
+  const renderSupervisorCell = (supervisor1, supervisor2) => (
     <div className="space-y-1">
-      <div>
-        <button
-          onClick={() => onEditField(row, 'supervisor1', 'Supervisor 1')}
-          className="text-blue-600 hover:text-blue-700 transition-colors"
-        >
-          {supervisor1}
-        </button>
-      </div>
-      {supervisor2 ? (
-        <div>
-          <button
-            onClick={() => onEditField(row, 'supervisor2', 'Supervisor 2')}
-            className="text-blue-600 hover:text-blue-700 transition-colors"
-          >
-            {supervisor2}
-          </button>
-        </div>
-      ) : null}
+      <div className="text-gray-700">{supervisor1 || 'Unknown'}</div>
+      {supervisor2 && <div className="text-gray-700">{supervisor2}</div>}
     </div>
   );
-  
+
+  const renderNonEditableCell = (value) => (
+    <div className="text-gray-700">{value || 'N/A'}</div>
+  );
 
   const renderStudentCell = (students) => (
     <div className="space-y-1">
@@ -71,20 +57,63 @@ const ProjectsTable = ({
       )}
     </div>
   );
-  
-  
-  console.log('Projects dataaaaaaaaaaaaaaaa:', projects);
-
 
   const projectColumns = [
-    { key: 'projectCode', header: 'Project Code', sortable: true, render: (value, row) => renderEditableCell(value, row, 'projectCode', 'Project Code') },
-    { key: 'title', header: 'Project Title', sortable: true, render: (value, row) => renderEditableCell(value, row, 'title', 'Project Title') },
-    { key: 'students', header: 'Students', sortable: false, render: (_, row) => renderStudentCell(row.students || []) },
-    {key: 'supervisors',header: 'Supervisors',sortable: true,render: (_, row) => renderSupervisorCell(row.supervisor1, row.supervisor2, row)},
-    { key: 'part', header: 'Part', sortable: true, render: (value, row) => renderEditableCell(value, row, 'part', 'Part', 'select', ['A', 'B']) },
-    { key: 'type', header: 'Type', sortable: true, render: (value, row) => renderEditableCell(value, row, 'type', 'Type', 'select', ['Development', 'Research']) },
-    { key: 'deadline', header: 'Deadline', sortable: true, render: (value, row) => renderEditableCell(value, row, 'deadline', 'Deadline', 'date') },
-    { key: 'specialNotes', header: 'Special Notes', sortable: true, render: (value, row) => <button onClick={() => onAddNote(row)} className="text-blue-600 hover:text-blue-700">{value || 'Add note'}</button> },
+    { 
+      key: 'projectCode', 
+      header: 'Project Code', 
+      sortable: true, 
+      render: (value) => renderNonEditableCell(value) // Non-editable
+    },
+    { 
+      key: 'title', 
+      header: 'Project Title', 
+      sortable: true, 
+      render: (value, row) => renderEditableCell(value, row, 'title', 'Project Title') 
+    },
+    { 
+      key: 'students', 
+      header: 'Students', 
+      sortable: false, 
+      render: (_, row) => renderStudentCell(row.students || []) 
+    },
+    { 
+      key: 'supervisors', 
+      header: 'Supervisors', 
+      sortable: true, 
+      render: (_, row) => renderSupervisorCell(row.supervisor1, row.supervisor2) // Non-editable
+    },
+    { 
+      key: 'part', 
+      header: 'Part', 
+      sortable: true, 
+      render: (value, row) => renderEditableCell(value, row, 'part', 'Part', 'select', ['A', 'B']) 
+    },
+    { 
+      key: 'type', 
+      header: 'Type', 
+      sortable: true, 
+      render: (value, row) => renderEditableCell(value, row, 'type', 'Type', 'select', ['Development', 'Research']) 
+    },
+    { 
+      key: 'deadline', 
+      header: 'Deadline', 
+      sortable: true, 
+      render: (value, row) => renderEditableCell(value, row, 'deadline', 'Deadline', 'date') 
+    },
+    { 
+      key: 'specialNotes', 
+      header: 'Special Notes', 
+      sortable: true, 
+      render: (value, row) => (
+        <button 
+          onClick={() => onAddNote(row)} 
+          className="text-blue-600 hover:text-blue-700"
+        >
+          {value || 'Add note'}
+        </button>
+      ) 
+    },
     {
       key: "actions",
       header: "Actions",
@@ -101,7 +130,6 @@ const ProjectsTable = ({
         </div>
       ),
     },
-
   ];
 
   if (!projects || projects.length === 0) {
@@ -115,15 +143,13 @@ const ProjectsTable = ({
   return (
     <Card className="p-6">
       <Table 
-      columns={projectColumns} 
-      data={projects}
-      showTabs={false}
-      showDescription = {true}
-      description = "Click any cell to edit its content. Click student names to view their details."
-      onRowClick={() => {}} // Placeholder to prevent errors
-          
-       />
-      
+        columns={projectColumns} 
+        data={projects}
+        showTabs={false}
+        showDescription={true}
+        description="Click any cell to edit its content. Supervisor names and project codes are read-only."
+        onRowClick={() => {}} // Placeholder to prevent errors
+      />
     </Card>
   );
 };

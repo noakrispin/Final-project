@@ -13,13 +13,7 @@ import { userApi } from "../../services/userAPI";
 import { evaluatorsApi } from "../../services/evaluatorsAPI";
 import { gradesApi } from "../../services/finalGradesAPI";
 import { db } from "../../firebaseConfig";
-import {
-  collection,
-  getDocs,
-  doc,
-  writeBatch,
-  updateDoc,
-} from "firebase/firestore";
+import { collection, collectionGroup, query, where, getDocs, deleteDoc, doc, addDoc, updateDoc } from "firebase/firestore";
 import { MdOutlineFileUpload } from "react-icons/md";
 import * as XLSX from "xlsx";
 
@@ -147,33 +141,116 @@ const AdminProjects = () => {
 
   const moveToPartB = async () => {
     try {
-      // Check if there are already projects in Part B
       const partBProjects = projects.filter((project) => project.part === "B");
       if (partBProjects.length > 0) {
-        alert("Part B must be empty before transferring projects from Part A..");
+        alert("Part B must be empty before transferring projects from Part A.");
         return;
       }
-
-      const batch = writeBatch(db);
+  
+      const batch = [];
+  
       const partAProjects = projects.filter((project) => project.part === "A");
+      for (const project of partAProjects) {
+        const projectCode = project.projectCode;
+  
+        // Step 1: Delete existing evaluators for the project
+        const evaluatorsQuery = query(collection(db, "evaluators"), where("projectCode", "==", projectCode));
+        const evaluatorsSnapshot = await getDocs(evaluatorsQuery);
+  
+        for (const evaluatorDoc of evaluatorsSnapshot.docs) {
+          await deleteDoc(evaluatorDoc.ref);
+          console.log(`Deleted evaluator with ID: ${evaluatorDoc.id}`);
+        }
+  
+        // Step 2: Reset the evaluators for the project
+        if (project.supervisor1) {
+          await addDoc(collection(db, "evaluators"), {
+            formID: "SupervisorForm",
+            evaluatorID: project.supervisor1,
+            projectCode: projectCode,
+            status: "Not Submitted", // Add the status field
+          });
+          console.log(`Created new evaluator for supervisor1: ${project.supervisor1}`);
+        }
+  
+        if (project.supervisor2) {
+          await addDoc(collection(db, "evaluators"), {
+            formID: "SupervisorForm",
+            evaluatorID: project.supervisor2,
+            projectCode: projectCode,
+            status: "Not Submitted", // Add the status field
+          });
+          console.log(`Created new evaluator for supervisor2: ${project.supervisor2}`);
+        }
+  
+        // Step 3: Reset grades and update the 'part' field for the project
+        const gradesQuery = query(collection(db, "finalGrades"), where("projectCode", "==", projectCode));
+        const gradesSnapshot = await getDocs(gradesQuery);
+  
+        for (const gradeDoc of gradesSnapshot.docs) {
+          const gradeRef = gradeDoc.ref;
+          await updateDoc(gradeRef, {
+            CalculatedBookGrade: null,
+            CalculatedPresentationGrade: null,
+            CalculatedSupervisorGrade: null,
+            comments: null,
+            finalGrade: null,
+            value: null,
+            part: "B", // Update the part field to "B"
+          });
+          console.log(`Updated grade with ID: ${gradeDoc.id} and set part to B`);
+        }
+  
+        // Step 3: Delete Evaluations and Responses in Forms Table
+      const formsQuery = collection(db, "forms");
+      const formsSnapshot = await getDocs(formsQuery);
 
-      partAProjects.forEach((project) => {
+      for (const formDoc of formsSnapshot.docs) {
+        // Delete evaluations subcollection
+        const evaluationsRef = collection(formDoc.ref, "evaluations");
+        const evaluationsSnapshot = await getDocs(query(evaluationsRef, where("evaluatorID", "in", [project.supervisor1, project.supervisor2])));
+
+        for (const evaluationDoc of evaluationsSnapshot.docs) {
+          await deleteDoc(evaluationDoc.ref);
+          console.log(`Deleted evaluation in forms for evaluatorID: ${evaluationDoc.data().evaluatorID}`);
+        }
+
+        // Delete responses subcollection
+        const responsesRef = collection(formDoc.ref, "responses");
+        const responsesSnapshot = await getDocs(query(responsesRef, where("evaluatorID", "in", [project.supervisor1, project.supervisor2])));
+
+        for (const responseDoc of responsesSnapshot.docs) {
+          await deleteDoc(responseDoc.ref);
+          console.log(`Deleted response in forms for evaluatorID: ${responseDoc.data().evaluatorID}`);
+        }
+      }
+  
+        // Step 6: Update the project's part to "B"
         const projectRef = doc(db, "projects", project.id);
-        batch.update(projectRef, { part: "B" });
-      });
-
-      await batch.commit();
-
+        batch.push({ ref: projectRef, data: { part: "B" } });
+      }
+  
+      // Commit batch updates for project part change
+      for (const update of batch) {
+        await updateDoc(update.ref, update.data);
+        console.log(`Updated project to Part B: ${update.ref.id}`);
+      }
+  
+      // Update local state
       setProjects((current) =>
         current.map((project) =>
           project.part === "A" ? { ...project, part: "B" } : project
         )
       );
+  
+      alert("Projects moved to Part B, evaluators reset, grades updated, and evaluations/responses deleted successfully.");
     } catch (err) {
       console.error("Error moving projects to Part B:", err);
+      alert("An error occurred while moving projects to Part B.");
     }
   };
-
+  
+    
   const exportToExcel = async () => {
     try {
       const partBProjects = projects.filter((project) => project.part === "B");
@@ -196,23 +273,50 @@ const AdminProjects = () => {
       for (const project of partBProjects) {
         const projectCode = project.projectCode;
   
-        // Delete evaluators associated with the project
-        const evaluators = await evaluatorsApi.getEvaluatorsByProject(projectCode);
-        for (const evaluator of evaluators) {
-          await evaluatorsApi.deleteEvaluator(evaluator.id);
-          console.log(`Deleted evaluator with ID: ${evaluator.id}`);
+        // Fetch and delete evaluators
+        const evaluatorsQuery = query(collection(db, "evaluators"), where("projectCode", "==", projectCode));
+        const evaluatorsSnapshot = await getDocs(evaluatorsQuery);
+  
+        for (const evaluatorDoc of evaluatorsSnapshot.docs) {
+          await deleteDoc(doc(db, "evaluators", evaluatorDoc.id));
+          console.log(`Deleted evaluator with ID: ${evaluatorDoc.id}`);
         }
   
-        // Delete grades associated with the project
-        const allGrades = await gradesApi.getAllGrades();
-        const projectGrades = allGrades.filter((grade) => grade.projectCode === projectCode);
-        for (const grade of projectGrades) {
-          await gradesApi.deleteGrade(grade.id);
-          console.log(`Deleted grade with ID: ${grade.id}`);
+        // Fetch and delete grades
+        const gradesQuery = query(collection(db, "finalGrades"), where("projectCode", "==", projectCode));
+        const gradesSnapshot = await getDocs(gradesQuery);
+  
+        for (const gradeDoc of gradesSnapshot.docs) {
+          await deleteDoc(doc(db, "finalGrades", gradeDoc.id));
+          console.log(`Deleted grade with ID: ${gradeDoc.id}`);
+        }
+  
+        // Delete evaluations and responses in the forms table
+        const formsQuery = collection(db, "forms");
+        const formsSnapshot = await getDocs(formsQuery);
+  
+        for (const formDoc of formsSnapshot.docs) {
+          // Delete evaluations subcollection
+          const evaluationsRef = collection(formDoc.ref, "evaluations");
+          const evaluationsSnapshot = await getDocs(query(evaluationsRef, where("projectCode", "==", projectCode)));
+  
+          for (const evaluationDoc of evaluationsSnapshot.docs) {
+            await deleteDoc(evaluationDoc.ref);
+            console.log(`Deleted evaluation with ID: ${evaluationDoc.id} in forms`);
+          }
+  
+          // Delete responses subcollection
+          const responsesRef = collection(formDoc.ref, "responses");
+          const responsesSnapshot = await getDocs(query(responsesRef, where("projectCode", "==", projectCode)));
+  
+          for (const responseDoc of responsesSnapshot.docs) {
+            await deleteDoc(responseDoc.ref);
+            console.log(`Deleted response with ID: ${responseDoc.id} in forms`);
+          }
         }
   
         // Delete the project itself
-        await projectsApi.deleteProject(projectCode);
+        await deleteDoc(doc(db, "projects", project.id));
         console.log(`Deleted project with projectCode: ${projectCode}`);
       }
   
@@ -227,7 +331,8 @@ const AdminProjects = () => {
       alert("An error occurred while exporting projects.");
     }
   };
-
+  
+  
   
   if (loading) {
     return <div className="text-center py-10">Loading...</div>;
@@ -260,51 +365,79 @@ const AdminProjects = () => {
   };
   
   // Handle project deletion
-  const handleDeleteProject = async () => {
-    if (!deleteModal.project) {
-      console.error("No project is selected for deletion.");
-      return;
+const handleDeleteProject = async () => {
+  if (!deleteModal.project) {
+    console.error("No project is selected for deletion.");
+    return;
+  }
+
+  const projectCode = deleteModal.project.projectCode;
+  console.log(`Deleting Project: ${projectCode}`);
+
+  setIsDeleting(true);
+
+  try {
+    // Fetch and delete evaluators for the project
+    const evaluatorsQuery = query(collection(db, "evaluators"), where("projectCode", "==", projectCode));
+    const evaluatorsSnapshot = await getDocs(evaluatorsQuery);
+
+    for (const evaluatorDoc of evaluatorsSnapshot.docs) {
+      await deleteDoc(doc(db, "evaluators", evaluatorDoc.id));
+      console.log(`Deleted evaluator with ID: ${evaluatorDoc.id}`);
     }
-  
-    const projectCode = deleteModal.project.projectCode; // Ensure this matches your API
-    console.log(`Deleting Project: ${projectCode}`);
-  
-    setIsDeleting(true); // Disable the delete button while processing
-  
-    try {
-      // Delete evaluators associated with the project
-      const evaluatorsResponse = await evaluatorsApi.getEvaluatorsByProject(projectCode);
-      for (const evaluator of evaluatorsResponse) {
-        await evaluatorsApi.deleteEvaluator(evaluator.id);
-        console.log(`Deleted evaluator with ID: ${evaluator.id}`);
-      }
-  
-      // Delete grades associated with the project
-      const gradesResponse = await gradesApi.getAllGrades();
-      const gradesToDelete = gradesResponse.filter((grade) => grade.projectCode === projectCode);
-      for (const grade of gradesToDelete) {
-        await gradesApi.deleteGrade(grade.id);
-        console.log(`Deleted grade with ID: ${grade.id}`);
-      }
-  
-      // Delete the project itself
-      const projectResponse = await projectsApi.deleteProject(projectCode);
-      if (projectResponse) {
-        setProjects((current) =>
-          current.filter((project) => project.projectCode !== projectCode)
-        );
-        closeDeleteModal();
-        console.log("Project deleted successfully.");
-      } else {
-        console.error("Failed to delete project.");
-      }
-    } catch (err) {
-      console.error("Error deleting project and related data:", err.message);
-      alert("An error occurred while deleting the project and its related data.");
-    } finally {
-      setIsDeleting(false); // Re-enable the delete button
+
+    // Fetch and delete grades for the project
+    const gradesQuery = query(collection(db, "finalGrades"), where("projectCode", "==", projectCode));
+    const gradesSnapshot = await getDocs(gradesQuery);
+
+    for (const gradeDoc of gradesSnapshot.docs) {
+      await deleteDoc(doc(db, "finalGrades", gradeDoc.id));
+      console.log(`Deleted grade with ID: ${gradeDoc.id}`);
     }
-  };
+
+    // Delete evaluations and responses in the forms table
+    const formsQuery = collection(db, "forms");
+    const formsSnapshot = await getDocs(formsQuery);
+
+    for (const formDoc of formsSnapshot.docs) {
+      // Delete evaluations subcollection
+      const evaluationsRef = collection(formDoc.ref, "evaluations");
+      const evaluationsSnapshot = await getDocs(query(evaluationsRef, where("projectCode", "==", projectCode)));
+
+      for (const evaluationDoc of evaluationsSnapshot.docs) {
+        await deleteDoc(evaluationDoc.ref);
+        console.log(`Deleted evaluation with ID: ${evaluationDoc.id} in forms`);
+      }
+
+      // Delete responses subcollection
+      const responsesRef = collection(formDoc.ref, "responses");
+      const responsesSnapshot = await getDocs(query(responsesRef, where("projectCode", "==", projectCode)));
+
+      for (const responseDoc of responsesSnapshot.docs) {
+        await deleteDoc(responseDoc.ref);
+        console.log(`Deleted response with ID: ${responseDoc.id} in forms`);
+      }
+    }
+
+    // Delete the project itself
+    await deleteDoc(doc(db, "projects", deleteModal.project.id));
+    console.log(`Deleted project with projectCode: ${projectCode}`);
+
+    // Update state to reflect the deleted project
+    setProjects((current) =>
+      current.filter((project) => project.projectCode !== projectCode)
+    );
+
+    closeDeleteModal();
+    console.log("Project deleted successfully.");
+  } catch (error) {
+    console.error("Error deleting project and related data:", error);
+    alert("An error occurred while deleting the project and its related data.");
+  } finally {
+    setIsDeleting(false);
+  }
+};
+
 
   return (
     <div className="relative bg-white min-h-screen overflow-hidden">
