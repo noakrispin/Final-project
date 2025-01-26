@@ -3,43 +3,53 @@ const admin = require("firebase-admin");
 // Add or update a grade
 exports.addOrUpdateGrade = async (req, res) => {
   const { formID } = req.params;
-    const { evaluatorID, projectCode, general, students } = req.body;
+  const { evaluatorID, projectCode, grades } = req.body;
+
   try {
     console.log("Updating finalGrades...");
+    console.log("Received grades:", grades);
 
     const finalGradesSnapshot = await db
       .collection("finalGrades")
       .where("projectCode", "==", projectCode)
-      // .where("part", "==", part)
       .get();
- 
-    console.log("finalGradesSnapshot:", finalGradesSnapshot);
- 
+
     if (!finalGradesSnapshot.empty) {
-      for (const doc of finalGradesSnapshot.docs) {
-        const finalGradeDoc = doc.data();
-        const studentID = finalGradeDoc.studentID;
- 
-        console.log(`Processing final grades for studentID: ${studentID}`);
- 
+      // Process each studentID from the received grades
+      for (const [studentID, grade] of Object.entries(grades)) {
+        console.log(`Processing studentID: ${studentID}, Grade: ${grade}`);
+
+        const matchingDoc = finalGradesSnapshot.docs.find(
+          (doc) => doc.data().studentID === studentID
+        );
+
+        if (!matchingDoc) {
+          console.log(`No finalGrades document found for studentID: ${studentID}. Skipping.`);
+          continue;
+        }
+
+        const finalGradeDoc = matchingDoc.data();
+
         // Calculate averages for each grade component
         const evaluatorsSnapshot = await db
           .collection("evaluators")
           .where("projectCode", "==", projectCode)
           .get();
- 
-          console.log("evaluatorsSnapshot:", evaluatorsSnapshot);
+
+        console.log("EvaluatorsSnapshot:", evaluatorsSnapshot);
+
         let totalSupervisorGrade = 0;
         let totalPresentationGrade = 0;
         let totalBookGrade = 0;
- 
+
         let supervisorCount = 0;
         let presentationCount = 0;
         let bookCount = 0;
- 
+
         for (const evaluatorDoc of evaluatorsSnapshot.docs) {
           const evaluator = evaluatorDoc.data();
-          console.log("evaluator:", evaluator);
+          console.log("Evaluator:", evaluator);
+
           if (evaluator.status === "Submitted") {
             const evaluationSnapshot = await db
               .collection("forms")
@@ -48,34 +58,25 @@ exports.addOrUpdateGrade = async (req, res) => {
               .where("evaluatorID", "==", evaluator.evaluatorID)
               .where("projectCode", "==", projectCode)
               .get();
- 
+
             for (const evaluationDoc of evaluationSnapshot.docs) {
               const evaluation = evaluationDoc.data();
-              const grades = evaluation.grades || {};
-              console.log("grades:", grades);
-              console.log("evaluation(in loop):", evaluation);
-              if (grades[studentID] !== undefined) {
+              const evaluationGrades = evaluation.grades || {};
+
+              if (evaluationGrades[studentID] !== undefined) {
                 switch (evaluator.formID) {
                   case "SupervisorForm":
-                    console.log("SupervisorForm:grades[studentID]", grades[studentID]);
-                    totalSupervisorGrade += grades[studentID];
+                    totalSupervisorGrade += evaluationGrades[studentID];
                     supervisorCount++;
                     break;
                   case "PresentationFormA":
-                    totalPresentationGrade += grades[studentID];
-                    presentationCount++;
-                    break;
                   case "PresentationFormB":
-                    console.log("PresentationFormB:grades[studentID]", grades[studentID]);
-                    totalPresentationGrade += grades[studentID];
+                    totalPresentationGrade += evaluationGrades[studentID];
                     presentationCount++;
                     break;
                   case "bookReviewerFormA":
-                    totalBookGrade += grades[studentID];
-                    bookCount++;
-                    break;
                   case "bookReviewerFormB":
-                    totalBookGrade += grades[studentID];
+                    totalBookGrade += evaluationGrades[studentID];
                     bookCount++;
                     break;
                   default:
@@ -85,70 +86,73 @@ exports.addOrUpdateGrade = async (req, res) => {
             }
           }
         }
- 
+
         const calculatedSupervisorGrade =
           supervisorCount > 0 ? totalSupervisorGrade / supervisorCount : null;
         const calculatedPresentationGrade =
           presentationCount > 0 ? totalPresentationGrade / presentationCount : null;
         const calculatedBookGrade =
           bookCount > 0 ? totalBookGrade / bookCount : null;
- 
+
         console.log(`Grade Averages for student ${studentID}:`, {
           calculatedSupervisorGrade,
           calculatedPresentationGrade,
           calculatedBookGrade,
         });
- 
+
         // Determine status
         let status = "Partially graded";
- 
+
         const allSubmitted = evaluatorsSnapshot.docs.every(
           (evaluatorDoc) => evaluatorDoc.data().status === "Submitted"
         );
         const noneSubmitted = evaluatorsSnapshot.docs.every(
           (evaluatorDoc) => evaluatorDoc.data().status !== "Submitted"
         );
- 
+
         if (allSubmitted) {
           status = "Fully graded";
         } else if (noneSubmitted) {
           status = "Not graded";
         }
- 
+
         // Calculate final grade
         const finalGrade =
           (calculatedSupervisorGrade || 0) * 0.5 +
           (calculatedPresentationGrade || 0) * 0.25 +
           (calculatedBookGrade || 0) * 0.25;
- 
+
         // Update finalGrades document
-        await db.collection("finalGrades").doc(doc.id).update({
+        await db.collection("finalGrades").doc(matchingDoc.id).update({
           CalculatedSupervisorGrade: calculatedSupervisorGrade || null,
-  CalculatedPresentationGrade: calculatedPresentationGrade || null,
-  CalculatedBookGrade: calculatedBookGrade || null,
-  finalGrade: finalGrade || null,
+          CalculatedPresentationGrade: calculatedPresentationGrade || null,
+          CalculatedBookGrade: calculatedBookGrade || null,
+          finalGrade: finalGrade || null,
           status,
           updated_at: new Date().toISOString(),
         });
- 
+
         console.log(`Updated final grade for student ${studentID}:`, {
           finalGrade,
           status,
         });
       }
- 
-      console.log("finalGrades updated successfully.");
+
+      console.log("Final grades updated successfully.");
       res.status(200).json({ success: true, message: "Final grades updated successfully." });
     } else {
-      console.log("No matching finalGrades document found for the project and student.");
+      console.log("No matching finalGrades documents found for the project.");
+      res.status(404).json({
+        success: false,
+        message: "No finalGrades documents found for the given project code.",
+      });
     }
- 
-    
   } catch (error) {
     console.error("Error adding/updating grade:", error.message);
     res.status(500).json({ success: false, error: "Failed to add/update grade" });
   }
 };
+
 
 // Get a specific grade by ID
 exports.getGrade = async (req, res) => {

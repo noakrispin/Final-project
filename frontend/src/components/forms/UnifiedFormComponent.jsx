@@ -188,12 +188,12 @@ export default function UnifiedFormComponent({
         projectCode
       );
       console.log("Fetched Evaluation:", evaluation);
-
+      console.log("Fetched Evaluation.grades:", evaluation.grades);
       // Use fetched grades for the grade update
       const gradesData = {
         evaluatorID: user.email,
         projectCode,
-        grades: evaluation, // Pass the fetched grades
+        grades: evaluation.grades, // Pass the fetched grades
       };
 
       await gradesApi.addOrUpdateGrade(formID, gradesData);
