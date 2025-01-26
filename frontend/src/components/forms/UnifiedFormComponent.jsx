@@ -145,24 +145,26 @@ export default function UnifiedFormComponent({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     if (!isFormValid()) {
-      alert("Please fill in all required fields. Text areas must have at least 5 words.");
+      alert(
+        "Please fill in all required fields. Text areas must have at least 5 words."
+      );
       return;
     }
-  
+
     const responses = {
       evaluatorID: user.email,
       projectCode,
       general: {},
       students: {},
     };
-  
+
     // Populate general responses
     generalQuestions.forEach((field) => {
       responses.general[field.name] = formData[field.name];
     });
-  
+
     // Populate student-specific responses
     students.forEach((student) => {
       const studentResponses = {};
@@ -172,42 +174,14 @@ export default function UnifiedFormComponent({
       });
       responses.students[student.id] = studentResponses;
     });
-  
+
     try {
       console.log("Submitting form data:", responses);
-  
+
       // Step 1: Submit the form responses
       await formsApi.submitForm(formID, responses);
       console.log("Responses submitted successfully");
-  
-      // Step 2: Fetch evaluation data
-      const evaluation = await formsApi.getEvaluationByEvaluatorAndProject(user.email, projectCode);
-      console.log("Fetched Evaluation:", evaluation);
-  
-      // Step 3: Loop through each student's grade in the evaluation and update it
-      const grades = evaluation.grades;
-      if (!grades || Object.keys(grades).length === 0) {
-        console.warn("No grades found in evaluation.");
-        return;
-      }
-  
-      for (const [studentID, grade] of Object.entries(grades)) {
-        console.log(`Processing grade for studentID: ${studentID}, grade: ${grade}`);
-  
-        // Prepare the data for the API
-        const gradeData = {
-          studentID,
-          projectCode,
-          grade,
-          formID,
-        };
-  
-        console.log(`Updating grade for studentID: ${studentID}with grade:${grade},projectCode:${projectCode}`);
-        await gradesApi.addOrUpdateGrade(gradeData);
-      }
-  
-      console.log("Final grades updated successfully");
-  
+
       // Step 4: Update evaluator status
       const evaluatorData = {
         evaluatorID: user.email.trim(),
@@ -215,10 +189,45 @@ export default function UnifiedFormComponent({
         projectCode,
         status: "Submitted",
       };
-  
+
       await evaluatorsApi.addOrUpdateEvaluator(evaluatorData);
       console.log("Evaluator status updated successfully");
-  
+
+      // Step 2: Fetch evaluation data
+      const evaluation = await formsApi.getEvaluationByEvaluatorAndProject(
+        user.email,
+        projectCode
+      );
+      console.log("Fetched Evaluation:", evaluation);
+
+      // Step 3: Loop through each student's grade in the evaluation and update it
+      const grades = evaluation.grades;
+      if (!grades || Object.keys(grades).length === 0) {
+        console.warn("No grades found in evaluation.");
+        return;
+      }
+
+      for (const [studentID, grade] of Object.entries(grades)) {
+        console.log(
+          `Processing grade for studentID: ${studentID}, grade: ${grade}`
+        );
+
+        // Prepare the data for the API
+        const gradeData = {
+          studentID,
+          projectCode,
+          grade,
+          formID,
+        };
+
+        console.log(
+          `Updating grade for studentID: ${studentID}with grade:${grade},projectCode:${projectCode}`
+        );
+        await gradesApi.addOrUpdateGrade(gradeData);
+      }
+
+      console.log("Final grades updated successfully");
+
       alert("Form submitted successfully!");
       navigate(-1); // Redirect to the previous page
     } catch (error) {
@@ -226,9 +235,6 @@ export default function UnifiedFormComponent({
       alert("Failed to submit the evaluation. Please try again.");
     }
   };
-  
-  
-  
 
   const updateProgress = (updatedFormData = formData) => {
     const staticFields = ["projectCode", "title", "evaluatorName"]; // Non-editable fields

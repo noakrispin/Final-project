@@ -211,20 +211,15 @@ exports.resetPassword = async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found or invalid credentials" });
     }
 
-    const user = userDoc.docs[0];
-    const emailId = user.email;
+    const user = userDoc.docs[0]; // Get the first matching document
+    const emailId = user.id; // Use document ID for update
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     await db.collection("users").doc(emailId).update({
       password: hashedPassword,
     });
-    // Temporarily comment out email-sending functionality
-    /*
-    // Send email notification
-    const emailText = `Hello,\n\nYour password has been successfully reset. If you didn't request this change, please contact support immediately.\n\nRegards,\nYour Team`;
-    await sendEmail(email, "Password Reset Confirmation", emailText);
-  */
+
     res.status(200).json({ success: true, message: "Password reset successfully" });
   } catch (error) {
     console.error("Error resetting password:", error.message);
