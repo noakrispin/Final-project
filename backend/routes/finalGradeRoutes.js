@@ -45,7 +45,7 @@ const asyncHandler = (fn) => (req, res, next) => {
 // };
 
 
-// Add or update grades for a project (using projectCode)
+// Add or update grades for a project 
 router.post("/", asyncHandler(async (req, res) => {
   const { studentID, projectCode, grade, formID } = req.body;
 

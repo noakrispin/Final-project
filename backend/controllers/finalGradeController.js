@@ -17,30 +17,55 @@ exports.addOrUpdateGrade = async (req, res) => {
       .get();
 
     let gradeDocId;
+    let existingGrades = {
+      CalculatedSupervisorGrade: null,
+      CalculatedPresentationGrade: null,
+      CalculatedBookGrade: null,
+    };
+
     if (!gradeSnapshot.empty) {
       gradeDocId = gradeSnapshot.docs[0].id;
+      const gradeData = gradeSnapshot.docs[0].data();
+
+      // Retain existing grades
+      existingGrades.CalculatedSupervisorGrade = gradeData.CalculatedSupervisorGrade || null;
+      existingGrades.CalculatedPresentationGrade = gradeData.CalculatedPresentationGrade || null;
+      existingGrades.CalculatedBookGrade = gradeData.CalculatedBookGrade || null;
+
       console.log(`Found grade document for studentID ${studentID}: ${gradeDocId}`);
     } else {
-      console.warn(`No grade document found for studentID: ${studentID}. Skipping.`);
+      console.warn(`No grade document found for studentID: ${studentID}. Creating a new document.`);
+      const newDocRef = await admin.firestore().collection("finalGrades").add({
+        projectCode,
+        studentID,
+        CalculatedSupervisorGrade: null,
+        CalculatedPresentationGrade: null,
+        CalculatedBookGrade: null,
+        finalGrade: null,
+        status: "Not graded",
+        created_at: new Date().toISOString(),
+      });
+      gradeDocId = newDocRef.id;
     }
 
-    // Recalculate grades based on evaluations
+    // Initialize variables to calculate new grades
+    let totalSupervisorGrade = existingGrades.CalculatedSupervisorGrade || 0;
+    let totalPresentationGrade = existingGrades.CalculatedPresentationGrade || 0;
+    let totalBookGrade = existingGrades.CalculatedBookGrade || 0;
+    let supervisorCount = existingGrades.CalculatedSupervisorGrade ? 1 : 0;
+    let presentationCount = existingGrades.CalculatedPresentationGrade ? 1 : 0;
+    let bookCount = existingGrades.CalculatedBookGrade ? 1 : 0;
+
+    // Fetch evaluations from evaluators
     const evaluatorsSnapshot = await admin
       .firestore()
       .collection("evaluators")
       .where("projectCode", "==", projectCode)
       .get();
 
-    let totalSupervisorGrade = 0;
-    let totalPresentationGrade = 0;
-    let totalBookGrade = 0;
-    let supervisorCount = 0;
-    let presentationCount = 0;
-    let bookCount = 0;
-
     for (const evaluatorDoc of evaluatorsSnapshot.docs) {
       const evaluator = evaluatorDoc.data();
-    
+
       if (evaluator.status === "Submitted") {
         const evaluationSnapshot = await admin
           .firestore()
@@ -50,13 +75,12 @@ exports.addOrUpdateGrade = async (req, res) => {
           .where("evaluatorID", "==", evaluator.evaluatorID)
           .where("projectCode", "==", projectCode)
           .get();
-    
+
         for (const evaluationDoc of evaluationSnapshot.docs) {
           const evaluation = evaluationDoc.data();
           const evaluationGrades = evaluation.grades || {};
-    
+
           if (evaluationGrades[studentID] !== undefined) {
-            // Ensure grades are added correctly to their respective categories
             switch (formID) {
               case "SupervisorForm":
                 totalSupervisorGrade += evaluationGrades[studentID];
@@ -73,14 +97,14 @@ exports.addOrUpdateGrade = async (req, res) => {
                 bookCount++;
                 break;
               default:
-                console.log(`Unknown formID: ${formID}`);
+                console.warn(`Unhandled formID: ${formID}`);
             }
           }
         }
       }
     }
-    
 
+    // Recalculate weighted grades
     const calculatedSupervisorGrade =
       supervisorCount > 0 ? totalSupervisorGrade / supervisorCount : null;
     const calculatedPresentationGrade =
@@ -107,6 +131,7 @@ exports.addOrUpdateGrade = async (req, res) => {
 
     const finalGrade = totalWeight > 0 ? weightedGrade / totalWeight : null;
 
+    // Determine the status of grading
     let status = "Partially graded";
     const allSubmitted = evaluatorsSnapshot.docs.every(
       (doc) => doc.data().status === "Submitted"
@@ -118,25 +143,25 @@ exports.addOrUpdateGrade = async (req, res) => {
     if (allSubmitted) status = "Fully graded";
     else if (noneSubmitted) status = "Not graded";
 
-    // Update the grade document
+    // Update or create the grade document
     await admin.firestore().collection("finalGrades").doc(gradeDocId).update({
-      CalculatedSupervisorGrade: calculatedSupervisorGrade || null,
-      CalculatedPresentationGrade: calculatedPresentationGrade || null,
-      CalculatedBookGrade: calculatedBookGrade || null,
-      finalGrade: finalGrade || null,
+      CalculatedSupervisorGrade: calculatedSupervisorGrade,
+      CalculatedPresentationGrade: calculatedPresentationGrade,
+      CalculatedBookGrade: calculatedBookGrade,
+      finalGrade: finalGrade,
       status,
       updated_at: new Date().toISOString(),
     });
 
     console.log(`Updated grade document ${gradeDocId} for studentID ${studentID}`);
-
-    console.log("Grades processed successfully.");
     res.status(200).json({ success: true, message: "Grades updated successfully." });
   } catch (error) {
     console.error("Error updating grades:", error.message);
     res.status(500).json({ success: false, error: "Failed to update grades." });
   }
 };
+
+
 
 
 
@@ -149,7 +174,6 @@ exports.getGrade = async (req, res) => {
     if (!gradeDoc.exists) {
       return res.status(404).json({ success: false, error: "Grade not found" });
     }
-
     res.status(200).json({ success: true, data: gradeDoc.data() });
   } catch (error) {
     console.error("Error fetching grade:", error.message);
