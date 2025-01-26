@@ -30,14 +30,14 @@ function ForgotPassword() {
   const handleResetPassword = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-
+  
     try {
-      const response = await api.post('/reset-password', { email, newPassword }); // Only send email and new password
+      const response = await api.post('/auth/reset-password', { email, newPassword });
       if (response.success) {
         toast.success('Password successfully reset! Redirecting to login...');
         setTimeout(() => {
-          window.location.href = '/login'; // Navigate to login
-        }, 2000); // Add a delay to allow the toast to display
+          window.location.href = '/login';
+        }, 2000);
       } else {
         toast.error(response.message || 'Failed to reset password.');
       }
@@ -47,6 +47,7 @@ function ForgotPassword() {
       setIsSubmitting(false);
     }
   };
+  
 
   return (
     <div className="min-h-screen bg-white relative overflow-hidden flex justify-center items-center py-12">
