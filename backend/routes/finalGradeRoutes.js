@@ -45,22 +45,47 @@ const asyncHandler = (fn) => (req, res, next) => {
 // };
 
 
+// Add or update grades for a project (using projectCode)
+router.post("/:projectCode", asyncHandler(async (req, res) => {
+  const { projectCode } = req.params; // Use `projectCode` from the route
+  const { evaluatorID, formID, grades } = req.body;
 
-// Add or update a grade
-router.post("/:id", asyncHandler(async (req, res) => {
-  const { id } = req.params; // Use `id` from the route to update the specific document
-  console.log("Received grade ID in route:", id);
+  // Validate required data
+  if (!projectCode || !evaluatorID || !formID || !grades) {
+    return res.status(400).json({
+      error: {
+        message: "Missing required fields: projectCode, evaluatorID, formID, or grades.",
+        status: 400,
+      },
+    });
+  }
 
+  console.log("Processing grades for projectCode:", projectCode);
+
+  // Call the controller
   const result = await addOrUpdateGrade(req, res);
   return res.status(200).json(result);
 }));
 
-
-// Get a specific grade
+// Get a specific grade by ID
 router.get("/:id", asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json({
+      error: {
+        message: "Grade ID is required.",
+        status: 400,
+      },
+    });
+  }
+
+  console.log("Fetching grade with ID:", id);
+
   const result = await getGrade(req, res);
-  return result;
+  return res.status(200).json(result);
 }));
+////
 
 // Get all grades
 router.get("/", asyncHandler(async (req, res) => {
