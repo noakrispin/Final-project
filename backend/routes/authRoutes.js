@@ -116,7 +116,10 @@ router.post('/verify-user',
 router.post("/reset-password",
   authLimiter,
   asyncHandler(async (req, res) => {
-    if (!req.body.email || !req.body.email.includes('@')) {
+    const { email, newPassword } = req.body;
+
+    // Validate email
+    if (!email || !email.includes('@')) {
       return res.status(400).json({
         error: {
           message: 'Valid email is required',
@@ -124,10 +127,23 @@ router.post("/reset-password",
         }
       });
     }
+
+    // Validate new password
+    if (!newPassword || newPassword.length < 8) {
+      return res.status(400).json({
+        error: {
+          message: 'Password must be at least 8 characters long',
+          status: 400
+        }
+      });
+    }
+
+    // Proceed with resetting the password
     const result = await resetPassword(req, res);
     return result;
   })
 );
+
 
 // Error handling middleware specific to auth routes
 router.use((err, req, res, next) => {

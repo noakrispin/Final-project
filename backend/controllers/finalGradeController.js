@@ -48,13 +48,10 @@ exports.addOrUpdateGrade = async (req, res) => {
       gradeDocId = newDocRef.id;
     }
 
-    // Initialize variables to calculate new grades
-    let totalSupervisorGrade = existingGrades.CalculatedSupervisorGrade || 0;
-    let totalPresentationGrade = existingGrades.CalculatedPresentationGrade || 0;
-    let totalBookGrade = existingGrades.CalculatedBookGrade || 0;
-    let supervisorCount = existingGrades.CalculatedSupervisorGrade ? 1 : 0;
-    let presentationCount = existingGrades.CalculatedPresentationGrade ? 1 : 0;
-    let bookCount = existingGrades.CalculatedBookGrade ? 1 : 0;
+    // Initialize variables for counting evaluators
+    let supervisorEvaluatorCount = 0;
+    let presentationEvaluatorCount = 0;
+    let bookEvaluatorCount = 0;
 
     // Fetch evaluations from evaluators
     const evaluatorsSnapshot = await admin
@@ -83,18 +80,30 @@ exports.addOrUpdateGrade = async (req, res) => {
           if (evaluationGrades[studentID] !== undefined) {
             switch (formID) {
               case "SupervisorForm":
-                totalSupervisorGrade += evaluationGrades[studentID];
-                supervisorCount++;
+                existingGrades.CalculatedSupervisorGrade =
+                  existingGrades.CalculatedSupervisorGrade !== null
+                    ? (existingGrades.CalculatedSupervisorGrade * supervisorEvaluatorCount + evaluationGrades[studentID]) /
+                      (supervisorEvaluatorCount + 1)
+                    : evaluationGrades[studentID];
+                supervisorEvaluatorCount++;
                 break;
               case "PresentationFormA":
               case "PresentationFormB":
-                totalPresentationGrade += evaluationGrades[studentID];
-                presentationCount++;
+                existingGrades.CalculatedPresentationGrade =
+                  existingGrades.CalculatedPresentationGrade !== null
+                    ? (existingGrades.CalculatedPresentationGrade * presentationEvaluatorCount + evaluationGrades[studentID]) /
+                      (presentationEvaluatorCount + 1)
+                    : evaluationGrades[studentID];
+                presentationEvaluatorCount++;
                 break;
               case "bookReviewerFormA":
               case "bookReviewerFormB":
-                totalBookGrade += evaluationGrades[studentID];
-                bookCount++;
+                existingGrades.CalculatedBookGrade =
+                  existingGrades.CalculatedBookGrade !== null
+                    ? (existingGrades.CalculatedBookGrade * bookEvaluatorCount + evaluationGrades[studentID]) /
+                      (bookEvaluatorCount + 1)
+                    : evaluationGrades[studentID];
+                bookEvaluatorCount++;
                 break;
               default:
                 console.warn(`Unhandled formID: ${formID}`);
@@ -104,29 +113,21 @@ exports.addOrUpdateGrade = async (req, res) => {
       }
     }
 
-    // Recalculate weighted grades
-    const calculatedSupervisorGrade =
-      supervisorCount > 0 ? totalSupervisorGrade / supervisorCount : null;
-    const calculatedPresentationGrade =
-      presentationCount > 0 ? totalPresentationGrade / presentationCount : null;
-    const calculatedBookGrade =
-      bookCount > 0 ? totalBookGrade / bookCount : null;
-
     // Adjust weights dynamically based on available grades
     let totalWeight = 0;
     let weightedGrade = 0;
 
-    if (calculatedSupervisorGrade !== null) {
+    if (existingGrades.CalculatedSupervisorGrade !== null) {
       totalWeight += 0.5;
-      weightedGrade += calculatedSupervisorGrade * 0.5;
+      weightedGrade += existingGrades.CalculatedSupervisorGrade * 0.5;
     }
-    if (calculatedPresentationGrade !== null) {
+    if (existingGrades.CalculatedPresentationGrade !== null) {
       totalWeight += 0.25;
-      weightedGrade += calculatedPresentationGrade * 0.25;
+      weightedGrade += existingGrades.CalculatedPresentationGrade * 0.25;
     }
-    if (calculatedBookGrade !== null) {
+    if (existingGrades.CalculatedBookGrade !== null) {
       totalWeight += 0.25;
-      weightedGrade += calculatedBookGrade * 0.25;
+      weightedGrade += existingGrades.CalculatedBookGrade * 0.25;
     }
 
     const finalGrade = totalWeight > 0 ? weightedGrade / totalWeight : null;
@@ -145,9 +146,9 @@ exports.addOrUpdateGrade = async (req, res) => {
 
     // Update or create the grade document
     await admin.firestore().collection("finalGrades").doc(gradeDocId).update({
-      CalculatedSupervisorGrade: calculatedSupervisorGrade,
-      CalculatedPresentationGrade: calculatedPresentationGrade,
-      CalculatedBookGrade: calculatedBookGrade,
+      CalculatedSupervisorGrade: existingGrades.CalculatedSupervisorGrade,
+      CalculatedPresentationGrade: existingGrades.CalculatedPresentationGrade,
+      CalculatedBookGrade: existingGrades.CalculatedBookGrade,
       finalGrade: finalGrade,
       status,
       updated_at: new Date().toISOString(),
@@ -160,6 +161,7 @@ exports.addOrUpdateGrade = async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to update grades." });
   }
 };
+
 
 
 

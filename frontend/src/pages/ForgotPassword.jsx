@@ -4,7 +4,6 @@ import { api } from '../services/api';
 
 function ForgotPassword() {
   const [email, setEmail] = useState('');
-  const [id, setId] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [isVerified, setIsVerified] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -14,7 +13,7 @@ function ForgotPassword() {
     setIsSubmitting(true);
 
     try {
-      const response = await api.post('/auth/verify-user', { email, id });
+      const response = await api.post('/auth/verify-user', { email });
       if (response.success) {
         toast.success('User verified! You can now reset your password.');
         setIsVerified(true); // Allow password reset
@@ -33,7 +32,7 @@ function ForgotPassword() {
     setIsSubmitting(true);
 
     try {
-      const response = await api.post('/auth/reset-password', { email, id, newPassword });
+      const response = await api.post('/reset-password', { email, newPassword }); // Only send email and new password
       if (response.success) {
         toast.success('Password successfully reset! Redirecting to login...');
         setTimeout(() => {
@@ -61,37 +60,23 @@ function ForgotPassword() {
           {isVerified ? 'Reset Password' : 'Forgot Password'}
         </h2>
         <p className="text-lg text-gray-600 mb-6">
-          {isVerified ? 'Set your new password below.' : 'Enter your email and ID to verify your account.'}
+          {isVerified ? 'Set your new password below.' : 'Enter your email to verify your account.'}
         </p>
 
         <form onSubmit={isVerified ? handleResetPassword : handleVerifyUser} className="space-y-4">
           {!isVerified && (
-            <>
-              <div>
-                <label htmlFor="email" className="block text-gray-600 mb-1">Email</label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full h-[55px] px-4 border border-[#dadada] rounded-md"
-                  placeholder="Enter your email"
-                />
-              </div>
-              <div>
-                <label htmlFor="id" className="block text-gray-600 mb-1">ID</label>
-                <input
-                  id="id"
-                  type="text"
-                  value={id}
-                  onChange={(e) => setId(e.target.value)}
-                  required
-                  className="w-full h-[55px] px-4 border border-[#dadada] rounded-md"
-                  placeholder="Enter your ID"
-                />
-              </div>
-            </>
+            <div>
+              <label htmlFor="email" className="block text-gray-600 mb-1">Email</label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full h-[55px] px-4 border border-[#dadada] rounded-md"
+                placeholder="Enter your email"
+              />
+            </div>
           )}
 
           {isVerified && (
