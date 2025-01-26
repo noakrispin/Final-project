@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Table } from "../../components/ui/Table";
-// import { exportToExcelFile } from "../../services/fileProcessingService";
-
+import { formsApi } from "../../services/formAPI";
 import ProjectAssessmentPopup from "../../components/ui/ProjectAssessmentPopup";
 import { gradesApi } from "../../services/finalGradesAPI";
 import { projectsApi } from "../../services/projectsAPI";
@@ -128,6 +127,112 @@ const AdminGradesPage = () => {
     }
   };
 
+  const handleRefreshClick = async () => {
+    try {
+      setIsLoading(true);
+      toast.info("Refreshing grades...");
+
+      // Iterate through each project
+      for (const project of projects) {
+        const { projectCode } = project;
+
+        // Initialize a structure to group evaluations by formID
+        const evaluationsByForm = [];
+
+        for (const formID of [
+          "SupervisorForm",
+          "PresentationFormA",
+          "PresentationFormB",
+          "bookReviewerFormA",
+          "bookReviewerFormB",
+        ]) {
+          try {
+            // Fetch evaluations for the current formID
+            const response = await formsApi.getEvaluations(formID);
+            console.log(`Fetched evaluations for formID: ${formID}`, response);
+
+            // Filter evaluations by projectCode
+            const filteredEvaluations = response?.filter(
+              (evaluation) => evaluation.projectCode === projectCode
+            );
+            console.log("filtered evaluations:", filteredEvaluations);
+            // Group evaluations by studentID and add them to the evaluationsByForm structure
+            const gradesByStudent = {};
+            filteredEvaluations.forEach((evaluation) => {
+              Object.entries(evaluation.grades).forEach(
+                ([studentID, grade]) => {
+                  if (!gradesByStudent[studentID]) {
+                    gradesByStudent[studentID] = [];
+                  }
+                  gradesByStudent[studentID].push(grade);
+                }
+              );
+            });
+            console.log("grades by student:", gradesByStudent);
+
+            // Add the grouped grades under the current formID
+            evaluationsByForm.push({
+              formID,
+              grades: Object.entries(gradesByStudent).map(
+                ([studentID, grades]) => ({
+                  studentID,
+                  grades,
+                })
+              ),
+            });
+            console.log("evaluations by form:", evaluationsByForm);
+            console.log(
+              `Grouped evaluations for formID: ${formID}`,
+              gradesByStudent
+            );
+          } catch (error) {
+            console.error(
+              `Error fetching evaluations for formID: ${formID}`,
+              error.message
+            );
+          }
+        }
+
+        // If evaluationsByForm is populated, send the data to addOrUpdateGrade
+        if (evaluationsByForm.length > 0) {
+          try {
+            console.log(
+              `Sending evaluationsByForm for projectCode: ${projectCode}`,
+              evaluationsByForm
+            );
+
+            // Call addOrUpdateGrade with the new structure
+            await gradesApi.addOrUpdateGrade({
+              projectCode,
+              evaluationsByForm,
+            });
+
+            console.log(`Grades updated for projectCode: ${projectCode}`);
+          } catch (error) {
+            console.error(
+              `Failed to update grades for projectCode: ${projectCode}`,
+              error.message
+            );
+            toast.error(`Failed to update grades for project ${projectCode}.`);
+          }
+        } else {
+          console.warn(`No evaluations found for projectCode: ${projectCode}`);
+        }
+      }
+
+      // Refresh the projects data after grades are updated
+      const updatedProjects = await gradesApi.getAllGrades();
+      setProjects(updatedProjects.data || []); // Update the state with the new data
+
+      toast.success("Grades refreshed successfully!");
+    } catch (error) {
+      console.error("Error refreshing grades:", error.message);
+      toast.error("Failed to refresh grades.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const renderGradeStatus = (status) => {
     console.log("status in render status:", status);
 
@@ -176,12 +281,6 @@ const AdminGradesPage = () => {
         sortable: true,
         className: "text-base",
       },
-      // {
-      //   key: "title",
-      //   header: "Project Title",
-      //   sortable: true,
-      //   className: "text-base",
-      // },
       { key: "part", header: "Part", className: "text-base" },
       {
         key: "studentName",
@@ -202,7 +301,9 @@ const AdminGradesPage = () => {
         header: "Book Grade",
         className: "text-base",
         render: (value, row) => {
-          return row.bookGrade !== undefined && row.bookGrade !== "N/A" ? row.bookGrade : " "
+          return row.bookGrade !== undefined && row.bookGrade !== "N/A"
+            ? row.bookGrade
+            : " ";
         },
       },
       {
@@ -210,7 +311,10 @@ const AdminGradesPage = () => {
         header: "Presentation Grade",
         className: "text-base",
         render: (value, row) => {
-          return row.presentationGrade !== undefined && row.presentationGrade !== "N/A" ? row.presentationGrade : " "
+          return row.presentationGrade !== undefined &&
+            row.presentationGrade !== "N/A"
+            ? row.presentationGrade
+            : " ";
         },
       },
       {
@@ -218,11 +322,12 @@ const AdminGradesPage = () => {
         header: "Supervisor Grade",
         className: "text-base",
         render: (value, row) => {
-          return row.supervisorGrade !== undefined && row.supervisorGrade !== "N/A"
+          return row.supervisorGrade !== undefined &&
+            row.supervisorGrade !== "N/A"
             ? typeof row.supervisorGrade === "number"
               ? row.supervisorGrade.toFixed(2)
               : row.supervisorGrade
-            : " "
+            : " ";
         },
       },
       {
@@ -230,14 +335,14 @@ const AdminGradesPage = () => {
         header: "Final Grade",
         className: "text-base",
         render: (value, row) => {
-          console.log("Row in final grade:", row)
-          console.log("Value in final grade:", value)
-          const grade = row.finalGrade
-          if (grade === null || grade === undefined) return " "
-          return typeof grade === "number" ? grade.toFixed(2) : grade
+          console.log("Row in final grade:", row);
+          console.log("Value in final grade:", value);
+          const grade = row.finalGrade;
+          if (grade === null || grade === undefined) return " ";
+          return typeof grade === "number" ? grade.toFixed(2) : grade;
         },
-      }, 
-      
+      },
+
       {
         key: "status",
         header: "Grade Status",
@@ -358,12 +463,24 @@ const AdminGradesPage = () => {
             Export to Excel
           </button> */}
 
-          <Button
-            onClick={handleExportToExcel}
-            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md sm:rounded-lg mt-2 sm:mt-4 text-sm sm:text-base w-full sm:w-auto"
-          >
-            Export to Excel
-          </Button>
+          <div className="flex space-x-4">
+            {/* Export to Excel Button */}
+            <Button
+              onClick={handleExportToExcel}
+              className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md sm:rounded-lg mt-2 sm:mt-4 text-sm sm:text-base w-full sm:w-auto"
+            >
+              Export to Excel
+            </Button>
+
+            {/* Refresh Button */}
+            <Button
+              onClick={handleRefreshClick}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md sm:rounded-lg mt-2 sm:mt-4 text-sm sm:text-base w-full sm:w-auto"
+            >
+              Refresh Grades
+            </Button>
+            <p> click to see the updated grades</p>
+          </div>
         </div>
 
         <div className="overflow-auto p-6">
