@@ -1,37 +1,39 @@
 const admin = require("firebase-admin");
 
+
 // Add or update a grade
 exports.addOrUpdateGrade = async (req, res) => {
   const { projectCode } = req.params; // Passed in the route
   const { evaluatorID, formID, grades } = req.body; // Sent in the request body
 
-  console.log("Updating finalGrades(controller)...");
-  console.log("Received grades:", grades);
-  console.log("Received evaluatorID:", evaluatorID);
-  console.log("Received projectCode:", projectCode);
-  console.log("Received formID:", formID);
+  console.log("Received data for grade update:");
+  console.log("Grades:", grades);
+  console.log("EvaluatorID:", evaluatorID);
+  console.log("ProjectCode:", projectCode);
+  console.log("FormID:", formID);
 
   try {
-    // Process each studentID from the received grades
+    // Loop through grades to process updates for each student
     for (const [studentID, grade] of Object.entries(grades)) {
-      console.log(`Processing studentID: ${studentID}, Grade: ${grade}`);
+      console.log(`Processing studentID: ${studentID}, grade: ${grade}`);
 
-      // Query Firestore for the document with the matching projectCode and studentID
-      const gradeSnapshot = await db
+      // Query Firestore for the grade document by `projectCode` and `studentID`
+      const gradeSnapshot = await admin
+        .firestore()
         .collection("finalGrades")
         .where("projectCode", "==", projectCode)
         .where("studentID", "==", studentID)
         .get();
 
-      let finalGradeDocId;
+      let gradeDocId;
 
       if (!gradeSnapshot.empty) {
-        // If the document exists, get its ID
-        finalGradeDocId = gradeSnapshot.docs[0].id;
-        console.log(`Found matching grade document with ID: ${finalGradeDocId}`);
+        // If the document exists, retrieve its ID
+        gradeDocId = gradeSnapshot.docs[0].id;
+        console.log(`Found grade document for studentID ${studentID}: ${gradeDocId}`);
       } else {
-        // If no matching document, create a new one
-        const newDocRef = await db.collection("finalGrades").add({
+        // If no matching document is found, create a new one
+        const newDocRef = await admin.firestore().collection("finalGrades").add({
           studentID,
           projectCode,
           status: "Not graded",
@@ -39,14 +41,16 @@ exports.addOrUpdateGrade = async (req, res) => {
           CalculatedPresentationGrade: 0,
           CalculatedBookGrade: 0,
           finalGrade: 0,
+          created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         });
-        finalGradeDocId = newDocRef.id;
-        console.log(`Created new document for student ${studentID}:`, finalGradeDocId);
+        gradeDocId = newDocRef.id;
+        console.log(`Created new grade document for studentID ${studentID}: ${gradeDocId}`);
       }
 
-      // Calculate averages for each grade component
-      const evaluatorsSnapshot = await db
+      // Recalculate grades based on evaluations
+      const evaluatorsSnapshot = await admin
+        .firestore()
         .collection("evaluators")
         .where("projectCode", "==", projectCode)
         .get();
@@ -62,7 +66,8 @@ exports.addOrUpdateGrade = async (req, res) => {
         const evaluator = evaluatorDoc.data();
 
         if (evaluator.status === "Submitted") {
-          const evaluationSnapshot = await db
+          const evaluationSnapshot = await admin
+            .firestore()
             .collection("forms")
             .doc(formID)
             .collection("evaluations")
@@ -105,30 +110,25 @@ exports.addOrUpdateGrade = async (req, res) => {
       const calculatedBookGrade =
         bookCount > 0 ? totalBookGrade / bookCount : null;
 
-      // Determine status
       let status = "Partially graded";
 
       const allSubmitted = evaluatorsSnapshot.docs.every(
-        (evaluatorDoc) => evaluatorDoc.data().status === "Submitted"
+        (doc) => doc.data().status === "Submitted"
       );
       const noneSubmitted = evaluatorsSnapshot.docs.every(
-        (evaluatorDoc) => evaluatorDoc.data().status !== "Submitted"
+        (doc) => doc.data().status !== "Submitted"
       );
 
-      if (allSubmitted) {
-        status = "Fully graded";
-      } else if (noneSubmitted) {
-        status = "Not graded";
-      }
+      if (allSubmitted) status = "Fully graded";
+      else if (noneSubmitted) status = "Not graded";
 
-      // Calculate final grade
       const finalGrade =
         (calculatedSupervisorGrade || 0) * 0.5 +
         (calculatedPresentationGrade || 0) * 0.25 +
         (calculatedBookGrade || 0) * 0.25;
 
-      // Update finalGrades document
-      await db.collection("finalGrades").doc(finalGradeDocId).update({
+      // Update the grade document
+      await admin.firestore().collection("finalGrades").doc(gradeDocId).update({
         CalculatedSupervisorGrade: calculatedSupervisorGrade || null,
         CalculatedPresentationGrade: calculatedPresentationGrade || null,
         CalculatedBookGrade: calculatedBookGrade || null,
@@ -137,19 +137,17 @@ exports.addOrUpdateGrade = async (req, res) => {
         updated_at: new Date().toISOString(),
       });
 
-      console.log(`Updated final grade for student ${studentID}:`, {
-        finalGrade,
-        status,
-      });
+      console.log(`Updated grade document ${gradeDocId} for studentID ${studentID}`);
     }
 
-    console.log("Final grades updated successfully.");
-    res.status(200).json({ success: true, message: "Final grades updated successfully." });
+    console.log("Grades processed successfully.");
+    res.status(200).json({ success: true, message: "Grades updated successfully." });
   } catch (error) {
-    console.error("Error adding/updating grade:", error.message);
-    res.status(500).json({ success: false, error: "Failed to add/update grade" });
+    console.error("Error updating grades:", error.message);
+    res.status(500).json({ success: false, error: "Failed to update grades." });
   }
 };
+
 
 
 

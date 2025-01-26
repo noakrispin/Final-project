@@ -4,23 +4,22 @@ export const gradesApi = {
   /**
    * Add or update a grade.
    */
-  addOrUpdateGrade: async (gradeDocId, data) => {
+  aaddOrUpdateGrade: async (gradeDocId, data) => {
     console.log("Adding/updating grade...");
     console.log("Received data:", data);
-    console.log("Using gradeDocId:", gradeDocId); // Use the document ID, not projectCode
-  
+    console.log("Using gradeDocId:", gradeDocId); // Use the document ID as required by the backend
+
     try {
       // The backend expects the gradeDocId as part of the URL
       const response = await api.post(`/grades/${gradeDocId}`, data);
-      console.log("Response:", response.data);
+      console.log("Response from addOrUpdateGrade:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error adding/updating grade:", error);
       throw error;
     }
   },
-  
-  
+
   
   
   /**
