@@ -152,7 +152,7 @@ export default function UnifiedFormComponent({
     }
   
     const responses = {
-      evaluatorID: user.email, // Ensure evaluatorID is correct
+      evaluatorID: user.email,
       projectCode,
       general: {},
       students: {},
@@ -185,7 +185,7 @@ export default function UnifiedFormComponent({
       console.log("Fetched Evaluation:", evaluation);
   
       // Step 3: Loop through each student's grade in the evaluation and update it
-      const grades = evaluation.grades; // Assuming grades is an object with studentIDs as keys
+      const grades = evaluation.grades;
       if (!grades || Object.keys(grades).length === 0) {
         console.warn("No grades found in evaluation.");
         return;
@@ -194,26 +194,16 @@ export default function UnifiedFormComponent({
       for (const [studentID, grade] of Object.entries(grades)) {
         console.log(`Processing grade for studentID: ${studentID}, grade: ${grade}`);
   
-        // Fetch the gradeDocId from the DB structure
-        // const gradeDocSnapshot = await api.get(`/grades`, {
-        //   params: { projectCode, studentID },
-        // });
+        // Prepare the data for the API
+        const gradeData = {
+          studentID,
+          projectCode,
+          grade,
+          formID,
+        };
   
-        // if (gradeDocSnapshot.data && gradeDocSnapshot.data.id) {
-        //   const gradeDocId = gradeDocSnapshot.data.id;
-  
-          const gradesData = {
-            formID,
-            grade,
-            studentID,
-            projectCode,
-          };
-  
-          console.log(`Updating grade for studentID: ${studentID} with gradesData: ${gradesData}`);
-          await gradesApi.addOrUpdateGrade(gradesData);
-        // } else {
-        //   console.warn(`No grade document found for studentID: ${studentID}. Skipping.`);
-        // }
+        console.log(`Updating grade for studentID: ${studentID}with grade:${grade},projectCode:${projectCode}`);
+        await gradesApi.addOrUpdateGrade(gradeData);
       }
   
       console.log("Final grades updated successfully");
@@ -236,6 +226,7 @@ export default function UnifiedFormComponent({
       alert("Failed to submit the evaluation. Please try again.");
     }
   };
+  
   
   
 

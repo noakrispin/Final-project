@@ -7,18 +7,19 @@ export const gradesApi = {
    * @param {string} id - The unique ID of the grade document.
    * @param {Object} data - The payload containing evaluatorID, formID, and grades.
    */
-  addOrUpdateGrade: async (id, data) => {
+  addOrUpdateGrade: async (data) => {
     console.log("Adding/updating grade...");
-    console.log("Using grade ID:", id);
     console.log("Received data:", data);
-
-    if (!id || !data) {
-      throw new Error("Grade ID and data are required for updating a grade.");
+  
+    // Ensure the required fields are present
+    const { studentID, projectCode, grade, formID } = data;
+    if (!studentID || !projectCode || grade === undefined || !formID) {
+      throw new Error("Missing required fields: studentID, projectCode, grade, or formID.");
     }
-
+  
     try {
       // Make the API request to the backend
-      const response = await api.post(`/grades/${id}`, data);
+      const response = await api.post(`/grades`, data);
       console.log("Response from addOrUpdateGrade:", response.data);
       return response.data;
     } catch (error) {
@@ -32,7 +33,12 @@ export const gradesApi = {
         }`
       );
     }
-  },
+  }, 
+
+
+
+  
+  
   /**
    * Get a specific grade by ID.
    */
