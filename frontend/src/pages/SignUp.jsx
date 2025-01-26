@@ -21,6 +21,9 @@ function SignUp() {
   const { register, handleSubmit, control, formState: { errors } } = useForm();
 
   const onSubmit = async (data) => {
+    data.email = data.email.trim().toLowerCase(); // Normalize the email
+    console.log("Submitting email:", data.email);
+    
     try {
       const response = await api.post("/auth/register", {
         fullName: data.fullName,
@@ -72,7 +75,7 @@ function SignUp() {
             required="Email is required"
             pattern={{
               value: /^[^\s@]+@(e\.)?braude\.ac\.il$/,
-              message: "Email must end with @e.braude.ac.il"
+              message: "Email must end with @braude.ac.il or @e.braude.ac.il"
             }}
             errors={errors}
           />
