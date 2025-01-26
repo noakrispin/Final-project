@@ -5,20 +5,20 @@ export const gradesApi = {
    * Add or update a grade.
    */
   addOrUpdateGrade: async (projectCode, data) => {
-    console.log("Adding/updating grade(finalGradesAPI)...");
-    console.log("Received data(finalGradesAPI):", data);
-    console.log("Received projectCode(finalGradesAPI):", projectCode);
-  
+    console.log("Adding/updating grade...");
+    console.log("Received data:", data);
+    console.log("Received projectCode:", projectCode);
     try {
-      const response = await api.post(`/grades/${projectCode}`, data);
-      console.log("response(finalGradesAPI):", response);
-      console.log("response.data(finalGradesAPI):", response.data);
+      const response = await api.post(`/grades/${projectCode}`, data); // Matches the backend route
+      console.log("Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error adding/updating grade:", error);
       throw error;
     }
   },
+  
+  
   
 
   /**
