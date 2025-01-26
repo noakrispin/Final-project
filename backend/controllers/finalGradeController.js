@@ -4,7 +4,11 @@ const admin = require("firebase-admin");
 exports.addOrUpdateGrade = async (req, res) => {
   const { formID } = req.params;
   const { evaluatorID, projectCode, grades } = req.body;
-
+  console.log("Updating finalGrades(controller)...");
+  console.log("Received grades:", grades);
+  console.log("Received evaluatorID:", evaluatorID);
+  console.log("Received projectCode:", projectCode);
+  console.log("Received formID:", formID);
   try {
     console.log("Updating finalGrades...");
     console.log("Received grades:", grades);
