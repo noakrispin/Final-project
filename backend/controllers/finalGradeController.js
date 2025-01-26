@@ -174,7 +174,6 @@ exports.getGrade = async (req, res) => {
     if (!gradeDoc.exists) {
       return res.status(404).json({ success: false, error: "Grade not found" });
     }
-
     res.status(200).json({ success: true, data: gradeDoc.data() });
   } catch (error) {
     console.error("Error fetching grade:", error.message);
