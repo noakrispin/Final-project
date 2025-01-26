@@ -184,24 +184,39 @@ export default function UnifiedFormComponent({
       const evaluation = await formsApi.getEvaluationByEvaluatorAndProject(user.email, projectCode);
       console.log("Fetched Evaluation:", evaluation);
   
-      // Step 3: Prepare grades data
-      const gradeDocId = evaluation.grades?.id; // Assuming evaluation.grades contains the ID
-      if (!gradeDocId) {
-        console.warn("Final grade ID not found. Creating a new grade document.");
+      // Step 3: Loop through each student's grade in the evaluation and update it
+      const grades = evaluation.grades; // Assuming grades is an object with studentIDs as keys
+      if (!grades || Object.keys(grades).length === 0) {
+        console.warn("No grades found in evaluation.");
+        return;
       }
   
-      const gradesData = {
-        evaluatorID: user.email,
-        grades: evaluation.grades, // Ensure this matches the backend format
-        formID,
-        projectCode,
-      };
+      for (const [studentID, grade] of Object.entries(grades)) {
+        console.log(`Processing grade for studentID: ${studentID}, grade: ${grade}`);
   
-      console.log("Sending grades data:", gradesData);
+        // Fetch the gradeDocId from the DB structure
+        // const gradeDocSnapshot = await api.get(`/grades`, {
+        //   params: { projectCode, studentID },
+        // });
   
-      // Call addOrUpdateGrade
-      await gradesApi.addOrUpdateGrade(gradeDocId || null, gradesData);
-      console.log("Final grade updated successfully");
+        // if (gradeDocSnapshot.data && gradeDocSnapshot.data.id) {
+        //   const gradeDocId = gradeDocSnapshot.data.id;
+  
+          const gradesData = {
+            formID,
+            grade,
+            studentID,
+            projectCode,
+          };
+  
+          console.log(`Updating grade for studentID: ${studentID} with gradesData: ${gradesData}`);
+          await gradesApi.addOrUpdateGrade(gradesData);
+        // } else {
+        //   console.warn(`No grade document found for studentID: ${studentID}. Skipping.`);
+        // }
+      }
+  
+      console.log("Final grades updated successfully");
   
       // Step 4: Update evaluator status
       const evaluatorData = {
@@ -221,6 +236,7 @@ export default function UnifiedFormComponent({
       alert("Failed to submit the evaluation. Please try again.");
     }
   };
+  
   
 
   const updateProgress = (updatedFormData = formData) => {

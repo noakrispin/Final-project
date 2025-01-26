@@ -3,18 +3,18 @@ const admin = require("firebase-admin");
 
 // Add or update a grade
 exports.addOrUpdateGrade = async (req, res) => {
-  const { projectCode } = req.params; // Passed in the route
-  const { evaluatorID, formID, grades } = req.body; // Sent in the request body
+  //const { projectCode } = req.params; // Passed in the route
+  const { formID,grade,studentID,projectCode, } = req.body; // Sent in the request body
 
   console.log("Received data for grade update:");
-  console.log("Grades:", grades);
-  console.log("EvaluatorID:", evaluatorID);
+  console.log("grade:", grade);
+  console.log("studentID:", studentID);
   console.log("ProjectCode:", projectCode);
   console.log("FormID:", formID);
 
   try {
     // Loop through grades to process updates for each student
-    for (const [studentID, grade] of Object.entries(grades)) {
+    
       console.log(`Processing studentID: ${studentID}, grade: ${grade}`);
 
       // Query Firestore for the grade document by `projectCode` and `studentID`
@@ -25,15 +25,15 @@ exports.addOrUpdateGrade = async (req, res) => {
         .where("studentID", "==", studentID)
         .get();
 
+        console.log("gradeSnapshot",gradeSnapshot);
       let gradeDocId;
-      console.log("gradeSnapshot",gradeSnapshot);
-
+      
       if (!gradeSnapshot.empty) {
         gradeDocId = gradeSnapshot.docs[0].id;
         console.log(`Found grade document for studentID ${studentID}: ${gradeDocId}`);
       } else {
         console.warn(`No grade document found for studentID: ${studentID}. Skipping.`);
-        continue; // Skip to the next student
+        //continue; // Skip to the next student
       }
       
 
@@ -127,7 +127,7 @@ exports.addOrUpdateGrade = async (req, res) => {
       });
 
       console.log(`Updated grade document ${gradeDocId} for studentID ${studentID}`);
-    }
+    
 
     console.log("Grades processed successfully.");
     res.status(200).json({ success: true, message: "Grades updated successfully." });
