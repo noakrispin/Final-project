@@ -49,6 +49,7 @@ const asyncHandler = (fn) => (req, res, next) => {
 // Add or update a grade
 router.post("/", asyncHandler(async (req, res) => {
   const result = await addOrUpdateGrade(req, res);
+  console.log("Response sent for add or update grade(from finalGradesRoutes):", result);
   return result;
 }));
 

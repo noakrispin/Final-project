@@ -5,6 +5,9 @@ export const gradesApi = {
    * Add or update a grade.
    */
   addOrUpdateGrade: async (id, data) => {
+    console.log("Adding/updating grade(finalGradesAPI)...");
+    console.log("Received data(finalGradesAPI):", data);  
+    console.log("Received id(finalGradesAPI):", id);
     try {
       const response = await api.post(`/grades`, { id, ...data });
       console.log("response(finalGradesAPI):", response);

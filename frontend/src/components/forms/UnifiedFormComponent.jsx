@@ -180,7 +180,7 @@ export default function UnifiedFormComponent({
 
       // Submit the form responses
       await formsApi.submitForm(formID, responses);
-      console.log("Form submitted successfully");
+      console.log("Responses submitted successfully");
 
       // Fetch evaluation based on user and projectCode
       const evaluation = await formsApi.getEvaluationByEvaluatorAndProject(
@@ -195,7 +195,7 @@ export default function UnifiedFormComponent({
         projectCode,
         grades: evaluation.grades, // Pass the fetched grades
       };
-
+      console.log("trying to update final grade with(unified form):", gradesData);
       await gradesApi.addOrUpdateGrade(formID, gradesData);
       console.log("Final grade updated successfully");
 
@@ -217,7 +217,7 @@ export default function UnifiedFormComponent({
 
       await evaluatorsApi.addOrUpdateEvaluator(evaluatorData);
       console.log("Evaluator status updated successfully");
-
+      console.log("form submitted successfully");
       // Redirect after successful submission
       navigate(-1); // Go back to the previous page
     } catch (error) {
