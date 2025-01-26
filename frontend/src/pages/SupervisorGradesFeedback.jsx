@@ -144,32 +144,43 @@ const SupervisorGradesFeedback = () => {
         key: "bookGrade",
         header: "Book Grade",
         className: "text-base",
-        render: (project) =>
-          project.bookGrade !== undefined ? project.bookGrade : " ",
+        render: (value, row) => {
+          return row.bookGrade !== undefined && row.bookGrade !== "N/A" ? row.bookGrade : " "
+        },
       },
       {
         key: "presentationGrade",
         header: "Presentation Grade",
         className: "text-base",
-        render: (project) =>
-          project.presentationGrade !== undefined
-            ? project.presentationGrade
-            : " ",
+        render: (value, row) => {
+          return row.presentationGrade !== undefined && row.presentationGrade !== "N/A" ? row.presentationGrade : " "
+        },
       },
       {
         key: "supervisorGrade",
         header: "Supervisor Grade",
         className: "text-base",
-        render: (project) =>
-          project.supervisorGrade !== undefined ? project.supervisorGrade : " ",
+        render: (value, row) => {
+          return row.supervisorGrade !== undefined && row.supervisorGrade !== "N/A"
+            ? typeof row.supervisorGrade === "number"
+              ? row.supervisorGrade.toFixed(2)
+              : row.supervisorGrade
+            : " "
+        },
       },
       {
         key: "finalGrade",
         header: "Final Grade",
         className: "text-base",
-        render: (project) =>
-          project.finalGrade !== undefined ? project.finalGrade : " ",
-      },
+        render: (value, row) => {
+          console.log("Row in final grade:", row)
+          console.log("Value in final grade:", value)
+          const grade = row.finalGrade
+          if (grade === null || grade === undefined) return " "
+          return typeof grade === "number" ? grade.toFixed(2) : grade
+        },
+      }, 
+      
       {
         key: "status",
         header: "Grade Status",
