@@ -201,51 +201,28 @@ exports.resetPassword = async (req, res) => {
   const { email, newPassword } = req.body;
 
   try {
-    // Validate input
-    if (!email || !email.includes('@')) {
-      return res.status(400).json({
-        success: false,
-        message: "Valid email is required",
-      });
+    const userDoc = await db
+      .collection("users")
+      .where("email", "==", email)
+      .limit(1)
+      .get();
+
+    if (userDoc.empty) {
+      return res.status(404).json({ success: false, message: "User not found or invalid credentials" });
     }
 
-    if (!newPassword || newPassword.length < 8) {
-      return res.status(400).json({
-        success: false,
-        message: "Password must be at least 8 characters long",
-      });
-    }
-
-    console.log(`Resetting password for email: ${email}`);
-
-    // Directly access the document by email (which is the doc ID)
-    const userDoc = await db.collection("users").doc(email).get();
-
-    if (!userDoc.exists) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
+    const user = userDoc.docs[0]; // Get the first matching document
+    const emailId = user.id; // Use document ID for update
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update the password in Firestore
-    await db.collection("users").doc(email).update({
+    await db.collection("users").doc(emailId).update({
       password: hashedPassword,
     });
 
-    console.log(`Password successfully updated for email: ${email}`);
-    res.status(200).json({
-      success: true,
-      message: "Password reset successfully",
-    });
+    res.status(200).json({ success: true, message: "Password reset successfully" });
   } catch (error) {
     console.error("Error resetting password:", error.message);
-    res.status(500).json({
-      success: false,
-      message: "An error occurred while resetting the password. Please try again.",
-    });
+    res.status(500).json({ success: false, message: "An error occurred. Please try again." });
   }
 };
-

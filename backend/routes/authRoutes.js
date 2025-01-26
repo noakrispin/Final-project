@@ -145,7 +145,6 @@ router.post("/reset-password",
 );
 
 
-
 // Error handling middleware specific to auth routes
 router.use((err, req, res, next) => {
   console.error('Auth route error:', err);
