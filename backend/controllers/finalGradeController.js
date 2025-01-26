@@ -21,7 +21,18 @@ exports.addOrUpdateGrade = async (req, res) => {
       gradeDocId = gradeSnapshot.docs[0].id;
       console.log(`Found grade document for studentID ${studentID}: ${gradeDocId}`);
     } else {
-      console.warn(`No grade document found for studentID: ${studentID}. Skipping.`);
+      console.warn(`No grade document found for studentID: ${studentID}. Creating a new document.`);
+      const newDocRef = await admin.firestore().collection("finalGrades").add({
+        projectCode,
+        studentID,
+        CalculatedSupervisorGrade: null,
+        CalculatedPresentationGrade: null,
+        CalculatedBookGrade: null,
+        finalGrade: null,
+        status: "Not graded",
+        created_at: new Date().toISOString(),
+      });
+      gradeDocId = newDocRef.id;
     }
 
     // Recalculate grades based on evaluations
@@ -40,7 +51,7 @@ exports.addOrUpdateGrade = async (req, res) => {
 
     for (const evaluatorDoc of evaluatorsSnapshot.docs) {
       const evaluator = evaluatorDoc.data();
-    
+
       if (evaluator.status === "Submitted") {
         const evaluationSnapshot = await admin
           .firestore()
@@ -50,13 +61,12 @@ exports.addOrUpdateGrade = async (req, res) => {
           .where("evaluatorID", "==", evaluator.evaluatorID)
           .where("projectCode", "==", projectCode)
           .get();
-    
+
         for (const evaluationDoc of evaluationSnapshot.docs) {
           const evaluation = evaluationDoc.data();
           const evaluationGrades = evaluation.grades || {};
-    
+
           if (evaluationGrades[studentID] !== undefined) {
-            // Ensure grades are added correctly to their respective categories
             switch (formID) {
               case "SupervisorForm":
                 totalSupervisorGrade += evaluationGrades[studentID];
@@ -73,13 +83,12 @@ exports.addOrUpdateGrade = async (req, res) => {
                 bookCount++;
                 break;
               default:
-                console.log(`Unknown formID: ${formID}`);
+                console.warn(`Unhandled formID: ${formID}`);
             }
           }
         }
       }
     }
-    
 
     const calculatedSupervisorGrade =
       supervisorCount > 0 ? totalSupervisorGrade / supervisorCount : null;
@@ -88,7 +97,7 @@ exports.addOrUpdateGrade = async (req, res) => {
     const calculatedBookGrade =
       bookCount > 0 ? totalBookGrade / bookCount : null;
 
-    // Adjust weights dynamically based on available grades
+    // Dynamically adjust weights based on available grades
     let totalWeight = 0;
     let weightedGrade = 0;
 
@@ -118,7 +127,7 @@ exports.addOrUpdateGrade = async (req, res) => {
     if (allSubmitted) status = "Fully graded";
     else if (noneSubmitted) status = "Not graded";
 
-    // Update the grade document
+    // Update or create the grade document
     await admin.firestore().collection("finalGrades").doc(gradeDocId).update({
       CalculatedSupervisorGrade: calculatedSupervisorGrade || null,
       CalculatedPresentationGrade: calculatedPresentationGrade || null,
@@ -129,14 +138,13 @@ exports.addOrUpdateGrade = async (req, res) => {
     });
 
     console.log(`Updated grade document ${gradeDocId} for studentID ${studentID}`);
-
-    console.log("Grades processed successfully.");
     res.status(200).json({ success: true, message: "Grades updated successfully." });
   } catch (error) {
     console.error("Error updating grades:", error.message);
     res.status(500).json({ success: false, error: "Failed to update grades." });
   }
 };
+
 
 
 
