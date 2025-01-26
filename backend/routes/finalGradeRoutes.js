@@ -46,26 +46,24 @@ const asyncHandler = (fn) => (req, res, next) => {
 
 
 // Add or update grades for a project (using projectCode)
-router.post("/:projectCode", asyncHandler(async (req, res) => {
-  const { projectCode } = req.params; // Use `projectCode` from the route
-  const { evaluatorID, formID, grades } = req.body;
+router.post("/", asyncHandler(async (req, res) => {
+  const { studentID, projectCode, grade, formID } = req.body;
 
-  // Validate required data
-  if (!projectCode || !evaluatorID || !formID || !grades) {
+  // Validate required fields
+  if (!studentID || !projectCode || grade === undefined || !formID) {
     return res.status(400).json({
       error: {
-        message: "Missing required fields: projectCode, evaluatorID, formID, or grades.",
+        message: "Missing required fields: studentID, projectCode, grade, or formID.",
         status: 400,
       },
     });
   }
 
-  console.log("Processing grades for projectCode:", projectCode);
-
-  // Call the controller
-  const result = await addOrUpdateGrade(req, res);
+  console.log(`Received request to update grade for studentID: ${studentID}`);
+  const result = await addOrUpdateGrade(req, res); // Call the controller
   return res.status(200).json(result);
 }));
+
 
 // Get a specific grade by ID
 router.get("/:id", asyncHandler(async (req, res) => {
