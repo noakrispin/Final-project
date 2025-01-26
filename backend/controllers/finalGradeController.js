@@ -40,7 +40,7 @@ exports.addOrUpdateGrade = async (req, res) => {
 
     for (const evaluatorDoc of evaluatorsSnapshot.docs) {
       const evaluator = evaluatorDoc.data();
-
+    
       if (evaluator.status === "Submitted") {
         const evaluationSnapshot = await admin
           .firestore()
@@ -50,13 +50,14 @@ exports.addOrUpdateGrade = async (req, res) => {
           .where("evaluatorID", "==", evaluator.evaluatorID)
           .where("projectCode", "==", projectCode)
           .get();
-
+    
         for (const evaluationDoc of evaluationSnapshot.docs) {
           const evaluation = evaluationDoc.data();
           const evaluationGrades = evaluation.grades || {};
-
+    
           if (evaluationGrades[studentID] !== undefined) {
-            switch (evaluator.formID) {
+            // Ensure grades are added correctly to their respective categories
+            switch (formID) {
               case "SupervisorForm":
                 totalSupervisorGrade += evaluationGrades[studentID];
                 supervisorCount++;
@@ -72,12 +73,13 @@ exports.addOrUpdateGrade = async (req, res) => {
                 bookCount++;
                 break;
               default:
-                console.log(`Unknown formID: ${evaluator.formID}`);
+                console.log(`Unknown formID: ${formID}`);
             }
           }
         }
       }
     }
+    
 
     const calculatedSupervisorGrade =
       supervisorCount > 0 ? totalSupervisorGrade / supervisorCount : null;
