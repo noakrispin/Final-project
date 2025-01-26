@@ -1,45 +1,52 @@
-const db = require("./config/firebaseAdmin"); // Ensure this points to your Firebase configuration
+const { addDocument } = require("./utils/firebaseHelper"); 
+const bcrypt = require("bcryptjs");
 
-async function addScheduledReminders() {
-  console.log("Adding scheduled reminders...");
-  try {
-    const reminders = [
-      {
-        userEmails: ["charlie.davis@e.braude.ac.il", "noa.krispin@e.braude.ac.il"],
-        scheduleDateTime: new Date("2025-01-24T15:11:00Z"),
-        message: "Reminder: Check the project's status.",
-        status: "pending",
-        createdAt: new Date(),
-      },
-      {
-        userEmails: ["Naomi.Lavi@e.braude.ac.il"],
-        scheduleDateTime: new Date("2025-01-25T10:00:00Z"),
-        message: "Reminder: Submit your project updates.",
-        status: "pending",
-        createdAt: new Date(),
-      },
-    ];
+const users = [
+  { fullName: "Renata Avrus", email: "ravros@braude.ac.il" },
+];
 
-    const batch = db.firestore().batch();
+const defaultPassword = "P123456!";
+const defaultRole = "Supervisor";
+const defaultIsAdmin = false;
 
-    reminders.forEach((reminder, index) => {
-      const docRef = db.firestore().collection("scheduled_reminders").doc(`reminder_${index + 1}`);
-      batch.set(docRef, reminder);
-    });
+async function addUsers() {
+  console.log("Starting user insertion...");
 
-    await batch.commit();
-    console.log("Scheduled reminders added successfully!");
-  } catch (error) {
-    console.error("Error adding scheduled reminders:", error.message);
+  for (const user of users) {
+    try {
+      const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+
+      const userData = {
+        email: user.email,
+        emailId: user.email.toLowerCase(), // Normalize email to lowercase
+        fullName: user.fullName,
+        isAdmin: defaultIsAdmin, // Set isAdmin to false
+        password: hashedPassword,
+        role: defaultRole, // Set role to Supervisor
+      };
+
+      // Add user to Firestore
+      const result = await addDocument("users", user.email.toLowerCase(), userData);
+
+      if (result.success) {
+        console.log(`User ${user.email} added successfully.`);
+
+        // Add supervisorDetails subcollection with correct structure
+        await addSubcollection("users", user.email.toLowerCase(), "supervisorDetails", "details", {
+          email: user.email.toLowerCase(),
+          fullName: user.fullName,
+          role: defaultRole,
+        });
+      } else {
+        console.error(`Failed to add user ${user.email}:`, result.error);
+      }
+    } catch (error) {
+      console.error(`Error processing user ${user.email}:`, error.message);
+    }
   }
+
+  console.log("User insertion complete.");
 }
 
-async function main() {
-  console.log("Starting scheduled reminders setup...");
-  await addScheduledReminders();
-  console.log("Setup complete!");
-}
+addUsers();
 
-main().catch((error) => {
-  console.error("Setup failed:", error.message);
-});

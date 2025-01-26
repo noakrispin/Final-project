@@ -21,7 +21,6 @@ const handleSubcollections = async (emailId, role, supervisorTopics) => {
 // Add a new user
 const addUser = async (req, res) => {
   const { email, fullName, role, password, supervisorTopics, isAdmin = false } = req.body;
-
   try {
     const isAdminValue = !!isAdmin; // Ensure `isAdmin` is always a boolean
     const emailId = email; // Use email as the document ID
