@@ -64,6 +64,16 @@ router.get("/evaluations/all", asyncHandler(async (req, res) => {
   return result;
 }));
 
+// Fetch evaluations by evaluatorID and projectCode
+router.get(
+  "/evaluations/by-evaluator-project",
+  asyncHandler(async (req, res) => {
+    const result = await formController.getEvaluationByEvaluatorAndProject(req, res);
+    return result;
+  })
+);
+
+
 // Response Routes
 router.get("/:formID/responses", asyncHandler(async (req, res) => {
   const result = await formController.getResponses(req, res);

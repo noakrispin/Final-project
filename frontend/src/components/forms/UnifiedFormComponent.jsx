@@ -65,7 +65,7 @@ export default function UnifiedFormComponent({
     console.log("Questions on load:", questions);
     console.log("General Questions:", generalQuestions);
     console.log("Student Questions:", studentQuestions);
-  
+
     if (user && generalQuestions.length > 0 && studentQuestions.length > 0) {
       // Fetch the last response once questions are ready
       fetchLastResponse();
@@ -74,40 +74,45 @@ export default function UnifiedFormComponent({
       initializeFormData();
     }
   }, [user, generalQuestions, studentQuestions]);
-  
-
 
   const fetchLastResponse = async () => {
     try {
       // Fetch the last response from the API
-      const lastResponse = await formsApi.getLastResponse(formID, user?.email, projectCode);
-  
+      const lastResponse = await formsApi.getLastResponse(
+        formID,
+        user?.email,
+        projectCode
+      );
+
       // Check if the response contains valid data
       if (!lastResponse) {
-        console.warn("No last response data found. Initializing empty form data.");
+        console.warn(
+          "No last response data found. Initializing empty form data."
+        );
         initializeFormData(); // Initialize empty data if no response
         return;
       }
-  
+
       const initialData = {};
-  
+
       // Populate general questions
       generalQuestions.forEach((field) => {
         initialData[field.name] = lastResponse.general?.[field.name] || ""; // Use null-safe access
       });
-  
+
       // Populate student-specific questions
       students.forEach((student) => {
         studentQuestions.forEach((field) => {
           const fieldName = `student${student.id}_${field.name}`;
-          initialData[fieldName] = lastResponse.students?.[student.id]?.[field.name] || ""; // Handle missing fields gracefully
+          initialData[fieldName] =
+            lastResponse.students?.[student.id]?.[field.name] || ""; // Handle missing fields gracefully
         });
       });
-  
+
       // Debugging logs
       console.log("Fetched Last Response:", lastResponse);
       console.log("Processed Initial Form Data:", initialData);
-  
+
       // Update state
       setFormData(initialData);
       updateProgress(initialData);
@@ -116,18 +121,15 @@ export default function UnifiedFormComponent({
       initializeFormData(); // Fallback to initialize empty form data
     }
   };
-  
-  
-  
 
   const initializeFormData = () => {
     const initialData = {};
-  
+
     // Initialize general questions
     generalQuestions.forEach((field) => {
       initialData[field.name] = ""; // Default to empty string
     });
-  
+
     // Initialize student-specific questions
     students.forEach((student) => {
       studentQuestions.forEach((field) => {
@@ -135,35 +137,34 @@ export default function UnifiedFormComponent({
         initialData[fieldName] = ""; // Default to empty string
       });
     });
-  
+
     console.log("Initialized Form Data:", initialData);
     setFormData(initialData);
     updateProgress(initialData); // Update progress bar
   };
-  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     if (!isFormValid()) {
       alert(
         "Please fill in all required fields. Text areas must have at least 5 words."
       );
       return;
     }
-  
+
     const responses = {
       evaluatorID: user.email, // Ensure evaluatorID is correct
       projectCode,
       general: {},
       students: {},
     };
-  
+
     // Populate general responses
     generalQuestions.forEach((field) => {
       responses.general[field.name] = formData[field.name];
     });
-  
+
     // Populate student-specific responses
     students.forEach((student) => {
       const studentResponses = {};
@@ -173,17 +174,32 @@ export default function UnifiedFormComponent({
       });
       responses.students[student.id] = studentResponses;
     });
-  
+
     try {
       console.log("Submitting form data:", responses);
-  
+
       // Submit the form responses
       await formsApi.submitForm(formID, responses);
       console.log("Form submitted successfully");
-      //update final grade
-      await gradesApi.addOrUpdateGrade( formID, responses);
-      console.log("Final grade uptaded successfully");
-      
+
+      // Fetch evaluation based on user and projectCode
+      const evaluation = await formsApi.getEvaluationByEvaluatorAndProject(
+        formID,
+        user.email,
+        projectCode
+      );
+      console.log("Fetched Evaluation:", evaluation);
+
+      // Use fetched grades for the grade update
+      const gradesData = {
+        evaluatorID: user.email,
+        projectCode,
+        grades: evaluation.grades, // Pass the fetched grades
+      };
+
+      await gradesApi.addOrUpdateGrade(formID, gradesData);
+      console.log("Final grade updated successfully");
+
       // Add or update evaluator status in Evaluators collection
       const evaluatorData = {
         evaluatorID: user.email.trim(), // Ensure evaluatorID is accurate
@@ -197,20 +213,18 @@ export default function UnifiedFormComponent({
         projectCode,
         status: "Submitted",
       });
-      
-  
+
       console.log("Evaluator data to update:", evaluatorData);
-  
-      await evaluatorsApi.addOrUpdateEvaluator(evaluatorData); 
+
+      await evaluatorsApi.addOrUpdateEvaluator(evaluatorData);
       console.log("Evaluator status updated successfully");
-  
+
       // Redirect after successful submission
       navigate(-1); // Go back to the previous page
     } catch (error) {
       console.error("Error submitting form or updating evaluator:", error);
     }
   };
-  
 
   const updateProgress = (updatedFormData = formData) => {
     const staticFields = ["projectCode", "title", "evaluatorName"]; // Non-editable fields
@@ -393,7 +407,6 @@ export default function UnifiedFormComponent({
             </div>
           ))}
         </div>
-
 
         {/* Student Evaluation */}
         {studentQuestions.length > 0 &&

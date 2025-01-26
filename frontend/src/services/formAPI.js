@@ -60,49 +60,49 @@ export const formsApi = {
     try {
       console.log("Sending request to add question:", { formID, questionData });
       const response = await api.post(`/forms/${formID}/questions`, questionData);
-  
+
       if (!response || !response.questionData || !response.questionData.id) {
         console.error("Invalid server response:", response);
         throw new Error("Invalid response from server when adding question.");
       }
-  
+
       console.log("API response after adding question:", response);
       return response.questionData;
     } catch (error) {
       console.error("Error adding question:", error.message);
       throw error;
     }
-  },  
-  
-  
+  },
 
-/**
- * Update a specific question in a form.
- */
-updateQuestion: async (formID, questionId, updatedData) => {
-  try {
-    console.log("Sending update request:", { formID, questionId, updatedData });
 
-    // Sending the PUT request
-    const response = await api.put(`/forms/${formID}/questions/${questionId}`, updatedData);
 
-    // Debugging log
-    console.log("Update question response:", response);
+  /**
+   * Update a specific question in a form.
+   */
+  updateQuestion: async (formID, questionId, updatedData) => {
+    try {
+      console.log("Sending update request:", { formID, questionId, updatedData });
 
-    // Adjust validation logic
-    if (!response || !response.updatedData) {
-      throw new Error("Invalid response from server while updating question.");
+      // Sending the PUT request
+      const response = await api.put(`/forms/${formID}/questions/${questionId}`, updatedData);
+
+      // Debugging log
+      console.log("Update question response:", response);
+
+      // Adjust validation logic
+      if (!response || !response.updatedData) {
+        throw new Error("Invalid response from server while updating question.");
+      }
+
+      return response.updatedData; // Return the updated question data
+    } catch (error) {
+      console.error(
+        `Error updating question (ID: ${questionId}, Title: ${updatedData?.title || "N/A"}):`,
+        error.response?.data || error.message
+      );
+      throw error;
     }
-
-    return response.updatedData; // Return the updated question data
-  } catch (error) {
-    console.error(
-      `Error updating question (ID: ${questionId}, Title: ${updatedData?.title || "N/A"}):`,
-      error.response?.data || error.message
-    );
-    throw error;
-  }
-},
+  },
 
 
 
@@ -156,7 +156,7 @@ updateQuestion: async (formID, questionId, updatedData) => {
       throw error;
     }
   },
-  
+
 
   /**
    * Fetch the last response for a specific evaluator and optionally for a specific student.
@@ -168,10 +168,10 @@ updateQuestion: async (formID, questionId, updatedData) => {
     if (!formID || !evaluatorID || !projectCode) {
       throw new Error("Form ID, Evaluator ID, and Project Code are required.");
     }
-    
+
     try {
-      
-      console.log("Sending GET request with params:", { evaluatorID, projectCode,formID }); // Debugging
+
+      console.log("Sending GET request with params:", { evaluatorID, projectCode, formID }); // Debugging
       const response = await api.get(
         `/forms/${formID}/last-response?evaluatorID=${evaluatorID}&projectCode=${projectCode}`
       );
@@ -182,8 +182,8 @@ updateQuestion: async (formID, questionId, updatedData) => {
       throw error;
     }
   },
-  
-  
+
+
   /**
    * Delete a specific response from a form.
    */
@@ -240,21 +240,40 @@ updateQuestion: async (formID, questionId, updatedData) => {
    */
   getEvaluationsByEvaluator: async (evaluatorID) => {
     if (!evaluatorID) {
-        console.error("Evaluator ID is missing in the API call.");
-        throw new Error("Evaluator ID is required.");
+      console.error("Evaluator ID is missing in the API call.");
+      throw new Error("Evaluator ID is required.");
     }
 
     try {
       console.log("Fetching evaluations by evaluatorID:", evaluatorID);
       const response = await api.get(`/forms/evaluations/all?evaluatorID=${evaluatorID}`);
       console.log("API Response (formAPI):", response); // Log the raw response
-      
+
       return response || []; // Return the data or an empty array
     } catch (error) {
-        console.error("Error fetching evaluations by evaluator:", error);
-        throw error; // Re-throw to handle in calling code
+      console.error("Error fetching evaluations by evaluator:", error);
+      throw error; // Re-throw to handle in calling code
     }
-},
+  },
+  /**
+   * Fetch evaluations for a specific evaluator and project.
+   */
+  getEvaluationByEvaluatorAndProject: async (evaluatorID, projectCode) => {
+    if (!evaluatorID || !projectCode) {
+      throw new Error("Evaluator ID and Project Code are required.");
+    }
+
+    try {
+      const response = await api.get(
+        `/forms/evaluations/by-evaluator-project?evaluatorID=${evaluatorID}&projectCode=${projectCode}`
+      );
+      console.log("API Response (formAPI):", response); // Log the raw response
+      return response.data; // Adjust response handling based on your API format
+    } catch (error) {
+      console.error("Error fetching evaluations by evaluator and project:", error.message);
+      throw error;
+    }
+  },
 
 
   /**
@@ -271,5 +290,5 @@ updateQuestion: async (formID, questionId, updatedData) => {
   },
 
 
-   
+
 };
