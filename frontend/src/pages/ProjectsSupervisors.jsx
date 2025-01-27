@@ -5,6 +5,7 @@ import { BlurElements } from "../components/shared/BlurElements";
 import ProjectDetailsPopup from "../components/shared/ProjectDetailsPopup";
 import { Table } from "../components/ui/Table";
 import { Card } from "../components/ui/Card";
+import LoadingScreen from "../components/shared/LoadingScreen";
 
 const FILTERS = ["All", "Part A", "Part B"];
 
@@ -115,7 +116,7 @@ const ProjectsSupervisors = () => {
   );
 
   if (isLoading) {
-    return <div className="text-center mt-10">Loading...</div>;
+    return <LoadingScreen isLoading={isLoading} description="Fetching your supervised projects..." />; 
   }
 
   if (error) {

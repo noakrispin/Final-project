@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Table } from "../../components/ui/Table";
 import { formsApi } from "../../services/formAPI";
-import { Card } from "../../components/ui/Card";
+import LoadingScreen from "../../components/shared/LoadingScreen";
 
 const AdminForms = () => {
   const [forms, setForms] = useState([]);
@@ -43,6 +43,10 @@ const AdminForms = () => {
     { key: "description", header: "Form Description", sortable: true },
   ];
 
+  if (loading) {
+    return <LoadingScreen isLoading={loading}  description="Looking for forms, please wait..."/>; 
+  }
+
   return (
     <div className="relative bg-white min-h-screen">
       <div className="relative z-10">
@@ -82,9 +86,6 @@ const AdminForms = () => {
 
     {/* Space between the description and the table */}
     <div className="mt-6">
-      {loading ? (
-        <p>Loading forms...</p>
-      ) : (
         <div className="bg-white shadow rounded-lg p-6">
           <Table
             data={forms}
@@ -96,7 +97,7 @@ const AdminForms = () => {
             description="Click on a row to view or edit form details."
           />
         </div>
-      )}
+      
     </div>
   </div>
 )}

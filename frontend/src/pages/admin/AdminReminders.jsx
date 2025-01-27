@@ -5,6 +5,7 @@ import { gradesApi } from "../../services/finalGradesAPI";
 import { projectsApi } from "../../services/projectsAPI";
 import { userApi } from "../../services/userAPI";
 import { emailAPI } from "../../services/emailAPI";
+import LoadingScreen from "../../components/shared/LoadingScreen";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -222,7 +223,7 @@ const AdminReminders = () => {
   );
 
   if (isLoading) {
-    return <div>Loading project reminders...</div>;
+    return <LoadingScreen isLoading={isLoading}  description="Loading projects' remainders..."/>; 
   }
 
   if (error) {
