@@ -68,7 +68,7 @@ const ProjectsSupervisors = () => {
       {
         key: "students",
         header: "Students",
-        sortable: true,
+        sortable: false,
         className: "text-base",
         render: (students) => (
           <span className="text-base">
@@ -79,7 +79,7 @@ const ProjectsSupervisors = () => {
       {
         key: "gitLink",
         header: "Git Link",
-        sortable: true,
+        sortable: false,
         className: "text-base",
         render: (value) =>
           value ? (
@@ -99,7 +99,7 @@ const ProjectsSupervisors = () => {
       {
         key: "specialNotes",
         header: "Special Notes",
-        sortable: true,
+        sortable: false,
         className: "text-base",
       },
       {

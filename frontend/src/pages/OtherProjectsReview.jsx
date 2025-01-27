@@ -235,21 +235,21 @@ const OtherProjectsReview = () => {
           ) : (
             <span className="text-gray-500">Missing Link</span>
           ),
-        sortable: true,
+        sortable: false,
       },
       {
         key: "presentationGrade",
         header: "Presentation Grade",
         className: "text-lg text-center",
         render: (_, project) => renderGradeCell(project, "presentation"),
-        sortable: true,
+        sortable: false,
       },
       {
         key: "bookGrade",
         header: "Book Grade",
         className: "text-lg text-center",
         render: (_, project) => renderGradeCell(project, "book"),
-        sortable: true,
+        sortable: false,
       },
       {
         key: "deadline",

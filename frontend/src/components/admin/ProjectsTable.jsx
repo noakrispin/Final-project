@@ -80,14 +80,14 @@ const ProjectsTable = ({
     { 
       key: 'supervisors', 
       header: 'Supervisors', 
-      sortable: true, 
+      sortable: false, 
       render: (_, row) => renderSupervisorCell(row.supervisor1, row.supervisor2) // Non-editable
     },
     { 
       key: 'part', 
       header: 'Part', 
       sortable: true, 
-      render: (value, row) => renderEditableCell(value, row, 'part', 'Part', 'select', ['A', 'B']) 
+      render: (value) => renderNonEditableCell(value)
     },
     { 
       key: 'type', 
@@ -104,7 +104,7 @@ const ProjectsTable = ({
     { 
       key: 'specialNotes', 
       header: 'Special Notes', 
-      sortable: true, 
+      sortable: false, 
       render: (value, row) => (
         <button 
           onClick={() => onAddNote(row)} 
