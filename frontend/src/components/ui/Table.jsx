@@ -6,6 +6,7 @@ import { sortData } from "../../utils/sortData";
 import SearchBar from "../shared/SearchBar";
 import { getGrade } from "../../utils/getGrade";
 import { Info } from "lucide-react";
+import { Card } from '../ui/Card';
 
 const FILTERS = ["All", "Part A", "Part B"];
 
@@ -164,7 +165,6 @@ export const Table = ({
   };
   
   
-
   return (
 <div className="space-y-4">
   {showTabs && (
@@ -197,6 +197,8 @@ export const Table = ({
       </div>
     </div>
   )}
+  
+  
   
   {/* Description */}
   {showDescription && description && (
@@ -261,30 +263,36 @@ export const Table = ({
           </tr>
         </thead>
         <tbody className="divide-y divide-[#e5e7eb] bg-white">
-          {sortedData.map((project, rowIndex) => (
-            <tr
-              key={rowIndex}
-              className="hover:bg-gray-50 transition-colors cursor-pointer"
-              onClick={() => onRowClick(project)}
-            >
-              {visibleColumnsList.map((column) => (
-                <td
-                  key={column.key}
-                  className="px-6 py-4 text-base text-[#686b80]"
-                >
-                  {useCustomColumns && column.key.includes("Grade")
-                    ? renderGradeCell(
-                        project,
-                        column.key.replace("Grade", "").toLowerCase()
-                      )
-                    : column.render
-                    ? column.render(project[column.key], project)
-                    : project[column.key]}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
+              {sortedData.length > 0 ? (
+                sortedData.map((project, rowIndex) => (
+                  <tr
+                    key={rowIndex}
+                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => onRowClick(project)}
+                  >
+                    {visibleColumnsList.map((column) => (
+                      <td
+                        key={column.key}
+                        className="px-6 py-4 text-base text-[#686b80] "
+                      >
+                        {column.render
+                          ? column.render(project[column.key], project)
+                          : project[column.key]}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan={visibleColumnsList.length}
+                    className="text-center py-6 text-gray-600 text-lg"
+                  >
+                    No data to display.
+                  </td>
+                </tr>
+              )}
+            </tbody>
       </table>
     </div>
   </div>

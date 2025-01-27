@@ -257,11 +257,12 @@ const SupervisorGradesFeedback = () => {
         header: "Final Grade",
         className: "text-base text-center",
         render: (value, row) => {
-          console.log("Row in final grade:", row)
-          console.log("Value in final grade:", value)
-          const grade = row.finalGrade
-          if (grade === null || grade === undefined) return " "
-          return typeof grade === "number" ? grade.toFixed(2) : grade
+          return row.finalGrade !== undefined &&
+            row.finalGrade !== "N/A"
+            ? typeof row.finalGrade === "number"
+              ? row.finalGrade.toFixed(2)
+              : row.finalGrade
+            : " ";
         },
       }, 
       

@@ -50,51 +50,59 @@ const AdminReminders = () => {
   }, []);
 
   const preprocessProjects = (projects, evaluators, users) => {
-    const processedRows = [];
-
+    const mergedRows = {};
+  
     projects.forEach((project) => {
       const projectEvaluators = evaluators.filter(
         (evaluator) => evaluator.projectCode === project.projectCode
       );
-
+  
       projectEvaluators.forEach((evaluator) => {
         const evaluatorUser = users.find(
           (user) => user.email === evaluator.evaluatorID
         );
-
-        processedRows.push({
-          projectCode: project.projectCode,
-          evaluatorName: evaluatorUser?.fullName || evaluator.evaluatorID,
-          presentationGrade:
-            evaluator.formID.startsWith("Presentation") &&
-            evaluator.status === "Submitted"
-              ? "✔"
-              : evaluator.formID.startsWith("Presentation")
-              ? "✘"
-              : "",
-          bookGrade:
-            evaluator.formID.startsWith("bookReviewer") &&
-            evaluator.status === "Submitted"
-              ? "✔"
-              : evaluator.formID.startsWith("bookReviewer")
-              ? "✘"
-              : "",
-          supervisorGrade:
-            evaluator.formID === "SupervisorForm" &&
-            evaluator.status === "Submitted"
-              ? "✔"
-              : evaluator.formID === "SupervisorForm"
-              ? "✘"
-              : "",
-          deadline: project.deadline
-            ? new Date(project.deadline).toLocaleDateString()
-            : "No Deadline",
-        });
+  
+        const key = `${project.projectCode}-${evaluatorUser?.fullName || evaluator.evaluatorID}`;
+  
+        if (!mergedRows[key]) {
+          mergedRows[key] = {
+            projectCode: project.projectCode,
+            evaluatorName: evaluatorUser?.fullName || evaluator.evaluatorID,
+            presentationGrade: "",
+            bookGrade: "",
+            supervisorGrade: "",
+            deadline: project.deadline
+              ? project.deadline._seconds
+                ? new Date(project.deadline._seconds * 1000).toLocaleDateString()
+                : new Date(project.deadline).toLocaleDateString()
+              : "No Deadline",
+            part: project.part , 
+          };
+        }
+  
+        if (evaluator.formID.startsWith("Presentation")) {
+          mergedRows[key].presentationGrade =
+            evaluator.status === "Submitted" ? "✔" : "✘";
+        }
+  
+        if (evaluator.formID.startsWith("bookReviewer")) {
+          mergedRows[key].bookGrade =
+            evaluator.status === "Submitted" ? "✔" : "✘";
+        }
+  
+        if (evaluator.formID === "SupervisorForm") {
+          mergedRows[key].supervisorGrade =
+            evaluator.status === "Submitted" ? "✔" : "✘";
+        }
       });
     });
-
-    return processedRows;
+  
+    return Object.values(mergedRows);
   };
+  
+  
+  
+  
 
   const handleSaveDeadline = async () => {
     if (!deadline) {
@@ -156,19 +164,49 @@ const AdminReminders = () => {
         key: "presentationGrade",
         header: "Presentation Grade",
         className: "text-lg text-center",
-        render: (value) => (value === "✔" ? "✔" : value === "✘" ? "✘" : ""),
+        render: (value) => (
+          <div className="flex justify-center items-center">
+            {value === "✔" ? (
+              <span className="text-green-500 font-bold text-xl">✔</span>
+            ) : value === "✘" ? (
+              <span className="text-red-500 font-bold text-xl">✘</span>
+            ) : (
+              <span className="text-gray-400">-</span>
+            )}
+          </div>
+        ),
       },
       {
         key: "bookGrade",
         header: "Book Grade",
         className: "text-lg text-center",
-        render: (value) => (value === "✔" ? "✔" : value === "✘" ? "✘" : ""),
+        render: (value) => (
+          <div className="flex justify-center items-center">
+            {value === "✔" ? (
+              <span className="text-green-500 font-bold text-xl">✔</span>
+            ) : value === "✘" ? (
+              <span className="text-red-500 font-bold text-xl">✘</span>
+            ) : (
+              <span className="text-gray-400">-</span>
+            )}
+          </div>
+        ),
       },
       {
         key: "supervisorGrade",
         header: "Supervisor Grade",
         className: "text-lg text-center",
-        render: (value) => (value === "✔" ? "✔" : value === "✘" ? "✘" : ""),
+        render: (value) => (
+          <div className="flex justify-center items-center">
+            {value === "✔" ? (
+              <span className="text-green-500 font-bold text-xl">✔</span>
+            ) : value === "✘" ? (
+              <span className="text-red-500 font-bold text-xl">✘</span>
+            ) : (
+              <span className="text-gray-400">-</span>
+            )}
+          </div>
+        ),
       },
       {
         key: "deadline",
@@ -180,6 +218,7 @@ const AdminReminders = () => {
     ],
     []
   );
+  
 
   if (isLoading) {
     return (

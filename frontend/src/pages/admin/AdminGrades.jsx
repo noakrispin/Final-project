@@ -117,7 +117,7 @@ const AdminGradesPage = () => {
             presentationGrade: grade.CalculatedPresentationGrade || "N/A",
             bookGrade: grade.CalculatedBookGrade || "N/A",
             supervisorGrade: grade.CalculatedSupervisorGrade || "N/A",
-            finalGrade: grade.finalGrade || " ",
+            finalGrade: grade.finalGrade || "N/A",
             status: grade.status || "Not graded",
             deadline: deadline, // Add fallback value for undefined deadline
           };
@@ -213,8 +213,6 @@ const AdminGradesPage = () => {
     }
 };
 
-  
-
   const renderGradeStatus = (status) => {
     console.log("status in render status:", status);
 
@@ -285,7 +283,7 @@ const AdminGradesPage = () => {
         render: (value, row) => {
           return row.bookGrade !== undefined && row.bookGrade !== "N/A"
             ? row.bookGrade
-            : " ";
+            : "";
         },
       },
       {
@@ -296,7 +294,7 @@ const AdminGradesPage = () => {
           return row.presentationGrade !== undefined &&
             row.presentationGrade !== "N/A"
             ? row.presentationGrade
-            : " ";
+            : "";
         },
       },
       {
@@ -309,7 +307,7 @@ const AdminGradesPage = () => {
             ? typeof row.supervisorGrade === "number"
               ? row.supervisorGrade.toFixed(2)
               : row.supervisorGrade
-            : " ";
+            : "";
         },
       },
       {
@@ -317,11 +315,12 @@ const AdminGradesPage = () => {
         header: "Final Grade",
         className: "text-base",
         render: (value, row) => {
-          console.log("Row in final grade:", row);
-          console.log("Value in final grade:", value);
-          const grade = row.finalGrade;
-          if (grade === null || grade === undefined) return " ";
-          return typeof grade === "number" ? grade.toFixed(2) : grade;
+          return row.finalGrade !== undefined &&
+            row.finalGrade !== "N/A"
+            ? typeof row.finalGrade === "number"
+              ? row.finalGrade.toFixed(2)
+              : row.finalGrade
+            : "";
         },
       },
 
@@ -352,9 +351,9 @@ const AdminGradesPage = () => {
         seenStudentIds.add(project.Student1.ID);
         exportData.push({
           "Student ID": project.Student1.ID || "",
-          "Student First Name": project.Student1.firstName || "",
           "Student Last Name": project.Student1.lastName || "",
-          "Student Final Grade": project.Student1.finalGrade || "N/A",
+          "Student First Name": project.Student1.firstName || "",
+          "Student Final Grade": project.Student1.finalGrade || "",
         });
       }
 
@@ -363,28 +362,15 @@ const AdminGradesPage = () => {
         seenStudentIds.add(project.Student2.ID);
         exportData.push({
           "Student ID": project.Student2.ID || "",
-          "Student First Name": project.Student2.firstName || "",
           "Student Last Name": project.Student2.lastName || "",
-          "Student Final Grade": project.Student2.finalGrade || "N/A",
+          "Student First Name": project.Student1.firstName || "",
+          "Student Final Grade": project.Student2.finalGrade || "",
         });
       }
     });
 
     return exportData;
   };
-
-  //
-  /*
-  const handleExport = () => {
-    const dataToExport = projects.map((project) => ({
-      "ID":project.students?.[0]?.id,
-      "Student 1 first Name": project.students?.[0]?.name
-      "Student 1 Last Name": project.students?.[0]?.name
-      "final Grade": ,
-    }));
-
-    exportToExcelFile(dataToExport, "Project_Grades.xlsx");
-  };*/
 
   const handleExportToExcel = () => {
     try {
@@ -396,12 +382,12 @@ const AdminGradesPage = () => {
       const worksheet = XLSX.utils.json_to_sheet(exportData);
 
       // Append worksheet to workbook
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Projects");
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Grades");
 
       // Export the workbook
-      XLSX.writeFile(workbook, "projects_export.xlsx");
+      XLSX.writeFile(workbook, "grades_export.xlsx");
 
-      toast.success("Data exported successfully!");
+      toast.success("Grades exported successfully!");
     } catch (error) {
       console.error("Error exporting data:", error);
       toast.error("Failed to export data.");
@@ -434,12 +420,6 @@ const AdminGradesPage = () => {
               View and manage grades for all ongoing projects.
             </p>
           </div>
-          {/* <button
-            onClick={handleExport}
-            className="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg shadow hover:bg-blue-600 transition"
-          >
-            Export to Excel
-          </button> */}
 
           <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0">
             {/* Export to Excel Button */}
