@@ -96,7 +96,7 @@ const AdminGradesPage = () => {
             .filter((id) => id) // Exclude null or empty supervisor IDs
             .map((id) => {
               const supervisor = users.find((user) => user.emailId === id);
-              return supervisor ? supervisor.fullName : `Supervisor ID ${id}`;
+              return supervisor ? supervisor.fullName : ` ${id}`;
             });
           const projectSupervisors =
             supervisors.length > 0 ? supervisors.join(", ") : "No Supervisors";
@@ -116,7 +116,7 @@ const AdminGradesPage = () => {
             presentationGrade: grade.CalculatedPresentationGrade || "N/A",
             bookGrade: grade.CalculatedBookGrade || "N/A",
             supervisorGrade: grade.CalculatedSupervisorGrade || "N/A",
-            finalGrade: grade.finalGrade || "N/A",
+            finalGrade: grade.finalGrade || " ",
             status: grade.status || "Not graded",
             deadline: deadline, // Add fallback value for undefined deadline
           };

@@ -1,6 +1,7 @@
 const admin = require("firebase-admin");
 const { sendEmail } = require("../utils/emailService");
 const mustache = require("mustache");
+const { appendDoNotReply } = require("../utils/emailUtils");
 
 // Add a new project
 exports.addProject = async (req, res) => {
@@ -143,7 +144,7 @@ exports.setGlobalDeadlineAndNotify = async (req, res) => {
     const recipientEmails = usersSnapshot.docs.map(doc => doc.data().email).filter(Boolean);
 
     // Use the updated email template or the provided custom message
-    const emailBody = emailMessage || emailTemplate;
+    const emailBody = appendDoNotReply(emailMessage || emailTemplate);
 
     // Send emails
     await Promise.all(

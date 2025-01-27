@@ -249,14 +249,14 @@ const MyProjectsReview = () => {
           ) : (
             <span className="text-gray-500">Missing Link</span>
           ),
-        sortable: true,
+        sortable: false,
       },
       {
         key: "supervisorGrade",
         header: "Supervisor Grade",
         className: "text-lg text-center",
         render: (_, project) => renderGradeCell(project, "supervisor"),
-        sortable: true,
+        sortable: false,
       },
       {
         key: "deadline",
