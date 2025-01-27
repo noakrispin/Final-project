@@ -195,7 +195,7 @@ const UserManagement = () => {
               value={selectedRole}
               onChange={(e) => setSelectedRole(e.target.value)}
             >
-              <option value="All">Select Role</option>
+              <option value="All">All Rules</option>
               <option value="Admin">Admin</option>
               <option value="Supervisor">Supervisor</option>
             </select>
@@ -244,7 +244,7 @@ const UserManagement = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-96">
             <h2 className="text-lg font-bold mb-4">Edit Role</h2>
-            <p>Change the role for {editRoleModal.user?.fullName}:</p>
+            <p>Change Role for {editRoleModal.user?.fullName}:</p>
             <select
               className="border p-2 rounded-md w-full mt-4"
               value={selectedRole}
