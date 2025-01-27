@@ -17,8 +17,6 @@ const AdminReminders = () => {
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
   const [scheduledReminder, setScheduledReminder] = useState(null);
-  
-
 
   useEffect(() => {
     const fetchAndProcessGrades = async () => {
@@ -60,93 +58,91 @@ const AdminReminders = () => {
       console.log("Grades:", grades);
       console.log("Projects:", projects);
       console.log("Users:", users);
-  
+
       // Filter out placeholder grades
       const filteredGrades = grades.filter(
         (grade) =>
           grade.projectCode && grade.projectCode !== "placeholderProject"
       );
       console.log("Filtered Grades:", filteredGrades);
-  
+
       // Map grades to project and user details
-      return filteredGrades.map((grade) => {
-        const project = projects.find(
-          (proj) => proj.projectCode === grade.projectCode
-        );
-        if (!project) {
-          console.warn(`Project not found for grade: ${grade.projectCode}`);
-          return null;
-        }
-  
-        const student = [project.Student1, project.Student2].find(
-          (s) => s && s.ID === grade.studentID
-        );
+      return filteredGrades
+        .map((grade) => {
+          const project = projects.find(
+            (proj) => proj.projectCode === grade.projectCode
+          );
+          if (!project) {
+            console.warn(`Project not found for grade: ${grade.projectCode}`);
+            return null;
+          }
 
-        // Find the student name dynamically
-        const studentName =
-          [project.Student1, project.Student2]
-            .filter((student) => student && student.ID === grade.studentID)
-            .map(
-              (student) =>
-                student.fullName || `${student.firstName} ${student.lastName}`
-            )
-            .join(", ") || "Unknown Student";
+          const student = [project.Student1, project.Student2].find(
+            (s) => s && s.ID === grade.studentID
+          );
 
-  
-        // Map supervisor IDs to full names from the `users` collection
-        const supervisors = [project.supervisor1, project.supervisor2]
-        .filter((id) => id) // Exclude null or empty supervisor IDs
-        .map((id) => {
-          const supervisor = users.find((user) => user.emailId === id);
-          return supervisor ? supervisor.fullName : `Supervisor ID ${id}`;
-        });
-        const projectSupervisors =
-        supervisors.length > 0 ? supervisors.join(", ") : "No Supervisors";
+          // Find the student name dynamically
+          const studentName =
+            [project.Student1, project.Student2]
+              .filter((student) => student && student.ID === grade.studentID)
+              .map(
+                (student) =>
+                  student.fullName || `${student.firstName} ${student.lastName}`
+              )
+              .join(", ") || "Unknown Student";
 
-  
-        // Use fallback for undefined or missing deadlines
-        const deadline =
-          project.deadline && project.deadline._seconds
-            ? new Date(project.deadline._seconds * 1000).toLocaleDateString()
-            : "No Deadline"; // Explicitly indicate that there is no deadline
-  
-        console.log("Rendering status(in preprocess):", grade.status);
-  
-        return {
-          ...project, // Include project details
-          projectCode: grade.projectCode,
-          studentName,
-          supervisors: projectSupervisors,
-          presentationGrade: grade.CalculatedPresentationGrade || "N/A",
-          bookGrade: grade.CalculatedBookGrade || "N/A",
-          supervisorGrade: grade.CalculatedSupervisorGrade || "N/A",
-          finalGrade: grade.finalGrade || "N/A",
-          status: grade.status || "Not graded",
-          deadline: deadline, // Fallback for undefined deadlines
-        };
-      }).filter(Boolean); // Filter out null values
+          // Map supervisor IDs to full names from the `users` collection
+          const supervisors = [project.supervisor1, project.supervisor2]
+            .filter((id) => id) // Exclude null or empty supervisor IDs
+            .map((id) => {
+              const supervisor = users.find((user) => user.emailId === id);
+              return supervisor ? supervisor.fullName : `Supervisor ID ${id}`;
+            });
+          const projectSupervisors =
+            supervisors.length > 0 ? supervisors.join(", ") : "No Supervisors";
+
+          // Use fallback for undefined or missing deadlines
+          const deadline =
+            project.deadline && project.deadline._seconds
+              ? new Date(project.deadline._seconds * 1000).toLocaleDateString()
+              : "No Deadline"; // Explicitly indicate that there is no deadline
+
+          console.log("Rendering status(in preprocess):", grade.status);
+
+          return {
+            ...project, // Include project details
+            projectCode: grade.projectCode,
+            studentName,
+            supervisors: projectSupervisors,
+            presentationGrade: grade.CalculatedPresentationGrade || "N/A",
+            bookGrade: grade.CalculatedBookGrade || "N/A",
+            supervisorGrade: grade.CalculatedSupervisorGrade || "N/A",
+            finalGrade: grade.finalGrade || "N/A",
+            status: grade.status || "Not graded",
+            deadline: deadline, // Fallback for undefined deadlines
+          };
+        })
+        .filter(Boolean); // Filter out null values
     } catch (error) {
       console.error("Error preprocessing projects:", error.message);
       throw new Error("Failed to preprocess project data.");
     }
   };
-  
-
 
   const handleSaveDeadline = async () => {
     if (!deadline) {
       toast.error("Please select a deadline.");
       return;
     }
-  
+
     try {
       const timestamp = new Date(deadline).getTime();
-  
+
       // Include emailMessage in the API call
       await emailAPI.notifyGlobalDeadline(timestamp, emailMessage);
-  
+
       toast.success("Deadline set successfully.");
-  
+
       // Clear the deadline and message box
       setDeadline("");
       setEmailMessage("");
@@ -161,12 +157,12 @@ const AdminReminders = () => {
     try {
       // Trim the email message and allow sending null if empty
       const reminderMessage = emailMessage.trim() || null;
-  
+
       // Call the email API to send reminders
       await emailAPI.sendRemindersToAll(reminderMessage);
-  
+
       toast.success("Reminders sent successfully.");
-  
+
       // Clear the message input after sending reminders
       setEmailMessage("");
     } catch (error) {
@@ -174,8 +170,6 @@ const AdminReminders = () => {
       toast.error("Failed to send reminders.");
     }
   };
-  
-
 
   const projectColumns = useMemo(
     () => [
@@ -248,11 +242,15 @@ const AdminReminders = () => {
       <div className="max-w-7xl mx-auto bg-white shadow-md rounded-lg mb-8">
         <div className="p-6 border-b border-gray-200">
           <h1 className="text-3xl font-bold">Set Deadline</h1>
-          <p className="text-gray-600 mt-1">Manage the global deadline for all projects.</p>
+          <p className="text-gray-600 mt-1">
+            Manage the global deadline for all projects.
+          </p>
         </div>
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-gray-700 font-medium mb-2">Deadline:</label>
+            <label className="block text-gray-700 font-medium mb-2">
+              Deadline:
+            </label>
             <input
               type="date"
               value={deadline}
@@ -261,14 +259,22 @@ const AdminReminders = () => {
             />
           </div>
           <div>
-          <label className="block text-gray-700 font-medium mb-2">Email Message (Optional):</label>
-          <p className="text-gray-500 text-base mb-2">
-            If no text message is added, the following message will be sent: <br />
-            <em>"A new deadline has been set for project submissions. Please log in to the system to view the details."</em>
-          </p>
-        </div>
+            <label className="block text-gray-700 font-medium mb-2">
+              Email Message (Optional):
+            </label>
+            <p className="text-gray-500 text-base mb-2">
+              If no text message is added, the following message will be sent:{" "}
+              <br />
+              <em>
+                "A new deadline has been set for project submissions. Please log
+                in to the system to view the details."
+              </em>
+            </p>
+          </div>
           <div>
-            <label className="block text-gray-700 font-medium mb-2">Email Message (Optional):</label>
+            <label className="block text-gray-700 font-medium mb-2">
+              Email Message (Optional):
+            </label>
             <textarea
               value={emailMessage}
               onChange={(e) => setEmailMessage(e.target.value)}
@@ -295,26 +301,6 @@ const AdminReminders = () => {
           <h1 className="text-3xl font-bold">Project Reminders</h1>
           <p className="text-gray-600">Manage reminders for all projects.</p>
         </div>
-
-        <div className="p-6">
-        {projects.length === 0 ? (
-          <div className="text-gray-500">No projects available to display.</div>
-        ) : (
-          // Added scrollable wrapper
-          <div className="overflow-x-auto">
-            <Table
-              data={tableData}
-              columns={projectColumns}
-              rowClassName="hover:bg-gray-50 transition duration-200"
-              useCustomColumns={false}
-              showDescription={true}
-              description="Overview of projects with supervisors, deadlines, and grades."
-              className="table-auto min-w-full" // Ensure table takes up full width
-            />
-          </div>
-        )}
-      </div>
-
         {/* Reminders Section */}
         <div className="p-6 border-t border-gray-200 flex flex-col space-y-6">
           {/* Reminder Message */}
@@ -323,11 +309,12 @@ const AdminReminders = () => {
               Reminder Message:
             </label>
             <p className="text-gray-500 text-base mb-2">
-              If no text message is added, the following default message will be sent:
+              If no text message is added, the following default message will be
+              sent:
               <br />
               <em>
-                "This is a reminder to review the project's status. Please log in to the
-                system to take action."
+                "This is a reminder to review the project's status. Please log
+                in to the system to take action."
               </em>
             </p>
             <textarea
@@ -341,14 +328,33 @@ const AdminReminders = () => {
 
           {/* Send Reminder Button */}
           <div className="flex justify-end">
-          <Button
-            onClick={handleSendReminders}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
-          >
-            Send Reminders
-          </Button>
+            <Button
+              onClick={handleSendReminders}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+            >
+              Send Reminders
+            </Button>
           </div>
         </div>
+      </div>
+      
+      <div className="p-6">
+        {projects.length === 0 ? (
+          <div className="text-gray-500">No projects available to display.</div>
+        ) : (
+          // Added scrollable wrapper
+          <div className="overflow-x-auto">
+            <Table
+              data={tableData}
+              columns={projectColumns}
+              rowClassName="hover:bg-gray-50 transition duration-200"
+              useCustomColumns={true}
+              showDescription={true}
+              description="Overview of projects' evaluators, deadlines, and grades."
+              className="table-auto min-w-full" // Ensure table takes up full width
+            />
+          </div>
+        )}
       </div>
     </div>
   );
