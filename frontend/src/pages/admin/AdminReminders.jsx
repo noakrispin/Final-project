@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Table } from "../../components/ui/Table";
 import { Button } from "../../components/ui/Button";
-import { gradesApi } from "../../services/finalGradesAPI";
+import { evaluatorsApi } from "../../services/evaluatorsAPI";
 import { projectsApi } from "../../services/projectsAPI";
 import { userApi } from "../../services/userAPI";
 import { emailAPI } from "../../services/emailAPI";
@@ -20,114 +20,80 @@ const AdminReminders = () => {
   const [scheduledReminder, setScheduledReminder] = useState(null);
 
   useEffect(() => {
-    const fetchAndProcessGrades = async () => {
+    const fetchAndProcessData = async () => {
       try {
-        console.log("Starting data fetch and preprocessing...");
+        setIsLoading(true);
 
-        console.log("Fetching final grades...");
-        const gradesResponse = await gradesApi.getAllGrades();
-        const grades = gradesResponse || [];
-        console.log("Final grades fetched:", grades);
+        // Fetch projects, evaluators, and users
+        const [projects, evaluators, users] = await Promise.all([
+          projectsApi.getAllProjects(),
+          evaluatorsApi.getAllEvaluators(), // Replace with the actual API call for evaluators
+          userApi.getAllUsers(),
+        ]);
 
-        console.log("Fetching all projects...");
-        const projects = await projectsApi.getAllProjects();
-        console.log("All projects fetched:", projects);
+        console.log("Projects:", projects);
+        console.log("Evaluators:", evaluators);
+        console.log("Users:", users);
 
-        console.log("Fetching all users...");
-        const users = await userApi.getAllUsers();
-        console.log("All users fetched:", users);
-
-        console.log("Processing final grades...");
-        const processedData = preprocessProjects(grades, projects, users);
-        console.log("Processed Data:", processedData);
-
+        // Process data for the table
+        const processedData = preprocessProjects(projects, evaluators, users);
         setProjects(processedData);
       } catch (error) {
-        console.error("Error during preprocessing:", error);
-        setError("Failed to preprocess project data.");
+        console.error("Error fetching and processing data:", error);
+        setError("Failed to fetch project data.");
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchAndProcessGrades();
+    fetchAndProcessData();
   }, []);
 
-  const preprocessProjects = (grades, projects, users) => {
-    try {
-      console.log("Preprocessing projects with grades, projects, and users...");
-      console.log("Grades:", grades);
-      console.log("Projects:", projects);
-      console.log("Users:", users);
+  const preprocessProjects = (projects, evaluators, users) => {
+    const processedRows = [];
 
-      // Filter out placeholder grades
-      const filteredGrades = grades.filter(
-        (grade) =>
-          grade.projectCode && grade.projectCode !== "placeholderProject"
+    projects.forEach((project) => {
+      const projectEvaluators = evaluators.filter(
+        (evaluator) => evaluator.projectCode === project.projectCode
       );
-      console.log("Filtered Grades:", filteredGrades);
 
-      // Map grades to project and user details
-      return filteredGrades
-        .map((grade) => {
-          const project = projects.find(
-            (proj) => proj.projectCode === grade.projectCode
-          );
-          if (!project) {
-            console.warn(`Project not found for grade: ${grade.projectCode}`);
-            return null;
-          }
+      projectEvaluators.forEach((evaluator) => {
+        const evaluatorUser = users.find(
+          (user) => user.email === evaluator.evaluatorID
+        );
 
-          const student = [project.Student1, project.Student2].find(
-            (s) => s && s.ID === grade.studentID
-          );
+        processedRows.push({
+          projectCode: project.projectCode,
+          evaluatorName: evaluatorUser?.fullName || evaluator.evaluatorID,
+          presentationGrade:
+            evaluator.formID.startsWith("Presentation") &&
+            evaluator.status === "Submitted"
+              ? "✔"
+              : evaluator.formID.startsWith("Presentation")
+              ? "✘"
+              : "",
+          bookGrade:
+            evaluator.formID.startsWith("bookReviewer") &&
+            evaluator.status === "Submitted"
+              ? "✔"
+              : evaluator.formID.startsWith("bookReviewer")
+              ? "✘"
+              : "",
+          supervisorGrade:
+            evaluator.formID === "SupervisorForm" &&
+            evaluator.status === "Submitted"
+              ? "✔"
+              : evaluator.formID === "SupervisorForm"
+              ? "✘"
+              : "",
+          deadline: project.deadline
+            ? new Date(project.deadline).toLocaleDateString()
+            : "No Deadline",
+        });
+      });
+    });
 
-          // Find the student name dynamically
-          const studentName =
-            [project.Student1, project.Student2]
-              .filter((student) => student && student.ID === grade.studentID)
-              .map(
-                (student) =>
-                  student.fullName || `${student.firstName} ${student.lastName}`
-              )
-              .join(", ") || "Unknown Student";
-
-          // Map supervisor IDs to full names from the `users` collection
-          const supervisors = [project.supervisor1, project.supervisor2]
-            .filter((id) => id) // Exclude null or empty supervisor IDs
-            .map((id) => {
-              const supervisor = users.find((user) => user.emailId === id);
-              return supervisor ? supervisor.fullName : `Supervisor ID ${id}`;
-            });
-          const projectSupervisors =
-            supervisors.length > 0 ? supervisors.join(", ") : "No Supervisors";
-
-          // Use fallback for undefined or missing deadlines
-          const deadline =
-            project.deadline && project.deadline._seconds
-              ? new Date(project.deadline._seconds * 1000).toLocaleDateString()
-              : "No Deadline"; // Explicitly indicate that there is no deadline
-
-          console.log("Rendering status(in preprocess):", grade.status);
-
-          return {
-            ...project, // Include project details
-            projectCode: grade.projectCode,
-            studentName,
-            supervisors: projectSupervisors,
-            presentationGrade: grade.CalculatedPresentationGrade || "N/A",
-            bookGrade: grade.CalculatedBookGrade || "N/A",
-            supervisorGrade: grade.CalculatedSupervisorGrade || "N/A",
-            finalGrade: grade.finalGrade || "N/A",
-            status: grade.status || "Not graded",
-            deadline: deadline, // Fallback for undefined deadlines
-          };
-        })
-        .filter(Boolean); // Filter out null values
-    } catch (error) {
-      console.error("Error preprocessing projects:", error.message);
-      throw new Error("Failed to preprocess project data.");
-    }
+    return processedRows;
   };
 
   const handleSaveDeadline = async () => {
@@ -177,45 +143,38 @@ const AdminReminders = () => {
       {
         key: "projectCode",
         header: "Project Code",
+        className: "text-lg text-center",
         sortable: true,
-        className: "text-base",
       },
       {
-        key: "supervisors",
-        header: "Supervisors",
-        className: "text-base",
-        render: (_, project) => {
-          console.log("Rendering supervisors:", project.supervisors);
-          return project.supervisors || "N/A";
-        },
-      },
-      {
-        key: "bookGrade",
-        header: "Book Grade",
-        className: "text-base",
-        render: (project) =>
-          project.bookGrade !== undefined ? project.bookGrade : " ",
+        key: "evaluatorName",
+        header: "Evaluator Name",
+        className: "text-lg text-center",
+        sortable: true,
       },
       {
         key: "presentationGrade",
         header: "Presentation Grade",
-        className: "text-base",
-        render: (project) =>
-          project.presentationGrade !== undefined
-            ? project.presentationGrade
-            : " ",
+        className: "text-lg text-center",
+        render: (value) => (value === "✔" ? "✔" : value === "✘" ? "✘" : ""),
+      },
+      {
+        key: "bookGrade",
+        header: "Book Grade",
+        className: "text-lg text-center",
+        render: (value) => (value === "✔" ? "✔" : value === "✘" ? "✘" : ""),
       },
       {
         key: "supervisorGrade",
         header: "Supervisor Grade",
-        className: "text-base",
-        render: (project) =>
-          project.supervisorGrade !== undefined ? project.supervisorGrade : " ",
+        className: "text-lg text-center",
+        render: (value) => (value === "✔" ? "✔" : value === "✘" ? "✘" : ""),
       },
       {
         key: "deadline",
         header: "Deadline",
-        className: "text-base",
+        className: "text-lg text-center",
+        render: (value) => value || "No Deadline",
         sortable: true,
       },
     ],
@@ -223,18 +182,19 @@ const AdminReminders = () => {
   );
 
   if (isLoading) {
-    return <LoadingScreen isLoading={isLoading}  description="Loading projects' remainders..."/>; 
+    return (
+      <LoadingScreen
+        isLoading={isLoading}
+        description="Loading projects' remainders..."
+      />
+    );
   }
 
   if (error) {
     return <div className="text-red-500">{error}</div>;
   }
 
-  const tableData = projects.map((project) => ({
-    ...project,
-    studentName: project.studentName,
-    supervisors: project.supervisors,
-  }));
+  const tableData = projects;
 
   return (
     <div className="bg-gray-50 min-h-screen p-6">
@@ -338,24 +298,32 @@ const AdminReminders = () => {
           </div>
         </div>
       </div>
-      
-      <div className="p-6">
-        {projects.length === 0 ? (
-          <div className="text-gray-500">No projects available to display.</div>
-        ) : (
-          // Added scrollable wrapper
-          <div className="overflow-x-auto">
+
+      <div className="max-w-7xl mx-auto bg-white shadow-md rounded-lg mt-8">
+        {/* Title Section for the Table */}
+        <div className="p-6 border-b border-gray-200">
+          <h1 className="text-3xl font-bold">Projects Evaluators and Grades</h1>
+          <p className="text-gray-600 mt-1">
+            Overview of evaluators, deadlines, and grades for all projects.
+          </p>
+        </div>
+
+        {/* Table Section */}
+        <div className="p-6 overflow-x-auto">
+          {projects.length === 0 ? (
+            <div className="text-gray-500">
+              No projects available to display.
+            </div>
+          ) : (
             <Table
               data={tableData}
               columns={projectColumns}
               rowClassName="hover:bg-gray-50 transition duration-200"
-              useCustomColumns={true}
-              showDescription={true}
-              description="Overview of projects' evaluators, deadlines, and grades."
-              className="table-auto min-w-full" // Ensure table takes up full width
+              useCustomColumns={false}
+              className="table-auto min-w-full"
             />
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
