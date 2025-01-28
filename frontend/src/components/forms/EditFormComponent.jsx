@@ -21,7 +21,7 @@ function QuestionEditor({ questions, setQuestions, reference, formID }) {
       order: questions.length + 1,
       reference,
       required: false,
-      response_type: "text",
+      response_type: "textarea",
       weight: 0,
     };
 
@@ -156,10 +156,9 @@ function QuestionEditor({ questions, setQuestions, reference, formID }) {
                   handleUpdateQuestion(index, "response_type", e.target.value)
                 }
               >
-                <option value="text">Text</option>
+                <option value="textarea">Text</option>
                 <option value="number">Number</option>
-                <option value="radio">Multiple Choice</option>
-                <option value="checkbox">Checkbox</option>
+                
               </select>
             </div>
 
@@ -296,12 +295,13 @@ export default function EditFormComponent({
   const [generalQuestions, setGeneralQuestions] = useState([]);
   const [studentQuestions, setStudentQuestions] = useState([]);
   const [editedFormName, setEditedFormName] = useState(formTitle);
-  const [editedFormDescription, setEditedFormDescription] =
-    useState(formDescription);
+  const [editedFormDescription, setEditedFormDescription] =useState(formDescription);
   const [isEditMode, setIsEditMode] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showConfirmExit, setShowConfirmExit] = useState(false);
   const [showConfirmSave, setShowConfirmSave] = useState(false);
+  const [showWeightValidationModal, setShowWeightValidationModal] =useState(false);
+  const [currentTotalWeight, setCurrentTotalWeight] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
@@ -344,9 +344,25 @@ export default function EditFormComponent({
   }, [user, questions]);
 
   const confirmSaveChanges = () => {
+    const totalWeight = [...generalQuestions, ...studentQuestions].reduce(
+      (sum, q) => sum + parseFloat(q.weight || 0),
+      0
+    );
+  
+    // Round to 2 decimal places
+    const roundedTotalWeight = parseFloat(totalWeight.toFixed(2));
+  
+    // Validate weight sum
+    if (roundedTotalWeight !== 1.0) {
+      setCurrentTotalWeight(roundedTotalWeight);
+      setShowWeightValidationModal(true);
+      return;
+    }
+  
+    // Show the save confirmation modal if validation passes
     setShowConfirmSave(true);
   };
-
+  
   const handleSave = async () => {
     setIsProcessing(true);
     console.log("Updating form:", formID, editedFormName, editedFormDescription);
@@ -500,6 +516,25 @@ export default function EditFormComponent({
             Save Changes
           </Button>
         )}
+        {/* Weight Validation Modal */}
+      {showWeightValidationModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96 text-center">
+            <h2 className="text-xl font-bold mb-4 text-red-700">
+              Weight Validation Error
+            </h2>
+            <p>Total question weights must add up to 100% (1.00). Currently: {currentTotalWeight}</p>
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={() => setShowWeightValidationModal(false)}
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-700"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
         <ConfirmationModal
           isOpen={showConfirmExit}
           title="Exit Edit Mode?"
