@@ -96,6 +96,7 @@ export default function MyProfile() {
   
     try {
       const response = await userApi.updateUserRole(user.email, { fullName: editedName });
+      console.log("response updateUserRole:", response);
       if (response.success) {
         setUser((prevUser) => ({ ...prevUser, fullName: editedName }));
         setIsEditing(false);
