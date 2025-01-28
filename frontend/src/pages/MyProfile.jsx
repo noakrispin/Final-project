@@ -93,12 +93,9 @@ export default function MyProfile() {
       setIsEditing(false);
       return;
     }
-
+  
     try {
-      // Send only the fullName field to prevent role/isAdmin from being overwritten
-      const response = await userApi.updateUserRole(user.email, {
-        fullName: editedName,
-      });
+      const response = await userApi.updateUserRole(user.email, { fullName: editedName });
       if (response.success) {
         setUser((prevUser) => ({ ...prevUser, fullName: editedName }));
         setIsEditing(false);
@@ -110,6 +107,7 @@ export default function MyProfile() {
       alert("Failed to update name. Please try again.");
     }
   };
+  
 
   return (
     <div className="min-h-screen bg-[#f9fafc] p-8">
