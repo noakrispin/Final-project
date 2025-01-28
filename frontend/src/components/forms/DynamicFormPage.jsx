@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import UnifiedFormComponent from "./UnifiedFormComponent";
 import EditFormComponent from "./EditFormComponent";
 import { formsApi } from "../../services/formAPI";
+import LoadingScreen from "../../components/shared/LoadingScreen";
 
 const DynamicFormPage = () => {
   const { user } = useAuth();
@@ -57,9 +58,7 @@ const DynamicFormPage = () => {
   
 
   if (isLoading) {
-    return (
-      <div className="text-center mt-6 text-blue-900">Loading form...</div>
-    );
+    return <LoadingScreen isLoading={isLoading}  description="Loading form..."/>; 
   }
 
   if (error) {

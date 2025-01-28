@@ -129,7 +129,7 @@ const deleteUser = async (req, res) => {
 
 const updateUserRole = async (req, res) => {
   const { userId } = req.params; // This should now be emailId
-  const { role, isAdmin } = req.body;
+  const { role, isAdmin ,fullName} = req.body;
 
   try {
     const userRef = admin.firestore().collection("users").doc(userId);
@@ -139,7 +139,12 @@ const updateUserRole = async (req, res) => {
       return res.status(404).json({ message: "User not found." });
     }
 
-    const updatedData = { ...userDoc.data(), role, isAdmin: !!isAdmin };
+    const updatedData = { 
+      ...userDoc.data(), 
+      role, 
+      isAdmin: !!isAdmin,
+      ...(fullName && { fullName }) 
+    };
 
     if (updatedData.isAdmin) {
       await addSubcollection("users", userId, "adminDetails", "details", { permissions: "All admin permissions" });

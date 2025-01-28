@@ -159,7 +159,7 @@ const ProjectAssessmentPopup = ({ project, onClose }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-lg w-11/12 max-w-4xl flex flex-col max-h-[90vh]">
         <div className="sticky top-0 bg-white z-10 px-6 py-4 border-b border-gray-200 flex justify-between items-center rounded-lg shadow-lg ">
-          <h2 className="text-2xl font-bold text-gray-800">"{project.title}" Assessment</h2>
+          <h2 className="text-2xl font-bold text-gray-800">Assessments for project {project.projectCode} </h2>
           <button className="text-gray-600 hover:text-gray-800 transition-colors" onClick={onClose}>
             <X className="h-6 w-6" />
           </button>
