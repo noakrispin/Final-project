@@ -95,7 +95,7 @@ export const userApi = {
         const response = await api.put(`/users/${emailId}/role`, updateData);
         console.log("API Response for updateUserRole:", response);
         
-        return response.data;
+        return response;
     } catch (error) {
         console.error("Error updating user role:", error.response?.data || error.message);
         throw new Error(`Failed to update user with email: ${emailId}`);
