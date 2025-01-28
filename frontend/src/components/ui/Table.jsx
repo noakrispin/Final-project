@@ -6,7 +6,6 @@ import { sortData } from "../../utils/sortData";
 import SearchBar from "../shared/SearchBar";
 import { getGrade } from "../../utils/getGrade";
 import { Info } from "lucide-react";
-import { Card } from '../ui/Card';
 
 const FILTERS = ["All", "Part A", "Part B"];
 
@@ -47,7 +46,7 @@ export const Table = ({
       const visibleColumnKeys = columns
         .filter((col) => visibleColumns.includes(col.key))
         .map((col) => col.key);
-  
+
       const matchesSearch = visibleColumnKeys.some((key) => {
         const value = item[key];
         return (
@@ -55,12 +54,11 @@ export const Table = ({
           value.toString().toLowerCase().includes(searchTerm.toLowerCase())
         );
       });
-  
+
       if (selectedFilter === "All") return matchesSearch;
       return matchesSearch && item.part === selectedFilter.split(" ")[1];
     });
   }, [data, searchTerm, selectedFilter, visibleColumns, columns]);
-  
 
   const sortedData = useMemo(() => {
     return sortData(filteredData, columns, sortColumn, sortDirection);
@@ -75,8 +73,11 @@ export const Table = ({
   };
 
   const renderGradeCell = (project, gradeType) => {
-    console.log(`Rendering grades for project: ${project.projectCode}`, project.students);
-  
+    console.log(
+      `Rendering grades for project: ${project.projectCode}`,
+      project.students
+    );
+
     // Determine the formID based on the grade type
     let formID;
     if (gradeType === "supervisor") {
@@ -86,21 +87,23 @@ export const Table = ({
     } else if (gradeType === "book") {
       formID = project.part === "A" ? "bookReviewerFormA" : "bookReviewerFormB";
     }
-  
+
     const assignedFormID = project.evaluatorDetails?.formID;
     const isAssignedToThisForm = formID === assignedFormID;
-    const isDeadlinePassed = project.deadline && new Date(project.deadline) < new Date();
-  
+    const isDeadlinePassed =
+      project.deadline && new Date(project.deadline) < new Date();
+
     // If the evaluator is not assigned to this form, show "Not Assigned"
     if (!isAssignedToThisForm) {
       return <span className="text-gray-400 "> - </span>;
     }
-  
+
     // Check if there are grades for the project
     const hasGrades = project.students.some(
-      (student) => getGrade(apiResponse, formID, project.projectCode, student.id) !== null
+      (student) =>
+        getGrade(apiResponse, formID, project.projectCode, student.id) !== null
     );
-  
+
     // If no grades exist
     if (!hasGrades) {
       return (
@@ -111,7 +114,10 @@ export const Table = ({
           data-grade-action={JSON.stringify({ gradeType, project, formID })}
           onClick={() => {
             if (!isDeadlinePassed) {
-              handleRowClick({ gradeType, project, studentName: null, formID }, true);
+              handleRowClick(
+                { gradeType, project, studentName: null, formID },
+                true
+              );
             }
           }}
         >
@@ -119,19 +125,24 @@ export const Table = ({
         </div>
       );
     }
-  
+
     // Render grades for students with grades
     return (
       <div>
         {project.students.map((student) => {
-          const grade = getGrade(apiResponse, formID, project.projectCode, student.id);
-  
+          const grade = getGrade(
+            apiResponse,
+            formID,
+            project.projectCode,
+            student.id
+          );
+
           if (grade === null) return null; // Skip students without grades
-  
+
           console.log(
             `Rendering grade for student: ${student.fullName}, formID: ${formID}, projectCode: ${project.projectCode}, gradeType: ${gradeType}, grade: ${grade}`
           );
-  
+
           const metadata = {
             gradeType,
             project,
@@ -139,7 +150,7 @@ export const Table = ({
             formID,
             readOnly: isDeadlinePassed,
           };
-  
+
           return (
             <div
               key={`${project.id}-${student.id}`}
@@ -150,7 +161,7 @@ export const Table = ({
                 <span
                   data-grade-action={JSON.stringify(metadata)}
                   className={`underline cursor-pointer ${
-                    isDeadlinePassed ? "text-gray-500" : "text-blue-500"
+                    isDeadlinePassed ? "text-blue-500" : "text-blue-500"
                   }`}
                   onClick={() => handleRowClick(metadata, true)}
                 >
@@ -163,106 +174,105 @@ export const Table = ({
       </div>
     );
   };
-  
-  
+
   return (
-<div className="space-y-4">
-  {showTabs && (
-    <div className="flex flex-wrap items-center justify-between mb-4 px-6 gap-y-4">
-      {/* Filters (Tabs) */}
-      <div className="flex flex-wrap items-center gap-2">
-        {FILTERS.map((filter) => (
-          <button
-            key={filter}
-            onClick={() => setSelectedFilter(filter)}
-            className={`px-4 py-2 rounded-full text-base font-medium ${
-              selectedFilter === filter
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 text-gray-600 hover:bg-gray-300"
-            }`}
-          >
-            {filter}
-          </button>
-        ))}
-      </div>
-
-      {/* Search Bar */}
-      <div className="flex-shrink-0 w-full md:w-auto">
-        <SearchBar
-          value={searchTerm}
-          onChange={setSearchTerm}
-          placeholder="Search"
-          className="w-full"
-        />
-      </div>
-    </div>
-  )}
-  
-  
-  
-  {/* Description */}
-  {showDescription && description && (
-    <div className="flex-grow flex justify-normal">
-      <div className="flex items-center space-x-2 text-green-600">
-        <Info className="w-4 h-4" />
-        <span className="text-base">{description}</span>
-      </div>
-    </div>
-  )}
-
-  {/* Table */}
-  <div
-    className={`w-full overflow-auto rounded-lg border border-[#e5e7eb] bg-white ${className}`}
-    onClick={(e) => {
-      const gradeAction = e.target.closest("[data-grade-action]");
-      if (gradeAction) {
-        const metadata = JSON.parse(gradeAction.dataset.gradeAction);
-        e.stopPropagation();
-        onRowClick(metadata, true);
-      }
-    }}
-  >
-    <div className="min-w-full align-middle">
-      <table className="min-w-full divide-y divide-[#e5e7eb]">
-        <thead>
-          <tr className="bg-white">
-            {visibleColumnsList.map((column) => (
-              <th
-                key={column.key}
-                scope="col"
-                className={`relative px-6 py-4 text-center text-base font-medium text-[#313131] ${
-                  column.sortable ? "cursor-pointer select-none" : ""
-                } group`}
+    <div className="space-y-4">
+      {showTabs && (
+        <div className="flex flex-wrap items-center justify-between mb-4 px-6 gap-y-4">
+          {/* Filters (Tabs) */}
+          <div className="flex flex-wrap items-center gap-2">
+            {FILTERS.map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setSelectedFilter(filter)}
+                className={`px-4 py-2 rounded-full text-base font-medium ${
+                  selectedFilter === filter
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                }`}
               >
-                <div
-                  className="flex items-center gap-2"
-                  onClick={() => column.sortable && handleSort(column.key)}
-                >
-                  {column.header}
-                  {column.sortable && (
-                    <span className="inline-flex flex-col">
-                      <ChevronUp
-                        className={`h-3 w-3 ${
-                          sortColumn === column.key && sortDirection === "asc"
-                            ? "text-[#313131]"
-                            : "text-gray-300"
-                        }`}
-                      />
-                      <ChevronDown
-                        className={`h-3 w-3 -mt-1 ${
-                          sortColumn === column.key && sortDirection === "desc"
-                            ? "text-[#313131]"
-                            : "text-gray-300"
-                        }`}
-                      />
-                    </span>
-                  )}
-                </div>
-              </th>
+                {filter}
+              </button>
             ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-[#e5e7eb] bg-white">
+          </div>
+
+          {/* Search Bar */}
+          <div className="flex-shrink-0 w-full md:w-auto">
+            <SearchBar
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Search"
+              className="w-full"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Description */}
+      {showDescription && description && (
+        <div className="flex-grow flex justify-normal">
+          <div className="flex items-center space-x-2 text-green-600">
+            <Info className="w-4 h-4" />
+            <span className="text-base">{description}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Table */}
+      <div
+        className={`w-full overflow-auto rounded-lg border border-[#e5e7eb] bg-white ${className}`}
+        onClick={(e) => {
+          const gradeAction = e.target.closest("[data-grade-action]");
+          if (gradeAction) {
+            const metadata = JSON.parse(gradeAction.dataset.gradeAction);
+            e.stopPropagation();
+            onRowClick(metadata, true);
+          }
+        }}
+      >
+        <div className="min-w-full align-middle">
+          <table className="min-w-full divide-y divide-[#e5e7eb]">
+            <thead>
+              <tr className="bg-white">
+                {visibleColumnsList.map((column) => (
+                  <th
+                    key={column.key}
+                    scope="col"
+                    className={`relative px-6 py-4 text-center text-base font-medium text-[#313131] ${
+                      column.sortable ? "cursor-pointer select-none" : ""
+                    } group`}
+                  >
+                    <div
+                      className="flex items-center gap-2"
+                      onClick={() => column.sortable && handleSort(column.key)}
+                    >
+                      {column.header}
+                      {column.sortable && (
+                        <span className="inline-flex flex-col">
+                          <ChevronUp
+                            className={`h-3 w-3 ${
+                              sortColumn === column.key &&
+                              sortDirection === "asc"
+                                ? "text-[#313131]"
+                                : "text-gray-300"
+                            }`}
+                          />
+                          <ChevronDown
+                            className={`h-3 w-3 -mt-1 ${
+                              sortColumn === column.key &&
+                              sortDirection === "desc"
+                                ? "text-[#313131]"
+                                : "text-gray-300"
+                            }`}
+                          />
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#e5e7eb] bg-white">
               {sortedData.length > 0 ? (
                 sortedData.map((project, rowIndex) => (
                   <tr
@@ -273,9 +283,14 @@ export const Table = ({
                     {visibleColumnsList.map((column) => (
                       <td
                         key={column.key}
-                        className="px-6 py-4 text-base text-[#686b80] "
+                        className="px-6 py-4 text-base text-[#686b80]"
                       >
-                        {column.render
+                        {useCustomColumns && column.key.includes("Grade")
+                          ? renderGradeCell(
+                              project,
+                              column.key.replace("Grade", "").toLowerCase()
+                            )
+                          : column.render
                           ? column.render(project[column.key], project)
                           : project[column.key]}
                       </td>
@@ -293,30 +308,30 @@ export const Table = ({
                 </tr>
               )}
             </tbody>
-      </table>
+          </table>
+        </div>
+      </div>
+
+      <div className="flex justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setIsColumnManagementOpen(true)}
+          className="bg-white hover:white text-blue-500"
+        >
+          <Settings2 className="mr-2 h-4 w-4" />
+          Show/Hide Columns
+        </Button>
+      </div>
+
+      <ColumnManagementDialog
+        isOpen={isColumnManagementOpen}
+        onClose={() => setIsColumnManagementOpen(false)}
+        columns={columns}
+        visibleColumns={visibleColumns}
+        onApply={setVisibleColumns}
+        onRestore={handleRestoreDefaults}
+      />
     </div>
-  </div>
-
-  <div className="flex justify-end">
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => setIsColumnManagementOpen(true)}
-      className="bg-white hover:white text-blue-500"
-    >
-      <Settings2 className="mr-2 h-4 w-4" />
-      Show/Hide Columns
-    </Button>
-  </div>
-
-  <ColumnManagementDialog
-    isOpen={isColumnManagementOpen}
-    onClose={() => setIsColumnManagementOpen(false)}
-    columns={columns}
-    visibleColumns={visibleColumns}
-    onApply={setVisibleColumns}
-    onRestore={handleRestoreDefaults}
-  />
-</div>
   );
 };

@@ -297,7 +297,7 @@ const MyProjectsReview = () => {
   };
 
   if (isLoading) {
-    return <LoadingScreen isLoading={isLoading}  />; 
+    return <LoadingScreen isLoading={isLoading} />;
   }
   if (error)
     return <div className="text-center text-red-500 mt-10">{error}</div>;
