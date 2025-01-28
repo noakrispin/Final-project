@@ -11,13 +11,14 @@ const UserManagement = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [roleFilter, setRoleFilter] = useState("All");
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, user: null });
+  const [roleFilter, setRoleFilter] = useState("All");
   const [editRoleModal, setEditRoleModal] = useState({
     isOpen: false,
     user: null,
   });
-  const [selectedRole, setSelectedRole] = useState(""); // State for the selected role
+  const [editingRole, setEditingRole] = useState(""); // Used only for editing modal
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   const tabs = ["User Management", "Forms Management"];
   const [activeTab, setActiveTab] = useState("User Management");
@@ -43,16 +44,17 @@ const UserManagement = () => {
 
   // Filter users whenever `users` or `roleFilter` changes
   useEffect(() => {
-    
     const updatedUsers = users
       .filter((user) => user && user.emailId) // Ensure valid users
       .filter((user) => {
-        if (!selectedRole || selectedRole === "All") return true; // No filtering for "All" or empty selection
-        const role = user.isAdmin ? "Admin" : "Supervisor"; // Map isAdmin to Admin/Supervisor
-        return role === selectedRole; // Match the selected role
+        if (!roleFilter || roleFilter === "All") return true; // Use roleFilter instead of selectedRole
+        return user.isAdmin
+          ? roleFilter === "Admin"
+          : roleFilter === "Supervisor";
       });
+
     setFilteredUsers(updatedUsers);
-  }, [users, selectedRole]);
+  }, [users, roleFilter]); // Use roleFilter instead of selectedRole
 
   // Open the delete modal
   const openDeleteModal = (user) => {
@@ -102,14 +104,14 @@ const UserManagement = () => {
       return;
     }
     setEditRoleModal({ isOpen: true, user });
-    setSelectedRole(user.role); // Initialize with the current role
+    setEditingRole(user.role); // Set editingRole instead of selectedRole
   };
 
   // Close the edit role modal
   const closeEditRoleModal = () => {
     console.log("Closing Edit Role Modal...");
     setEditRoleModal({ isOpen: false, user: null });
-    setSelectedRole(""); // Reset selected role
+    setEditingRole(""); // Reset the correct state
   };
 
   // Save role change
@@ -120,12 +122,10 @@ const UserManagement = () => {
     }
 
     const userId = editRoleModal.user.emailId;
-    const isAdmin = selectedRole === "Admin"; // Check if Admin is selected
-    const role = "Supervisor"; // Admins retain 'Supervisor' as their role
+    const isAdmin = editingRole === "Admin";
+    const role = "Supervisor"; // Admins retain 'Supervisor' role
 
-    console.log(
-      `Updating user: email: ${userId}, Role: ${role}, isAdmin: ${isAdmin}`
-    );
+    console.log(`Updating user: ${userId}, Role: ${role}, isAdmin: ${isAdmin}`);
 
     try {
       const response = await userApi.updateUserRole(userId, { role, isAdmin });
@@ -140,8 +140,15 @@ const UserManagement = () => {
             user.emailId === userId ? { ...user, role, isAdmin } : user
           )
         );
-        closeEditRoleModal();
-        console.log("User role and isAdmin status updated successfully.");
+
+      closeEditRoleModal();
+      setTimeout(() => {
+        setShowSuccessPopup(true);
+        setTimeout(() => {
+          setShowSuccessPopup(false);
+        }, 3000);
+      }, 300);
+        console.log("User role updated successfully.");
       } else {
         console.error("Failed to update user role.");
       }
@@ -150,14 +157,22 @@ const UserManagement = () => {
       alert("An error occurred while updating the user role.");
     }
   };
+
   if (loading) {
-    return <LoadingScreen isLoading={loading}  description="Looking for users..."/>; 
+    return (
+      <LoadingScreen isLoading={loading} description="Looking for users..." />
+    );
   }
   if (error) return <div className="text-red-600">{error}</div>;
 
   return (
     <div className="relative bg-white min-h-screen">
       <BlurElements />
+      {showSuccessPopup && (
+        <div className="fixed top-10 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-fade">
+          Role updated successfully!
+        </div>
+      )}
       <div className="relative z-10">
         <div className="bg-white shadow">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -195,10 +210,10 @@ const UserManagement = () => {
           <div className="mb-4 flex space-x-4">
             <select
               className="border p-2 rounded-md w-200 mt-4"
-              value={selectedRole}
-              onChange={(e) => setSelectedRole(e.target.value)}
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
             >
-              <option value="All">All Rules</option>
+              <option value="All">All Roles</option>
               <option value="Admin">Admin</option>
               <option value="Supervisor">Supervisor</option>
             </select>
@@ -244,14 +259,14 @@ const UserManagement = () => {
       )}
 
       {editRoleModal.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-96">
             <h2 className="text-lg font-bold mb-4">Edit Role</h2>
             <p>Change Role for {editRoleModal.user?.fullName}:</p>
             <select
               className="border p-2 rounded-md w-full mt-4"
-              value={selectedRole}
-              onChange={(e) => setSelectedRole(e.target.value)}
+              value={editingRole}
+              onChange={(e) => setEditingRole(e.target.value)}
             >
               <option value="">Select Role</option>
               <option value="Admin">Admin</option>
