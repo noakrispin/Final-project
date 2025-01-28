@@ -79,17 +79,27 @@ export const userApi = {
    * @param {string} emailId - The email of the user to update.
    * @param {object} roleData - Object containing the role and isAdmin status.
    */
-  updateUserRole: async (emailId, { role, isAdmin }) => {
+  updateUserRole: async (emailId, { role, isAdmin, fullName }) => {
     try {
-      console.log(
-        `Sending PUT request to update user emailId: ${emailId} with role: ${role}, isAdmin: ${isAdmin}`
-      );
-      const response = await api.put(`/users/${emailId}/role`, { role, isAdmin });
-      console.log("API Response for updateUserRole:", response);
-      return response.data;
+        console.log(
+            `Sending PUT request to update user emailId: ${emailId} with role: ${role}, isAdmin: ${isAdmin}, fullName: ${fullName}`
+        );
+
+        // Only include properties that are actually defined
+        const updateData = {};
+        if (role !== undefined) updateData.role = role;
+        if (isAdmin !== undefined) updateData.isAdmin = isAdmin;
+        if (fullName) updateData.fullName = fullName;
+
+        // Send the update request
+        const response = await api.put(`/users/${emailId}/role`, updateData);
+        console.log("API Response for updateUserRole:", response);
+        
+        return response.data;
     } catch (error) {
-      console.error("Error updating user role:", error.response?.data || error.message);
-      throw new Error(`Failed to update role for user with email: ${emailId}`);
+        console.error("Error updating user role:", error.response?.data || error.message);
+        throw new Error(`Failed to update user with email: ${emailId}`);
     }
-  },
+},
+
 };

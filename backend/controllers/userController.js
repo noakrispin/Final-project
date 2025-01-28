@@ -141,10 +141,11 @@ const updateUserRole = async (req, res) => {
 
     const updatedData = { 
       ...userDoc.data(), 
-      role, 
-      isAdmin: !!isAdmin,
+      ...(role !== undefined && { role }), 
+      ...(isAdmin !== undefined && { isAdmin: !!isAdmin }), 
       ...(fullName && { fullName }) 
     };
+    
 
     if (updatedData.isAdmin) {
       await addSubcollection("users", userId, "adminDetails", "details", { permissions: "All admin permissions" });
