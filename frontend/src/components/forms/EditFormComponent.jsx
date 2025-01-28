@@ -100,6 +100,7 @@ function QuestionEditor({ questions, setQuestions, reference, formID }) {
             </button>
           </div>
 
+          {/* Title */}
           <div className="mb-4">
             <label className="block text-gray-700 font-medium mb-2">
               Question Title
@@ -114,6 +115,7 @@ function QuestionEditor({ questions, setQuestions, reference, formID }) {
             />
           </div>
 
+          {/* Description */}
           <div className="mb-4">
             <label className="block text-gray-700 font-medium mb-2">
               Question Description
@@ -125,6 +127,83 @@ function QuestionEditor({ questions, setQuestions, reference, formID }) {
                 handleUpdateQuestion(index, "description", e.target.value)
               }
             />
+          </div>
+
+          {/* Other Fields */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Order
+              </label>
+              <input
+                type="number"
+                className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 shadow-sm"
+                value={field.order}
+                onChange={(e) =>
+                  handleUpdateQuestion(index, "order", parseInt(e.target.value))
+                }
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Response Type
+              </label>
+              <select
+                className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 shadow-sm"
+                value={field.response_type}
+                onChange={(e) =>
+                  handleUpdateQuestion(index, "response_type", e.target.value)
+                }
+              >
+                <option value="text">Text</option>
+                <option value="number">Number</option>
+                <option value="radio">Multiple Choice</option>
+                <option value="checkbox">Checkbox</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Weight
+              </label>
+              <input
+                type="number"
+                className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 shadow-sm"
+                value={field.weight}
+                onChange={(e) =>
+                  handleUpdateQuestion(index, "weight", parseFloat(e.target.value))
+                }
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Reference 
+              </label>
+              <select
+                className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 shadow-sm"
+                value={field.reference}
+                onChange={(e) =>
+                  handleUpdateQuestion(index, "reference", e.target.value)
+                }
+              >
+                <option value="general">General</option>
+                <option value="student">Student</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Required
+              </label>
+              <input
+                type="checkbox"
+                className="w-6 h-6"
+                checked={field.required}
+                onChange={(e) =>
+                  handleUpdateQuestion(index, "required", e.target.checked)
+                }
+              />
+            </div>
           </div>
         </div>
       ))}
