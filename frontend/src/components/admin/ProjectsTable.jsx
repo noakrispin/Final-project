@@ -70,7 +70,8 @@ const ProjectsTable = ({
       key: 'title', 
       header: 'Project Title', 
       sortable: true, 
-      render: (value, row) => renderEditableCell(value, row, 'title', 'Project Title') 
+      render: (value, row) => renderEditableCell(value, row, 'title', 'Project Title'), 
+      className: "w-40 min-w-[150px] max-w-[200px] truncate"
     },
     { 
       key: 'students', 
@@ -136,7 +137,7 @@ const ProjectsTable = ({
   if (!projects || projects.length === 0) {
     return (
       <Card className="p-6 ">
-        <p className="text-gray-600">No projects available to display.</p>
+        <p className="text-gray-600 text-xl text-center">No projects available to display.</p>
       </Card>
     );
   }
@@ -148,7 +149,7 @@ const ProjectsTable = ({
         data={projects}
         showTabs={false}
         showDescription={true}
-        description="Click any cell to edit its content. Supervisor names and project codes are read-only."
+        description="Click cell to edit its content. Names, project codes and parts are read-only."
         onRowClick={() => {}} // Placeholder to prevent errors
       />
     </Card>

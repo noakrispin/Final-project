@@ -131,87 +131,85 @@ const AdminGradesPage = () => {
 
   const handleRefreshClick = async () => {
     try {
-        setIsLoading(true);
-        toast.info("Refreshing grades...");
+      setIsLoading(true);
+      toast.info("Refreshing grades...");
 
-        for (const project of projects) {
-            const { projectCode } = project;
-            const evaluationsByForm = [];
+      for (const project of projects) {
+        const { projectCode } = project;
+        const evaluationsByForm = [];
 
-            for (const formID of [
-                "SupervisorForm",
-                "PresentationFormA",
-                "PresentationFormB",
-                "bookReviewerFormA",
-                "bookReviewerFormB",
-            ]) {
-                try {
-                    const response = await formsApi.getEvaluations(formID);
-                    const filteredEvaluations = response?.filter(
-                        (evaluation) => evaluation.projectCode === projectCode
-                    );
-                    const gradesByStudent = {};
-                    filteredEvaluations.forEach((evaluation) => {
-                        Object.entries(evaluation.grades).forEach(
-                            ([studentID, grade]) => {
-                                if (!gradesByStudent[studentID]) {
-                                    gradesByStudent[studentID] = [];
-                                }
-                                gradesByStudent[studentID].push(grade);
-                            }
-                        );
-                    });
-                    evaluationsByForm.push({
-                        formID,
-                        grades: Object.entries(gradesByStudent).map(
-                            ([studentID, grades]) => ({ studentID, grades })
-                        ),
-                    });
-                } catch (error) {
-                    console.error(
-                        `Error fetching evaluations for formID: ${formID}`,
-                        error.message
-                    );
-                }
-            }
-
-            if (evaluationsByForm.length > 0) {
-                try {
-                    await gradesApi.addOrUpdateGrade({
-                        projectCode,
-                        evaluationsByForm,
-                    });
-                } catch (error) {
-                    toast.error(
-                        `Failed to update grades for project ${projectCode}.`
-                    );
-                }
-            }
-        }
-
-        const updatedProjects = await gradesApi.getAllGrades();
-        const allProjects = await projectsApi.getAllProjects();
-        const allUsers = await userApi.getAllUsers();
-        console.log("Updated Projects after Refresh:", updatedProjects);
-
-        if (updatedProjects.data && updatedProjects.data.length > 0) {
-            const processedData = preprocessProjects(
-                updatedProjects.data,
-                allProjects,
-                allUsers
+        for (const formID of [
+          "SupervisorForm",
+          "PresentationFormA",
+          "PresentationFormB",
+          "bookReviewerFormA",
+          "bookReviewerFormB",
+        ]) {
+          try {
+            const response = await formsApi.getEvaluations(formID);
+            const filteredEvaluations = response?.filter(
+              (evaluation) => evaluation.projectCode === projectCode
             );
-            setProjects(processedData);
-            toast.success("Grades refreshed successfully!");
-        } else {
-            toast.warn("No projects found after refreshing grades.");
+            const gradesByStudent = {};
+            filteredEvaluations.forEach((evaluation) => {
+              Object.entries(evaluation.grades).forEach(
+                ([studentID, grade]) => {
+                  if (!gradesByStudent[studentID]) {
+                    gradesByStudent[studentID] = [];
+                  }
+                  gradesByStudent[studentID].push(grade);
+                }
+              );
+            });
+            evaluationsByForm.push({
+              formID,
+              grades: Object.entries(gradesByStudent).map(
+                ([studentID, grades]) => ({ studentID, grades })
+              ),
+            });
+          } catch (error) {
+            console.error(
+              `Error fetching evaluations for formID: ${formID}`,
+              error.message
+            );
+          }
         }
+
+        if (evaluationsByForm.length > 0) {
+          try {
+            await gradesApi.addOrUpdateGrade({
+              projectCode,
+              evaluationsByForm,
+            });
+          } catch (error) {
+            toast.error(`Failed to update grades for project ${projectCode}.`);
+          }
+        }
+      }
+
+      const updatedProjects = await gradesApi.getAllGrades();
+      const allProjects = await projectsApi.getAllProjects();
+      const allUsers = await userApi.getAllUsers();
+      console.log("Updated Projects after Refresh:", updatedProjects);
+
+      if (updatedProjects.data && updatedProjects.data.length > 0) {
+        const processedData = preprocessProjects(
+          updatedProjects.data,
+          allProjects,
+          allUsers
+        );
+        setProjects(processedData);
+        toast.success("Grades refreshed successfully!");
+      } else {
+        toast.warn("No projects found after refreshing grades.");
+      }
     } catch (error) {
-        console.error("Error refreshing grades:", error.message);
-        toast.error("Failed to refresh grades.");
+      console.error("Error refreshing grades:", error.message);
+      toast.error("Failed to refresh grades.");
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
-};
+  };
 
   const renderGradeStatus = (status) => {
     console.log("status in render status:", status);
@@ -272,18 +270,29 @@ const AdminGradesPage = () => {
         header: "Supervisors",
         className: "text-base",
         render: (_, project) => {
-          console.log("Rendering supervisors:", project.supervisors);
-          return project.supervisors || "N/A";
+          if (!project.supervisors) return "N/A";
+          return (
+            <div className="whitespace-pre-line">
+              {project.supervisors.split(", ").map((supervisor, index) => (
+                <div key={index}>{supervisor}</div>
+              ))}
+            </div>
+          );
         },
       },
+
       {
         key: "bookGrade",
         header: "Book Grade",
-        className: "text-base",
+        className: "text-base ",
         render: (value, row) => {
-          return row.bookGrade !== undefined && row.bookGrade !== "N/A"
-            ? row.bookGrade
-            : "";
+          return (
+            <div className="whitespace-pre-line text-center">
+              {row.bookGrade !== undefined && row.bookGrade !== "N/A"
+                ? row.bookGrade
+                : "-"}
+            </div>
+          );
         },
       },
       {
@@ -291,23 +300,31 @@ const AdminGradesPage = () => {
         header: "Presentation Grade",
         className: "text-base",
         render: (value, row) => {
-          return row.presentationGrade !== undefined &&
-            row.presentationGrade !== "N/A"
-            ? row.presentationGrade
-            : "";
+          return (
+            <div className="whitespace-pre-line text-center">
+              {row.presentationGrade !== undefined &&
+              row.presentationGrade !== "N/A"
+                ? row.presentationGrade
+                : "-"}
+            </div>
+          );
         },
       },
       {
         key: "supervisorGrade",
         header: "Supervisor Grade",
-        className: "text-base",
+        className: "text-base text-center",
         render: (value, row) => {
-          return row.supervisorGrade !== undefined &&
-            row.supervisorGrade !== "N/A"
-            ? typeof row.supervisorGrade === "number"
-              ? row.supervisorGrade.toFixed(2)
-              : row.supervisorGrade
-            : "";
+          return (
+            <div className="whitespace-pre-line text-center">
+              {row.supervisorGrade !== undefined &&
+              row.supervisorGrade !== "N/A"
+                ? typeof row.supervisorGrade === "number"
+                  ? row.supervisorGrade
+                  : row.supervisorGrade
+                : "-"}
+            </div>
+          );
         },
       },
       {
@@ -315,12 +332,16 @@ const AdminGradesPage = () => {
         header: "Final Grade",
         className: "text-base",
         render: (value, row) => {
-          return row.finalGrade !== undefined &&
-            row.finalGrade !== "N/A"
-            ? typeof row.finalGrade === "number"
-              ? row.finalGrade.toFixed(2)
-              : row.finalGrade
-            : "";
+          return (
+            <div className="whitespace-pre-line text-center">
+              {" "}
+              {row.finalGrade !== undefined && row.finalGrade !== "N/A"
+                ? typeof row.finalGrade === "number"
+                  ? row.finalGrade
+                  : row.finalGrade
+                : "-"}
+            </div>
+          );
         },
       },
 
@@ -395,7 +416,12 @@ const AdminGradesPage = () => {
   };
 
   if (isLoading) {
-    return <LoadingScreen isLoading={isLoading}  description="Updateding grades, please wait..."/>; 
+    return (
+      <LoadingScreen
+        isLoading={isLoading}
+        description="Updateding grades, please wait..."
+      />
+    );
   }
 
   if (error) {
@@ -410,7 +436,7 @@ const AdminGradesPage = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen p-6">
-      <div className="max-w-7xl mx-auto bg-white shadow-md rounded-lg">
+      <div className="max-w-full mx-auto bg-white shadow-md rounded-lg">
         <div className="p-6 border-b border-gray-200 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">
