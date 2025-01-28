@@ -9,6 +9,7 @@ import { Table } from "../components/ui/Table";
 import { getGrade } from "../utils/getGrade";
 import { formatDate } from "../utils/dateUtils";
 import { Card } from "../components/ui/Card";
+import LoadingScreen from "../components/shared/LoadingScreen";
 
 const TABS = ["My Projects", "Other Projects"];
 
@@ -282,7 +283,10 @@ const OtherProjectsReview = () => {
     return <span>{grade}</span>;
   };
 
-  if (isLoading) return <div className="text-center mt-10">Loading...</div>;
+  if (isLoading) {
+    return <LoadingScreen isLoading={isLoading} />;
+  }
+
   if (error)
     return <div className="text-center text-red-500 mt-10">{error}</div>;
 

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { BlurElements } from "../../components/shared/BlurElements";
 import { userApi } from "../../services/userAPI";
 import UserTable from "../../components/admin/UserTable";
+import LoadingScreen from "../../components/shared/LoadingScreen";
 
 const UserManagement = () => {
   const navigate = useNavigate();
@@ -149,7 +150,9 @@ const UserManagement = () => {
       alert("An error occurred while updating the user role.");
     }
   };
-  if (loading) return <div>Loading users...</div>;
+  if (loading) {
+    return <LoadingScreen isLoading={loading}  description="Looking for users..."/>; 
+  }
   if (error) return <div className="text-red-600">{error}</div>;
 
   return (

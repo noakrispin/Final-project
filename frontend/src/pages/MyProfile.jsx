@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext"; // Correctly import useAuth
+import { useAuth } from "../context/AuthContext"; 
 import { projectsApi } from "../services/projectsAPI";
 import { userApi } from "../services/userAPI";
 import { evaluatorsApi } from "../services/evaluatorsAPI";
+import LoadingScreen from "../components/shared/LoadingScreen";
 
 export default function MyProfile() {
-  const { user: authUser } = useAuth(); // Use the useAuth hook
+  const { user: authUser } = useAuth(); 
   const [user, setUser] = useState(null);
   const [supervisedProjectsCount, setSupervisedProjectsCount] = useState(0);
   const [pendingReviewsCount, setPendingReviewsCount] = useState(0);
@@ -56,7 +57,9 @@ export default function MyProfile() {
     fetchProfileAndProjects();
   }, [authUser]);
   
-  if (loading) return <div>Loading your profile...</div>;
+  if (loading) {
+    return <LoadingScreen isLoading={loading}  description="Preparing your profile..."/>; 
+  }
   if (error) return <div>Error: {error}</div>;
 
   if (!user) {

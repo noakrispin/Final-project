@@ -10,11 +10,10 @@ import EditFieldModal from "../../components/actions/EditTitleModal";
 import { useProjectModals } from "../../hooks/useProjectModals";
 import { projectsApi } from "../../services/projectsAPI";
 import { userApi } from "../../services/userAPI";
-import { evaluatorsApi } from "../../services/evaluatorsAPI";
-import { gradesApi } from "../../services/finalGradesAPI";
 import { db } from "../../firebaseConfig";
-import { collection, collectionGroup, query, where, getDocs, deleteDoc, doc, addDoc, updateDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, deleteDoc, doc, addDoc, updateDoc } from "firebase/firestore";
 import { MdOutlineFileUpload } from "react-icons/md";
+import LoadingScreen from "../../components/shared/LoadingScreen";
 import * as XLSX from "xlsx";
 
 const TABS = ["All Projects", "Part A", "Part B"];
@@ -335,7 +334,7 @@ const AdminProjects = () => {
   
   
   if (loading) {
-    return <div className="text-center py-10">Loading...</div>;
+    return <LoadingScreen isLoading={loading}  description="Looking for projects..."/>; 
   }
 
   if (error) {
@@ -522,6 +521,7 @@ const handleDeleteProject = async () => {
           </div>
 
           {/* Projects Table */}
+          
           <ProjectsTable
             projects={projects.filter((project) =>
               activeTab === "All Projects"

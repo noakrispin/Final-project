@@ -13,6 +13,7 @@ const ProjectsTable = ({
   onStudentClick,
   onDelete 
 }) => {
+  
   const renderEditableCell = (value, row, field, fieldName, fieldType = 'text', options = []) => (
     <div className="group relative">
       <button
@@ -134,14 +135,14 @@ const ProjectsTable = ({
 
   if (!projects || projects.length === 0) {
     return (
-      <Card className="p-6">
+      <Card className="p-6 ">
         <p className="text-gray-600">No projects available to display.</p>
       </Card>
     );
   }
 
   return (
-    <Card className="p-6">
+    <Card className="p-6 ">
       <Table 
         columns={projectColumns} 
         data={projects}

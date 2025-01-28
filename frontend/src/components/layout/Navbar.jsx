@@ -113,7 +113,7 @@ const Navbar = () => {
             <SearchBar
               value={searchQuery}
               onChange={handleSearchChange} // Update search query
-              placeholder="Search"
+              placeholder="Search Projects..."
             />
 
             {showResults && searchResults.length > 0 ? (

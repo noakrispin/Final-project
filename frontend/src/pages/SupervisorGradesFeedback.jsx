@@ -9,6 +9,7 @@ import * as XLSX from "xlsx";
 import { toast } from "react-toastify";
 import { LuRefreshCcw } from "react-icons/lu";
 import "react-toastify/dist/ReactToastify.css";
+import LoadingScreen from "../components/shared/LoadingScreen";
 
 const SupervisorGradesFeedback = () => {
   const { user } = useAuth(); // Retrieve the logged-in user details
@@ -256,11 +257,12 @@ const SupervisorGradesFeedback = () => {
         header: "Final Grade",
         className: "text-base text-center",
         render: (value, row) => {
-          console.log("Row in final grade:", row)
-          console.log("Value in final grade:", value)
-          const grade = row.finalGrade
-          if (grade === null || grade === undefined) return " "
-          return typeof grade === "number" ? grade.toFixed(2) : grade
+          return row.finalGrade !== undefined &&
+            row.finalGrade !== "N/A"
+            ? typeof row.finalGrade === "number"
+              ? row.finalGrade.toFixed(2)
+              : row.finalGrade
+            : " ";
         },
       }, 
       
@@ -321,12 +323,9 @@ const SupervisorGradesFeedback = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="text-center mt-10 text-lg font-medium text-gray-500">
-        Loading project grades...
-      </div>
-    );
+    return <LoadingScreen isLoading={isLoading}  description="Updateding grades, please wait..."/>; 
   }
+
 
   if (error) {
     return <div className="text-center text-red-500 mt-10">{error}</div>;
