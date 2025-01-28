@@ -54,164 +54,181 @@ const AdminGradesPage = () => {
 
   const preprocessProjects = (grades, projects, users) => {
     try {
-      console.log("Preprocessing projects with grades, projects, and users...");
-      console.log("Grades:", grades);
-      console.log("Projects:", projects);
-      console.log("Users:", users);
+        console.log("Preprocessing projects with grades, projects, and users...");
+        console.log("Grades:", grades);
+        console.log("Projects:", projects);
+        console.log("Users:", users);
 
-      // Filter out placeholder grades
-      const filteredGrades = grades.filter(
-        (grade) =>
-          grade.projectCode && grade.projectCode !== "placeholderProject"
-      );
-      console.log("Filtered Grades:", filteredGrades);
+        // Filter out placeholder grades
+        const filteredGrades = grades.filter(
+            (grade) => grade.projectCode && grade.projectCode !== "placeholderProject"
+        );
+        console.log("Filtered Grades:", filteredGrades);
 
-      // Map grades to project and user details
-      return filteredGrades
-        .map((grade) => {
-          const project = projects.find(
-            (proj) => proj.projectCode === grade.projectCode
-          );
+        // Map grades to project and user details
+        return filteredGrades
+            .map((grade) => {
+                const project = projects.find(
+                    (proj) => proj.projectCode === grade.projectCode
+                );
 
-          if (!project) {
-            console.warn(`Project not found for grade: ${grade.projectCode}`);
-            return null;
-          }
+                if (!project) {
+                    console.warn(`Project not found for grade: ${grade.projectCode}`);
+                    return null;
+                }
 
-          const student = [project.Student1, project.Student2].find(
-            (s) => s && s.ID === grade.studentID
-          );
+                const student1 = project.Student1 || {};
+                const student2 = project.Student2 || {};
 
-          // Find the student name dynamically
-          const studentName =
-            [project.Student1, project.Student2]
-              .filter((student) => student && student.ID === grade.studentID)
-              .map(
-                (student) =>
-                  student.fullName || `${student.firstName} ${student.lastName}`
-              )
-              .join(", ") || "Unknown Student";
+                // Find the student's grade
+                const student1Grade = filteredGrades.find(
+                    (g) => g.studentID === student1.ID
+                );
+                const student2Grade = filteredGrades.find(
+                    (g) => g.studentID === student2.ID
+                );
 
-          // Map supervisor IDs to full names from the `users` collection
-          const supervisors = [project.supervisor1, project.supervisor2]
-            .filter((id) => id) // Exclude null or empty supervisor IDs
-            .map((id) => {
-              const supervisor = users.find((user) => user.emailId === id);
-              return supervisor ? supervisor.fullName : ` ${id}`;
-            });
-          const projectSupervisors =
-            supervisors.length > 0 ? supervisors.join(", ") : "No Supervisors";
+                // Find the student name dynamically
+                const studentName =
+                    [student1, student2]
+                        .filter((student) => student && student.ID === grade.studentID)
+                        .map(
+                            (student) =>
+                                student.fullName || `${student.firstName} ${student.lastName}`
+                        )
+                        .join(", ") || "Unknown Student";
 
-          const deadline =
-            project.deadline && project.deadline._seconds
-              ? new Date(project.deadline._seconds * 1000).toLocaleDateString()
-              : "No Deadline"; // Use a fallback for undefined deadlines
+                // Map supervisor IDs to full names from the `users` collection
+                const supervisors = [project.supervisor1, project.supervisor2]
+                    .filter((id) => id) // Exclude null or empty supervisor IDs
+                    .map((id) => {
+                        const supervisor = users.find((user) => user.emailId === id);
+                        return supervisor ? supervisor.fullName : ` ${id}`;
+                    });
+                const projectSupervisors =
+                    supervisors.length > 0 ? supervisors.join(", ") : "No Supervisors";
 
-          console.log("Rendering status(in preprocess):", grade.status);
+                const deadline =
+                    project.deadline && project.deadline._seconds
+                        ? new Date(project.deadline._seconds * 1000).toLocaleDateString()
+                        : "No Deadline"; // Use a fallback for undefined deadlines
 
-          return {
-            ...project, // Include project details
-            projectCode: grade.projectCode,
-            studentName,
-            supervisors: projectSupervisors,
-            presentationGrade: grade.CalculatedPresentationGrade || "N/A",
-            bookGrade: grade.CalculatedBookGrade || "N/A",
-            supervisorGrade: grade.CalculatedSupervisorGrade || "N/A",
-            finalGrade: grade.finalGrade || "N/A",
-            status: grade.status || "Not graded",
-            deadline: deadline, // Add fallback value for undefined deadline
-          };
-        })
-        .filter(Boolean); // Filter out null values
+                console.log("Rendering status(in preprocess):", grade.status);
+
+                return {
+                    ...project, // Include project details
+                    projectCode: grade.projectCode,
+                    studentName,
+                    supervisors: projectSupervisors,
+                    presentationGrade: grade.CalculatedPresentationGrade || "",
+                    bookGrade: grade.CalculatedBookGrade || "",
+                    supervisorGrade: grade.CalculatedSupervisorGrade || "",
+                    finalGrade: grade.finalGrade || "",
+                    status: grade.status || "Not graded",
+                    deadline: deadline, 
+                    student1: {
+                        id: student1.ID,
+                        firstName: student1.firstName || "",
+                        lastName: student1.lastName || "",
+                        finalGrade: student1Grade ? student1Grade.finalGrade : "",
+                    },
+                    student2: {
+                      id: student2.ID,
+                      firstName: student2.firstName || "",
+                      lastName: student2.lastName || "",
+                      finalGrade: student2Grade ? student2Grade.finalGrade : "",
+                    },
+                };
+            })
+            .filter(Boolean); // Filter out null values
     } catch (error) {
-      console.error("Error preprocessing projects:", error.message);
-      throw new Error("Failed to preprocess project data.");
+        console.error("Error preprocessing projects:", error.message);
+        throw new Error("Failed to preprocess project data.");
     }
-  };
+};
+
 
   const handleRefreshClick = async () => {
     try {
-        setIsLoading(true);
-        toast.info("Refreshing grades...");
+      setIsLoading(true);
+      toast.info("Refreshing grades...");
 
-        for (const project of projects) {
-            const { projectCode } = project;
-            const evaluationsByForm = [];
+      for (const project of projects) {
+        const { projectCode } = project;
+        const evaluationsByForm = [];
 
-            for (const formID of [
-                "SupervisorForm",
-                "PresentationFormA",
-                "PresentationFormB",
-                "bookReviewerFormA",
-                "bookReviewerFormB",
-            ]) {
-                try {
-                    const response = await formsApi.getEvaluations(formID);
-                    const filteredEvaluations = response?.filter(
-                        (evaluation) => evaluation.projectCode === projectCode
-                    );
-                    const gradesByStudent = {};
-                    filteredEvaluations.forEach((evaluation) => {
-                        Object.entries(evaluation.grades).forEach(
-                            ([studentID, grade]) => {
-                                if (!gradesByStudent[studentID]) {
-                                    gradesByStudent[studentID] = [];
-                                }
-                                gradesByStudent[studentID].push(grade);
-                            }
-                        );
-                    });
-                    evaluationsByForm.push({
-                        formID,
-                        grades: Object.entries(gradesByStudent).map(
-                            ([studentID, grades]) => ({ studentID, grades })
-                        ),
-                    });
-                } catch (error) {
-                    console.error(
-                        `Error fetching evaluations for formID: ${formID}`,
-                        error.message
-                    );
-                }
-            }
-
-            if (evaluationsByForm.length > 0) {
-                try {
-                    await gradesApi.addOrUpdateGrade({
-                        projectCode,
-                        evaluationsByForm,
-                    });
-                } catch (error) {
-                    toast.error(
-                        `Failed to update grades for project ${projectCode}.`
-                    );
-                }
-            }
-        }
-
-        const updatedProjects = await gradesApi.getAllGrades();
-        const allProjects = await projectsApi.getAllProjects();
-        const allUsers = await userApi.getAllUsers();
-        console.log("Updated Projects after Refresh:", updatedProjects);
-
-        if (updatedProjects.data && updatedProjects.data.length > 0) {
-            const processedData = preprocessProjects(
-                updatedProjects.data,
-                allProjects,
-                allUsers
+        for (const formID of [
+          "SupervisorForm",
+          "PresentationFormA",
+          "PresentationFormB",
+          "bookReviewerFormA",
+          "bookReviewerFormB",
+        ]) {
+          try {
+            const response = await formsApi.getEvaluations(formID);
+            const filteredEvaluations = response?.filter(
+              (evaluation) => evaluation.projectCode === projectCode
             );
-            setProjects(processedData);
-            toast.success("Grades refreshed successfully!");
-        } else {
-            toast.warn("No projects found after refreshing grades.");
+            const gradesByStudent = {};
+            filteredEvaluations.forEach((evaluation) => {
+              Object.entries(evaluation.grades).forEach(
+                ([studentID, grade]) => {
+                  if (!gradesByStudent[studentID]) {
+                    gradesByStudent[studentID] = [];
+                  }
+                  gradesByStudent[studentID].push(grade);
+                }
+              );
+            });
+            evaluationsByForm.push({
+              formID,
+              grades: Object.entries(gradesByStudent).map(
+                ([studentID, grades]) => ({ studentID, grades })
+              ),
+            });
+          } catch (error) {
+            console.error(
+              `Error fetching evaluations for formID: ${formID}`,
+              error.message
+            );
+          }
         }
+
+        if (evaluationsByForm.length > 0) {
+          try {
+            await gradesApi.addOrUpdateGrade({
+              projectCode,
+              evaluationsByForm,
+            });
+          } catch (error) {
+            toast.error(`Failed to update grades for project ${projectCode}.`);
+          }
+        }
+      }
+
+      const updatedProjects = await gradesApi.getAllGrades();
+      const allProjects = await projectsApi.getAllProjects();
+      const allUsers = await userApi.getAllUsers();
+      console.log("Updated Projects after Refresh:", updatedProjects);
+
+      if (updatedProjects.data && updatedProjects.data.length > 0) {
+        const processedData = preprocessProjects(
+          updatedProjects.data,
+          allProjects,
+          allUsers
+        );
+        setProjects(processedData);
+        toast.success("Grades refreshed successfully!");
+      } else {
+        toast.warn("No projects found after refreshing grades.");
+      }
     } catch (error) {
-        console.error("Error refreshing grades:", error.message);
-        toast.error("Failed to refresh grades.");
+      console.error("Error refreshing grades:", error.message);
+      toast.error("Failed to refresh grades.");
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
-};
+  };
 
   const renderGradeStatus = (status) => {
     console.log("status in render status:", status);
@@ -272,18 +289,29 @@ const AdminGradesPage = () => {
         header: "Supervisors",
         className: "text-base",
         render: (_, project) => {
-          console.log("Rendering supervisors:", project.supervisors);
-          return project.supervisors || "N/A";
+          if (!project.supervisors) return "N/A";
+          return (
+            <div className="whitespace-pre-line">
+              {project.supervisors.split(", ").map((supervisor, index) => (
+                <div key={index}>{supervisor}</div>
+              ))}
+            </div>
+          );
         },
       },
+
       {
         key: "bookGrade",
         header: "Book Grade",
-        className: "text-base",
+        className: "text-base ",
         render: (value, row) => {
-          return row.bookGrade !== undefined && row.bookGrade !== "N/A"
-            ? row.bookGrade
-            : "";
+          return (
+            <div className="whitespace-pre-line text-center">
+              {row.bookGrade !== undefined && row.bookGrade !== "N/A"
+                ? row.bookGrade
+                : "-"}
+            </div>
+          );
         },
       },
       {
@@ -291,23 +319,31 @@ const AdminGradesPage = () => {
         header: "Presentation Grade",
         className: "text-base",
         render: (value, row) => {
-          return row.presentationGrade !== undefined &&
-            row.presentationGrade !== "N/A"
-            ? row.presentationGrade
-            : "";
+          return (
+            <div className="whitespace-pre-line text-center">
+              {row.presentationGrade !== undefined &&
+              row.presentationGrade !== "N/A"
+                ? row.presentationGrade
+                : "-"}
+            </div>
+          );
         },
       },
       {
         key: "supervisorGrade",
         header: "Supervisor Grade",
-        className: "text-base",
+        className: "text-base text-center",
         render: (value, row) => {
-          return row.supervisorGrade !== undefined &&
-            row.supervisorGrade !== "N/A"
-            ? typeof row.supervisorGrade === "number"
-              ? row.supervisorGrade.toFixed(2)
-              : row.supervisorGrade
-            : "";
+          return (
+            <div className="whitespace-pre-line text-center">
+              {row.supervisorGrade !== undefined &&
+              row.supervisorGrade !== "N/A"
+                ? typeof row.supervisorGrade === "number"
+                  ? row.supervisorGrade
+                  : row.supervisorGrade
+                : "-"}
+            </div>
+          );
         },
       },
       {
@@ -315,12 +351,16 @@ const AdminGradesPage = () => {
         header: "Final Grade",
         className: "text-base",
         render: (value, row) => {
-          return row.finalGrade !== undefined &&
-            row.finalGrade !== "N/A"
-            ? typeof row.finalGrade === "number"
-              ? row.finalGrade.toFixed(2)
-              : row.finalGrade
-            : "";
+          return (
+            <div className="whitespace-pre-line text-center">
+              {" "}
+              {row.finalGrade !== undefined && row.finalGrade !== "N/A"
+                ? typeof row.finalGrade === "number"
+                  ? row.finalGrade
+                  : row.finalGrade
+                : "-"}
+            </div>
+          );
         },
       },
 
@@ -344,8 +384,13 @@ const AdminGradesPage = () => {
   const prepareExportData = (projects) => {
     const exportData = [];
     const seenStudentIds = new Set(); // Track processed student IDs
+    console.log("Projects before export:", projects);
 
     projects.forEach((project) => {
+      // Ensure final grades come from the correct filtered grades
+      const student1FinalGrade = project.student1 ? project.student1.finalGrade : "N/A";
+      const student2FinalGrade = project.student2 ? project.student2.finalGrade : "N/A";
+
       // Add Student 1 data if not already added
       if (project.Student1 && !seenStudentIds.has(project.Student1.ID)) {
         seenStudentIds.add(project.Student1.ID);
@@ -353,7 +398,7 @@ const AdminGradesPage = () => {
           "Student ID": project.Student1.ID || "",
           "Student Last Name": project.Student1.lastName || "",
           "Student First Name": project.Student1.firstName || "",
-          "Student Final Grade": project.Student1.finalGrade || "",
+          "Student Final Grade": student1FinalGrade, 
         });
       }
 
@@ -363,29 +408,30 @@ const AdminGradesPage = () => {
         exportData.push({
           "Student ID": project.Student2.ID || "",
           "Student Last Name": project.Student2.lastName || "",
-          "Student First Name": project.Student1.firstName || "",
-          "Student Final Grade": project.Student2.finalGrade || "",
+          "Student First Name": project.Student2.firstName || "",
+          "Student Final Grade": student2FinalGrade, 
         });
       }
     });
 
     return exportData;
-  };
+};
+
 
   const handleExportToExcel = () => {
     try {
       // Prepare data for export with the selected columns
       const exportData = prepareExportData(projects);
-
+      console.log("Export Data:", exportData);
       // Create a new workbook and add the data
       const workbook = XLSX.utils.book_new();
       const worksheet = XLSX.utils.json_to_sheet(exportData);
 
       // Append worksheet to workbook
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Grades");
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Final Grades");
 
       // Export the workbook
-      XLSX.writeFile(workbook, "grades_export.xlsx");
+      XLSX.writeFile(workbook, "Students_final_grades_export.xlsx");
 
       toast.success("Grades exported successfully!");
     } catch (error) {
@@ -395,7 +441,12 @@ const AdminGradesPage = () => {
   };
 
   if (isLoading) {
-    return <LoadingScreen isLoading={isLoading}  description="Updateding grades, please wait..."/>; 
+    return (
+      <LoadingScreen
+        isLoading={isLoading}
+        description="Updateding grades, please wait..."
+      />
+    );
   }
 
   if (error) {
@@ -410,7 +461,7 @@ const AdminGradesPage = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen p-6">
-      <div className="max-w-7xl mx-auto bg-white shadow-md rounded-lg">
+      <div className="max-w-full mx-auto bg-white shadow-md rounded-lg">
         <div className="p-6 border-b border-gray-200 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">

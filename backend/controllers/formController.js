@@ -31,18 +31,41 @@ module.exports = {
     const updatedData = req.body;
 
     if (!formID || !updatedData) {
-      return res.status(400).json({ message: "Form ID and updated data are required." });
+        return res.status(400).json({ message: "Form ID and updated data are required." });
     }
 
     try {
-      await db.collection("forms").doc(formID).update(updatedData);
-      res.status(200).json({ message: "Form updated successfully." });
-    } catch (error) {
-      console.error("Error updating form:", error.message);
-      res.status(500).json({ message: "Failed to update form." });
-    }
-  },
+        const formRef = db.collection("forms").doc(formID);
 
+        // Extract form metadata and questions separately
+        const { formName, description, questions } = updatedData;
+
+        // Step 1: Update form metadata (if provided)
+        if (formName || description) {
+            await formRef.update({
+                ...(formName && { formName }), // Only update if provided
+                ...(description && { description })
+            });
+        }
+
+        // Step 2: Update the questions inside the subcollection (if provided)
+        if (questions && Array.isArray(questions)) {
+            const batch = db.batch();
+
+            questions.forEach((question) => {
+                const questionRef = formRef.collection("questions").doc(question.id);
+                batch.set(questionRef, question, { merge: true }); // Merge ensures existing fields aren't deleted
+            });
+
+            await batch.commit();
+        }
+
+        res.status(200).json({ message: "Form and questions updated successfully." });
+    } catch (error) {
+        console.error("Error updating form:", error.message);
+        res.status(500).json({ message: "Failed to update form." });
+    }
+},
   // Fetch a specific form
   getForm: async (req, res) => {
     const { formID } = req.params;

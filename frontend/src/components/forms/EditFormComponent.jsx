@@ -4,8 +4,14 @@ import { useNavigate } from "react-router-dom";
 import { FaTrashAlt, FaPlus } from "react-icons/fa";
 import { Button } from "../ui/Button";
 import { formsApi } from "../../services/formAPI";
+import ConfirmationModal from "../shared/ConfirmationModal";
 
 function QuestionEditor({ questions, setQuestions, reference, formID }) {
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    index: null,
+  });
+
   const handleAddQuestion = async () => {
     const newQuestion = {
       id: `new_${Date.now()}`,
@@ -19,7 +25,6 @@ function QuestionEditor({ questions, setQuestions, reference, formID }) {
       weight: 0,
     };
 
-    // Optimistic update
     setQuestions((prev) => [...prev, newQuestion]);
 
     try {
@@ -28,7 +33,6 @@ function QuestionEditor({ questions, setQuestions, reference, formID }) {
         throw new Error("Failed to add question on the server.");
       }
 
-      // Update local state with server-confirmed data
       const updatedQuestion = { ...newQuestion, id: response.id };
       setQuestions((prev) =>
         prev.map((q) => (q.id === newQuestion.id ? updatedQuestion : q))
@@ -36,64 +40,66 @@ function QuestionEditor({ questions, setQuestions, reference, formID }) {
     } catch (error) {
       console.error("Error adding question:", error.message);
       alert("Failed to add question. Please try again.");
-      // Revert optimistic update
       setQuestions((prev) => prev.filter((q) => q.id !== newQuestion.id));
     }
   };
 
-  const handleDeleteQuestion = async (index) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this question?"
-    );
-    if (!confirmDelete) return;
+  const confirmDeleteQuestion = (index) => {
+    setDeleteModal({ isOpen: true, index });
+  };
+
+  const handleDeleteQuestion = async () => {
+    const index = deleteModal.index;
+    if (index === null) return;
 
     const questionToDelete = questions[index];
 
     try {
-      // Delete from DB if it exists there
       if (!questionToDelete.id.startsWith("new_")) {
         await formsApi.deleteQuestion(formID, questionToDelete.id);
       }
-      // Remove from local state
       setQuestions((prev) => prev.filter((_, i) => i !== index));
     } catch (error) {
       console.error("Error deleting question:", error.message);
       alert("Failed to delete question. Please try again.");
+    } finally {
+      setDeleteModal({ isOpen: false, index: null });
     }
   };
 
   const handleUpdateQuestion = (index, key, value) => {
-    const updatedValue =
-      key === "order" || key === "weight" ? Number(value) : value;
-  
+    let updatedValue = value;
+    if (key === "order" || key === "weight") {
+      updatedValue = Number(value);
+    } else if (key === "required") {
+      updatedValue = value === "true" || value === true;
+    }
+
     const updatedQuestion = { ...questions[index], [key]: updatedValue };
     setQuestions((prev) =>
       prev.map((q, i) => (i === index ? updatedQuestion : q))
     );
-    console.log("Updated question locally:", updatedQuestion);
   };
-  
 
   return (
     <div className="space-y-6">
-        {questions.map((field, index) => (
-          <div
-            key={field.id || `question-${index}`} // Ensure unique key
-            className="p-6 bg-white border border-gray-300 rounded-lg shadow-sm"
-          >
+      {questions.map((field, index) => (
+        <div
+          key={field.id || `question-${index}`}
+          className="p-6 bg-white border border-gray-300 rounded-lg shadow-sm"
+        >
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl text-blue-900 font-semibold">
               {field.reference} Question #{index + 1}
             </h3>
             <button
-              onClick={() => handleDeleteQuestion(index)}
+              onClick={() => confirmDeleteQuestion(index)}
               className="text-red-500 hover:text-red-700 text-2xl"
             >
               <FaTrashAlt />
             </button>
           </div>
 
-          {/* Title */}
           <div className="mb-4">
             <label className="block text-gray-700 font-medium mb-2">
               Question Title
@@ -108,7 +114,6 @@ function QuestionEditor({ questions, setQuestions, reference, formID }) {
             />
           </div>
 
-          {/* Description */}
           <div className="mb-4">
             <label className="block text-gray-700 font-medium mb-2">
               Question Description
@@ -121,51 +126,6 @@ function QuestionEditor({ questions, setQuestions, reference, formID }) {
               }
             />
           </div>
-
-          {/* Other Fields */}
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Order
-              </label>
-              <input
-                type="number"
-                className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 shadow-sm"
-                value={field.order}
-                onChange={(e) =>
-                  handleUpdateQuestion(index, "order", parseInt(e.target.value))
-                }
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Response Type
-              </label>
-              <select
-                className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 shadow-sm"
-                value={field.response_type}
-                onChange={(e) =>
-                  handleUpdateQuestion(index, "response_type", e.target.value)
-                }
-              >
-                <option value="text">Text</option>
-                <option value="number">Number</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Weight
-              </label>
-              <input
-                type="number"
-                className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 shadow-sm"
-                value={field.weight}
-                onChange={(e) =>
-                  handleUpdateQuestion(index, "weight", parseFloat(e.target.value))
-                }
-              />
-            </div>
-          </div>
         </div>
       ))}
 
@@ -176,57 +136,71 @@ function QuestionEditor({ questions, setQuestions, reference, formID }) {
         <FaPlus className="mr-2" />
         Add {reference === "general" ? "General" : "Student"} Question
       </Button>
+
+      <ConfirmationModal
+        isOpen={deleteModal.isOpen}
+        title="Delete Question?"
+        message="Are you sure you want to delete this question?"
+        onCancel={() => setDeleteModal({ isOpen: false, index: null })}
+        onConfirm={handleDeleteQuestion}
+        isProcessing={false}
+      />
     </div>
   );
 }
-
 
 function QuestionViewer({ questions }) {
   return (
     <div className="space-y-6">
       {questions.map((field, index) => (
-      <div
-        key={field.id ? `question-${field.id}` : `question-${index}`} // Ensure a unique key for each question
-        className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300"
-      >
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl text-blue-900 font-semibold flex items-center">
-            <span className="mr-2 font-semibold bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-base">
-              #{index + 1}
-            </span>
-            {field.title}
-          </h3>
-          <span className="text-sm text-gray-500">{field.reference} question</span>
-        </div>
-
-        <p className="text-gray-600 mb-4">{field.description}</p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="flex items-center">
-            <span className="font-medium mr-2">Response Type:</span>
-            <span className="text-gray-700 capitalize">{field.response_type}</span>
-          </div>
-          <div className="flex items-center">
-            <span className="font-medium mr-2">Required:</span>
-            <span
-              className={`px-2 py-1 rounded-full text-sm font-medium ${
-                field.required ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-              }`}
-            >
-              {field.required ? "Yes" : "No"}
+        <div
+          key={field.id ? `question-${field.id}` : `question-${index}`} // Ensure a unique key for each question
+          className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300"
+        >
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl text-blue-900 font-semibold flex items-center">
+              <span className="mr-2 font-semibold bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-base">
+                #{index + 1}
+              </span>
+              {field.title}
+            </h3>
+            <span className="text-sm text-gray-500">
+              {field.reference} question
             </span>
           </div>
-          <div className="flex items-center">
-            <span className="font-medium mr-2">Weight:</span>
-            <span className="text-gray-700">{field.weight}</span>
-          </div>
-          <div className="flex items-center">
-            <span className="font-medium mr-2">Order:</span>
-            <span className="text-gray-700">{field.order}</span>
+
+          <p className="text-gray-600 mb-4">{field.description}</p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="flex items-center">
+              <span className="font-medium mr-2">Response Type:</span>
+              <span className="text-gray-700 capitalize">
+                {field.response_type}
+              </span>
+            </div>
+            <div className="flex items-center">
+              <span className="font-medium mr-2">Required:</span>
+              <span
+                className={`px-2 py-1 rounded-full text-sm font-medium ${
+                  field.required
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}
+              >
+                {field.required ? "Yes" : "No"}
+              </span>
+            </div>
+            <div className="flex items-center">
+              <span className="font-medium mr-2">Weight:</span>
+              <span className="text-gray-700">{field.weight}</span>
+            </div>
+            <div className="flex items-center">
+              <span className="font-medium mr-2">Order:</span>
+              <span className="text-gray-700">{field.order}</span>
+            </div>
           </div>
         </div>
-      </div>
-    ))}
+      ))}
     </div>
   );
 }
@@ -247,19 +221,19 @@ export default function EditFormComponent({
     useState(formDescription);
   const [isEditMode, setIsEditMode] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showConfirmExit, setShowConfirmExit] = useState(false);
+  const [showConfirmSave, setShowConfirmSave] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const confirmExitEditMode = () => {
-    const userChoice = window.confirm(
-      "You have unsaved changes. Would you like to save them before exiting?"
-    );
-    if (userChoice) {
-      handleSave();
+    if (hasUnsavedChanges) {
+      setShowConfirmExit(true); // Ask for confirmation before exiting
     } else {
-      setIsEditMode(false);
+      setIsEditMode(false); // Exit without saving if no changes
     }
   };
 
-  
   useEffect(() => {
     if (!user) {
       navigate("/login");
@@ -290,71 +264,75 @@ export default function EditFormComponent({
     }
   }, [user, questions]);
 
-  const handleSave = async () => {
-    try {
-      const updatedQuestions = [...generalQuestions, ...studentQuestions].map((q) => ({
-        ...q,
-        order: parseInt(q.order, 10), // Ensure `order` is an integer
-        weight: parseFloat(q.weight), // Ensure `weight` is a float
-      }));
-  
-      console.log("Saving updated questions:", updatedQuestions);
-  
-      for (const question of updatedQuestions) {
-        // Validate question data
-        if (!question.title || !question.reference) {
-          console.warn("Skipping invalid question:", question);
-          alert(`Invalid question data for "${question.title || 'Untitled'}". Please check all fields.`);
-          continue;
-        }
-  
-        try {
-          if (question.id.startsWith("new_")) {
-            console.log("Adding new question:", question);
-            const response = await formsApi.addQuestion(formID, question);
-            question.id = response.id; // Update the local ID with the database ID
-          } else {
-            console.log("Updating question:", question);
-            const updatedResponse = await formsApi.updateQuestion(formID, question.id, question);
-            console.log("Updated question data:", updatedResponse);
-          }
-        } catch (error) {
-          console.error(`Error syncing question: "${question.title}"`, error);
-          alert(`Failed to sync question: "${question.title}". Please try again.`);
-        }
-      }
-  
-      // Refetch updated questions from the server
-      const allQuestions = await formsApi.getQuestions(formID);
-      setGeneralQuestions(allQuestions.filter((q) => q.reference === "general"));
-      setStudentQuestions(allQuestions.filter((q) => q.reference === "student"));
-  
-      alert("Form updated successfully!");
-    } catch (error) {
-      console.error("Error saving form:", error.message);
-      alert(error.message || "Failed to save form. Please try again.");
-    }
+  const confirmSaveChanges = () => {
+    setShowConfirmSave(true);
   };
-  
-  
-  
+
+  const handleSave = async () => {
+    setIsProcessing(true);
+    console.log("Updating form:", formID, editedFormName, editedFormDescription);
+
+    try {
+        // Prepare the form update object (renamed 'title' to 'formName')
+        const formUpdate = {
+            formName: editedFormName, 
+            description: editedFormDescription,
+            questions: [...generalQuestions, ...studentQuestions].map(q => ({
+                ...q,
+                order: parseInt(q.order, 10), // Ensure order is an integer
+                weight: parseFloat(q.weight), // Ensure weight is a float
+            }))
+        };
+
+        // Send a single API call to update the form + questions
+        const response = await formsApi.updateForm(formID, formUpdate);
+        console.log("Update response:", response);
+
+        // Refresh questions from the DB
+        const allQuestions = await formsApi.getQuestions(formID);
+
+        // Sort questions before setting state
+        const sortedQuestions = allQuestions.sort((a, b) => a.order - b.order);
+        setGeneralQuestions(sortedQuestions.filter(q => q.reference === "general"));
+        setStudentQuestions(sortedQuestions.filter(q => q.reference === "student"));
+
+        // Show success message
+        setShowSuccessModal(true);
+
+        // Reset edit mode and unsaved changes tracking
+        setIsEditMode(false);
+        setHasUnsavedChanges(false);
+        setShowConfirmSave(false);
+        setIsProcessing(false);
+    } catch (error) {
+        console.error("Error saving form:", error.message);
+        alert(error.message || "Failed to save form. Please try again.");
+    } finally {
+        setIsProcessing(false);
+    }
+};
+
+
   return (
     <div className="relative p-4 md:p-6">
       <div className="flex flex-col md:flex-row justify-center items-center mb-6 space-y-2 md:space-y-0 md:space-x-2">
         <Button
-          onClick={() =>
-            isEditMode && hasUnsavedChanges
-              ? confirmExitEditMode()
-              : setIsEditMode((prev) => !prev)
-          }
-          className="bg-blue-500 text-white hover:bg-blue-600 transition duration-200 w-full md:w-auto"
+          onClick={() => {
+            if (isEditMode && hasUnsavedChanges) {
+              confirmExitEditMode(); // Ask for confirmation only if changes are unsaved
+            } else {
+              setIsEditMode((prev) => !prev); // Toggle edit mode
+            }
+          }}
+          className="bg-blue-500 text-white hover:bg-blue-600 transition duration-200 w-full sm:w-auto"
         >
           {isEditMode ? "Exit Edit Mode" : "Edit Form"}
         </Button>
+
         {isEditMode && (
           <Button
-            onClick={handleSave}
-            className="bg-green-500 text-white hover:bg-green-600 transition duration-200 w-full md:w-auto"
+            onClick={confirmSaveChanges} // Show confirmation before saving
+            className="bg-green-500 text-white hover:bg-green-600 transition duration-200 w-full sm:w-auto"
           >
             Save Changes
           </Button>
@@ -442,6 +420,55 @@ export default function EditFormComponent({
           >
             Save Changes
           </Button>
+        )}
+        <ConfirmationModal
+          isOpen={showConfirmExit}
+          title="Exit Edit Mode?"
+          message="You have unsaved changes. Do you want to save before exiting?"
+          onCancel={() => setShowConfirmExit(false)} // Stay in Edit Mode
+          onConfirm={() => {
+            setIsEditMode(false); // Exit without saving
+            setShowConfirmExit(false);
+            setHasUnsavedChanges(false); // Discard changes
+          }}
+          confirmText="Exit Without Saving"
+          secondaryConfirmText="Save and Exit"
+          onSecondaryConfirm={() => {
+            handleSave(); // Save before exiting
+            setIsEditMode(false);
+            setShowConfirmExit(false);
+          }}
+          isProcessing={false}
+        />
+
+        <ConfirmationModal
+          isOpen={showConfirmSave}
+          title="Save Changes?"
+          message="Are you sure you want to save these changes?"
+          onCancel={() => {
+            setShowConfirmSave(false);
+            setIsProcessing(false);
+          }}
+          onConfirm={handleSave}
+          isProcessing={isProcessing}
+        />
+        {showSuccessModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-96 text-center">
+              <h2 className="text-xl font-bold mb-4 text-green-700">
+                Success!
+              </h2>
+              <p>Your form has been updated successfully!</p>
+              <div className="flex justify-center mt-4">
+                <button
+                  onClick={() => setShowSuccessModal(false)} // Close the modal
+                  className="px-4 py-2 bg-green-400 text-white rounded-md hover:bg-green-700"
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </form>
     </div>
