@@ -2,12 +2,27 @@ import ExcelJS from 'exceljs';
 
 const emailRegex = /^[^\s@]+@(e\.)?braude\.ac\.il$/;
 
-export const processExcelFile = async (file) => {
+/**
+ * Processes an uploaded Excel file based on the expected format.
+ * Ensures only valid Projects or Evaluators files are processed.
+ */
+export const processExcelFile = async (file, pageType) => {
   try {
     const data = await readExcelFile(file);
-    const validatedData = validateData(data);
+    const validatedData = validateData(data, pageType);
+
+    // Determine if the file matches the expected page format
+    const isProjectFile = validatedData[0]?.hasOwnProperty('title');
+    const isEvaluatorFile = validatedData[0]?.hasOwnProperty('presentationEvaluator');
+
+    if (pageType === "projects" && !isProjectFile) {
+      throw new Error("This file does not match the expected Projects format.");
+    }
+    if (pageType === "evaluators" && !isEvaluatorFile) {
+      throw new Error("This file does not match the expected Evaluators format.");
+    }
+
     return validatedData.map((row, index) => {
-      const isProjectFile = row.hasOwnProperty('title');
       if (isProjectFile) {
         // Projects upload format
         return {
@@ -55,13 +70,17 @@ export const processExcelFile = async (file) => {
   }
 };
 
+/**
+ * Reads an Excel file and extracts the data.
+ */
 const readExcelFile = async (file) => {
+  try {
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(await file.arrayBuffer());
 
   const worksheet = workbook.worksheets[0];
   if (!worksheet) {
-    throw new Error('No worksheet found in the Excel file');
+    throw new Error("No worksheet found in the Excel file.");
   }
 
   // Detect format by examining the header row
@@ -69,18 +88,18 @@ const readExcelFile = async (file) => {
   worksheet.getRow(1).eachCell((cell) => headers.push(cell.text.trim()));
 
   let format = null;
-  if (headers.includes('Project Title') && headers.includes('Student 1 ID')) {
-    format = 'projects';
-  } else if (headers.includes('Presentation Evaluator') && headers.includes('Book Evaluator')) {
-    format = 'evaluators';
+  if (headers.includes("Project Title") && headers.includes("Student 1 ID")) {
+    format = "projects";
+  } else if (headers.includes("Presentation Evaluator") && headers.includes("Book Evaluator")) {
+    format = "evaluators";
   } else {
-    throw new Error('Unrecognized Excel format. Please check the header row.');
+    throw new Error("Unrecognized Excel format. Please check the header row.");
   }
 
   const data = [];
   worksheet.eachRow((row, rowNumber) => {
     if (rowNumber > 1) {
-      if (format === 'projects') {
+      if (format === "projects") {
         const rowData = {
           projectCode: row.getCell(1).text.trim(),
           student1firstName: row.getCell(2).text.trim(),
@@ -89,17 +108,17 @@ const readExcelFile = async (file) => {
           student1Email: row.getCell(5).text.trim(),
           student2firstName: row.getCell(6).text.trim(),
           student2lastName: row.getCell(7).text.trim(),
-          student2Id: row.getCell(8).text.trim() || '',
-          student2Email: row.getCell(9).text.trim() || '',
+          student2Id: row.getCell(8).text.trim() || "",
+          student2Email: row.getCell(9).text.trim() || "",
           supervisor1: row.getCell(10).text.trim(),
-          supervisor2: row.getCell(11).text.trim() || '',
+          supervisor2: row.getCell(11).text.trim() || "",
           title: row.getCell(12).text.trim(),
-          description: row.getCell(13).text.trim() || '',
+          description: row.getCell(13).text.trim() || "",
           part: row.getCell(14).text.trim(),
           type: row.getCell(15).text.trim(),
         };
         data.push(rowData);
-      } else if (format === 'evaluators') {
+      } else if (format === "evaluators") {
         const rowData = {
           projectCode: row.getCell(1).text.trim(),
           presentationEvaluator: row.getCell(2).text.trim(),
@@ -111,14 +130,29 @@ const readExcelFile = async (file) => {
   });
 
   return data;
+  } catch (error) {
+     throw new Error(error.message); 
+  }
 };
 
-const validateData = (data) => {
+/**
+ * Validates the extracted data to ensure required fields exist.
+ */
+const validateData = (data, pageType) => {
   if (!Array.isArray(data) || data.length === 0) {
-    throw new Error('No valid data found in file');
+    throw new Error("No valid data found in file.");
   }
 
-  const isProjectFile = data[0].hasOwnProperty('title');
+  const isProjectFile = data[0].hasOwnProperty("title");
+
+  if (pageType === "projects" && !isProjectFile) {
+    throw new Error("The uploaded file does not match the expected Projects format.");
+  }
+
+  if (pageType === "evaluators" && isProjectFile) {
+    throw new Error("The uploaded file does not match the expected Evaluators format.");
+  }
+
   if (isProjectFile) {
     return data.map((row, index) => {
       if (
@@ -135,38 +169,25 @@ const validateData = (data) => {
         throw new Error(`Missing required data in row ${index + 1}`);
       }
 
-
       if (!emailRegex.test(row.student1Email)) {
-        throw new Error(
-          `Invalid email format for Student 1 in row ${index + 1}`
-        );
+        throw new Error(`Invalid email format for Student 1 in row ${index + 1}`);
       }
       if (row.student2Email && !emailRegex.test(row.student2Email)) {
-        throw new Error(
-          `Invalid email format for Student 2 in row ${index + 1}`
-        );
+        throw new Error(`Invalid email format for Student 2 in row ${index + 1}`);
       }
       if (!emailRegex.test(row.supervisor1)) {
-        throw new Error(
-          `Invalid supervisor email format for supervisor 1 in row ${index + 1}`
-        );
+        throw new Error(`Invalid supervisor email format for supervisor 1 in row ${index + 1}`);
       }
       if (row.supervisor2 && !emailRegex.test(row.supervisor2)) {
-        throw new Error(
-          `Invalid supervisor email format for supervisor 2 in row ${index + 1}`
-        );
+        throw new Error(`Invalid supervisor email format for supervisor 2 in row ${index + 1}`);
       }
 
       const idRegex = /^\d{9}$/;
       if (!idRegex.test(row.student1Id)) {
-        throw new Error(
-          `Invalid student ID format for Student 1 in row ${index + 1}`
-        );
+        throw new Error(`Invalid student ID format for Student 1 in row ${index + 1}`);
       }
       if (row.student2Id && !idRegex.test(row.student2Id)) {
-        throw new Error(
-          `Invalid student ID format for Student 2 in row ${index + 1}`
-        );
+        throw new Error(`Invalid student ID format for Student 2 in row ${index + 1}`);
       }
       return row;
     });
@@ -177,16 +198,12 @@ const validateData = (data) => {
       }
 
       if (row.presentationEvaluator && !emailRegex.test(row.presentationEvaluator)) {
-        throw new Error(
-          `Invalid email format for Presentation Evaluator in row ${index + 1}`
-        );
+        throw new Error(`Invalid email format for Presentation Evaluator in row ${index + 1}`);
       }
       if (row.bookEvaluator && !emailRegex.test(row.bookEvaluator)) {
-        throw new Error(
-          `Invalid email format for Book Evaluator in row ${index + 1}`
-        );
+        throw new Error(`Invalid email format for Book Evaluator in row ${index + 1}`);
       }
-      
+
       return row;
     });
   }

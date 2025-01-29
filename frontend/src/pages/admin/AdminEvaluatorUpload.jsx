@@ -13,7 +13,6 @@ const AdminEvaluatorUpload = () => {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [error, setError] = useState(null);
 
-
   const handleFileSelect = async (file) => {
     setIsUploading(true);
     setError(null);
@@ -25,7 +24,7 @@ const AdminEvaluatorUpload = () => {
 
       await ExcelDatabaseService.insertEvaluators(processedData); // Pass processed data, not the file
       console.log("Evaluators uploaded successfully to DB:", processedData);
-      
+
       setUploadSuccess(true);
       setTimeout(() => {
         navigate("/admin-grades");
@@ -41,29 +40,35 @@ const AdminEvaluatorUpload = () => {
   };
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen p-0">
       <div className="max-w-4xl mx-auto">
-        {/* Tabs Navigation */}
-        <div className="flex justify-center py-6 bg-white shadow-md">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              className={`inline-flex items-center px-5 py-3 text-lg font-medium border-b-4 ${
-                activeTab === tab
-                  ? "border-blue-900 text-blue-900"
-                  : "border-transparent text-gray-500 hover:border-blue-900 hover:text-blue-900"
-              }`}
-              onClick={() => {
-                setActiveTab(tab);
-                if (tab === "Projects") {
-                  navigate("/admin-upload");
-                }
-              }}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
+        {/* Tabs Section */}
+        <div className="relative z-10 bg-white border-b border-gray-300">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="flex justify-center py-4">
+
+                {tabs.map((tab) => (
+                  <button
+                    key={tab}
+                    className={`inline-flex items-center px-3 pt-2 pb-3 border-b-2 text-base font-medium ${
+                      activeTab === tab
+                        ? "border-blue-900 text-blue-900"
+                        : "border-transparent text-gray-500 hover:border-blue-900 hover:text-blue-900"
+                    }`}
+                    onClick={() => {
+                      setActiveTab(tab);
+                      if (tab === "Projects") {
+                        navigate("/admin-upload");
+                      }
+                    }}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        
 
         {/* Tab Content */}
         {activeTab === "Evaluators" && (
@@ -95,8 +100,6 @@ const AdminEvaluatorUpload = () => {
               isSuccess={uploadSuccess}
               error={error}
             />
-
-            
           </div>
         )}
       </div>
