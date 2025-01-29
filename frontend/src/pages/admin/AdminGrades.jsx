@@ -17,6 +17,9 @@ const AdminGradesPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedGrade, setSelectedGrade] = useState(null);
+  const [responses, setResponses] = useState({});
+  const [evaluations, setEvaluations] = useState({});
+  const [formQuestions, setFormQuestions] = useState({});
 
   useEffect(() => {
     const fetchAndProcessGrades = async () => {
@@ -26,15 +29,47 @@ const AdminGradesPage = () => {
         console.log("Fetching final grades...");
         const gradesResponse = await gradesApi.getAllGrades();
         const grades = gradesResponse || [];
-        console.log("Final grades fetched:", grades);
 
         console.log("Fetching all projects...");
         const projects = await projectsApi.getAllProjects();
-        console.log("All projects fetched:", projects);
 
         console.log("Fetching all users...");
         const users = await userApi.getAllUsers();
-        console.log("All users fetched:", users);
+        console.log("Fetching all form-related data...");
+        const formIDs = [
+          "SupervisorForm",
+          "PresentationFormA",
+          "PresentationFormB",
+          "bookReviewerFormA",
+          "bookReviewerFormB",
+        ];
+
+        let responsesData = {};
+        let evaluationsData = {};
+        let questionsData = {};
+
+        for (const formID of formIDs) {
+          try {
+            console.log(`Fetching data for formID: ${formID}`);
+
+            const [responses, evaluations, questions] = await Promise.all([
+              formsApi.getResponses(formID),
+              formsApi.getEvaluations(formID),
+              formsApi.getQuestions(formID),
+            ]);
+
+            responsesData[formID] = responses || [];
+            evaluationsData[formID] = evaluations || [];
+            questionsData[formID] = questions || [];
+          } catch (error) {
+            console.error(`Error fetching data for ${formID}:`, error.message);
+          }
+        }
+
+        // Set the state variables
+        setResponses(responsesData);
+        setEvaluations(evaluationsData);
+        setFormQuestions(questionsData);
 
         console.log("Processing final grades...");
         const processedData = preprocessProjects(grades, projects, users);
@@ -54,99 +89,96 @@ const AdminGradesPage = () => {
 
   const preprocessProjects = (grades, projects, users) => {
     try {
-        console.log("Preprocessing projects with grades, projects, and users...");
-        console.log("Grades:", grades);
-        console.log("Projects:", projects);
-        console.log("Users:", users);
+      console.log("Preprocessing projects with grades, projects, and users...");
 
-        // Filter out placeholder grades
-        const filteredGrades = grades.filter(
-            (grade) => grade.projectCode && grade.projectCode !== "placeholderProject"
-        );
-        console.log("Filtered Grades:", filteredGrades);
+      // Filter out placeholder grades
+      const filteredGrades = grades.filter(
+        (grade) =>
+          grade.projectCode && grade.projectCode !== "placeholderProject"
+      );
+      console.log("Filtered Grades:", filteredGrades);
 
-        // Map grades to project and user details
-        return filteredGrades
-            .map((grade) => {
-                const project = projects.find(
-                    (proj) => proj.projectCode === grade.projectCode
-                );
+      // Map grades to project and user details
+      return filteredGrades
+        .map((grade) => {
+          const project = projects.find(
+            (proj) => proj.projectCode === grade.projectCode
+          );
 
-                if (!project) {
-                    console.warn(`Project not found for grade: ${grade.projectCode}`);
-                    return null;
-                }
+          if (!project) {
+            console.warn(`Project not found for grade: ${grade.projectCode}`);
+            return null;
+          }
 
-                const student1 = project.Student1 || {};
-                const student2 = project.Student2 || {};
+          const student1 = project.Student1 || {};
+          const student2 = project.Student2 || {};
 
-                // Find the student's grade
-                const student1Grade = filteredGrades.find(
-                    (g) => g.studentID === student1.ID
-                );
-                const student2Grade = filteredGrades.find(
-                    (g) => g.studentID === student2.ID
-                );
+          // Find the student's grade
+          const student1Grade = filteredGrades.find(
+            (g) => g.studentID === student1.ID
+          );
+          const student2Grade = filteredGrades.find(
+            (g) => g.studentID === student2.ID
+          );
 
-                // Find the student name dynamically
-                const studentName =
-                    [student1, student2]
-                        .filter((student) => student && student.ID === grade.studentID)
-                        .map(
-                            (student) =>
-                                student.fullName || `${student.firstName} ${student.lastName}`
-                        )
-                        .join(", ") || "Unknown Student";
+          // Find the student name dynamically
+          const studentName =
+            [student1, student2]
+              .filter((student) => student && student.ID === grade.studentID)
+              .map(
+                (student) =>
+                  student.fullName || `${student.firstName} ${student.lastName}`
+              )
+              .join(", ") || "Unknown Student";
 
-                // Map supervisor IDs to full names from the `users` collection
-                const supervisors = [project.supervisor1, project.supervisor2]
-                    .filter((id) => id) // Exclude null or empty supervisor IDs
-                    .map((id) => {
-                        const supervisor = users.find((user) => user.emailId === id);
-                        return supervisor ? supervisor.fullName : ` ${id}`;
-                    });
-                const projectSupervisors =
-                    supervisors.length > 0 ? supervisors.join(", ") : "No Supervisors";
+          // Map supervisor IDs to full names from the `users` collection
+          const supervisors = [project.supervisor1, project.supervisor2]
+            .filter((id) => id) // Exclude null or empty supervisor IDs
+            .map((id) => {
+              const supervisor = users.find((user) => user.emailId === id);
+              return supervisor ? supervisor.fullName : ` ${id}`;
+            });
+          const projectSupervisors =
+            supervisors.length > 0 ? supervisors.join(", ") : "No Supervisors";
 
-                const deadline =
-                    project.deadline && project.deadline._seconds
-                        ? new Date(project.deadline._seconds * 1000).toLocaleDateString()
-                        : "No Deadline"; // Use a fallback for undefined deadlines
+          const deadline =
+            project.deadline && project.deadline._seconds
+              ? new Date(project.deadline._seconds * 1000).toLocaleDateString()
+              : "No Deadline"; // Use a fallback for undefined deadlines
 
-                console.log("Rendering status(in preprocess):", grade.status);
-
-                return {
-                    ...project, // Include project details
-                    projectCode: grade.projectCode,
-                    studentName,
-                    supervisors: projectSupervisors,
-                    presentationGrade: grade.CalculatedPresentationGrade || "",
-                    bookGrade: grade.CalculatedBookGrade || "",
-                    supervisorGrade: grade.CalculatedSupervisorGrade || "",
-                    finalGrade: grade.finalGrade || "",
-                    status: grade.status || "Not graded",
-                    deadline: deadline, 
-                    student1: {
-                        id: student1.ID,
-                        firstName: student1.firstName || "",
-                        lastName: student1.lastName || "",
-                        finalGrade: student1Grade ? student1Grade.finalGrade : "",
-                    },
-                    student2: {
-                      id: student2.ID,
-                      firstName: student2.firstName || "",
-                      lastName: student2.lastName || "",
-                      finalGrade: student2Grade ? student2Grade.finalGrade : "",
-                    },
-                };
-            })
-            .filter(Boolean); // Filter out null values
+          const roundGrade = (value) =>
+            typeof value === "number" ? Math.round(value) : value;
+          return {
+            ...project, // Include project details
+            projectCode: grade.projectCode,
+            studentName,
+            supervisors: projectSupervisors,
+            presentationGrade: roundGrade(grade.CalculatedPresentationGrade || ""),
+            bookGrade: roundGrade(grade.CalculatedBookGrade || ""),
+            supervisorGrade: roundGrade(grade.CalculatedSupervisorGrade || ""),
+            finalGrade: roundGrade(grade.finalGrade || ""),
+            status: grade.status || "Not graded",
+            deadline: deadline,
+            student1: {
+              id: student1.ID,
+              firstName: student1.firstName || "",
+              lastName: student1.lastName || "",
+              finalGrade: roundGrade(student1Grade ? student1Grade.finalGrade : ""),
+            },
+            student2: {
+              id: student2.ID,
+              firstName: student2.firstName || "",
+              lastName: student2.lastName || "",
+              finalGrade: roundGrade(student2Grade ? student2Grade.finalGrade : ""),
+            },
+          };
+        })
+        .filter(Boolean); // Filter out null values
     } catch (error) {
-        console.error("Error preprocessing projects:", error.message);
-        throw new Error("Failed to preprocess project data.");
+      console.error("Error preprocessing projects:", error.message);
+      throw new Error("Failed to preprocess project data.");
     }
-};
-
+  };
 
   const handleRefreshClick = async () => {
     try {
@@ -206,27 +238,16 @@ const AdminGradesPage = () => {
         }
       }
 
-      const updatedProjects = await gradesApi.getAllGrades();
-      const allProjects = await projectsApi.getAllProjects();
-      const allUsers = await userApi.getAllUsers();
-      console.log("Updated Projects after Refresh:", updatedProjects);
-
-      if (updatedProjects.data && updatedProjects.data.length > 0) {
-        const processedData = preprocessProjects(
-          updatedProjects.data,
-          allProjects,
-          allUsers
-        );
-        setProjects(processedData);
         toast.success("Grades refreshed successfully!");
-      } else {
-        toast.warn("No projects found after refreshing grades.");
-      }
+      
     } catch (error) {
       console.error("Error refreshing grades:", error.message);
       toast.error("Failed to refresh grades.");
     } finally {
       setIsLoading(false);
+      setTimeout(() => {
+        window.location.reload(); // Force full page reload
+      }, 100);
     }
   };
 
@@ -387,9 +408,14 @@ const AdminGradesPage = () => {
     console.log("Projects before export:", projects);
 
     projects.forEach((project) => {
+      const roundGrade = (value) => (typeof value === "number" ? Math.round(value) : value);
       // Ensure final grades come from the correct filtered grades
-      const student1FinalGrade = project.student1 ? project.student1.finalGrade : "N/A";
-      const student2FinalGrade = project.student2 ? project.student2.finalGrade : "N/A";
+      const student1FinalGrade = project.student1
+        ? project.student1.finalGrade
+        : "";
+      const student2FinalGrade = project.student2
+        ? project.student2.finalGrade
+        : "";
 
       // Add Student 1 data if not already added
       if (project.Student1 && !seenStudentIds.has(project.Student1.ID)) {
@@ -398,7 +424,7 @@ const AdminGradesPage = () => {
           "Student ID": project.Student1.ID || "",
           "Student Last Name": project.Student1.lastName || "",
           "Student First Name": project.Student1.firstName || "",
-          "Student Final Grade": student1FinalGrade, 
+          "Student Final Grade": roundGrade(student1FinalGrade),
         });
       }
 
@@ -409,31 +435,125 @@ const AdminGradesPage = () => {
           "Student ID": project.Student2.ID || "",
           "Student Last Name": project.Student2.lastName || "",
           "Student First Name": project.Student2.firstName || "",
-          "Student Final Grade": student2FinalGrade, 
+          "Student Final Grade": roundGrade(student2FinalGrade),
         });
       }
     });
 
     return exportData;
-};
+  };
 
+  const prepareResponsesExportData = (
+    projects,
+    responsesData,
+    evaluationsData,
+    formQuestions
+  ) => {
+    const exportData = {}; // Object to store data per formID
+
+    for (const formID in formQuestions) {
+      const columns = ["Project Code"]; // Base column
+      const generalQuestions = [
+        ...formQuestions[formID].filter((q) => q.reference === "general"),
+      ].sort((a, b) => a.order - b.order); // Sort by order
+
+      const studentQuestions = [
+        ...formQuestions[formID].filter((q) => q.reference === "student"),
+      ].sort((a, b) => a.order - b.order); // Sort by order
+
+      // Add general questions as columns in order
+      generalQuestions.forEach((q) => columns.push(q.title));
+
+      // Add student-specific columns dynamically
+      for (let i = 1; i <= 2; i++) {
+        columns.push(`Student ${i} Name`);
+        studentQuestions.forEach((q) =>
+          columns.push(`Student ${i} - ${q.title}`)
+        );
+        columns.push(`Student ${i} Final Grade`);
+      }
+
+      const sheetData = [columns]; // Store rows as arrays
+
+      // Loop over responses to ensure unique rows per response
+      Object.values(responsesData[formID] || []).forEach((response) => {
+        const project = projects.find(
+          (proj) => proj.projectCode === response.projectCode
+        );
+        if (!project) return; // Skip if project doesn't exist
+
+        // Find the matching evaluation using evaluatorID
+        const evaluationEntry = (evaluationsData[formID] || []).find(
+          (e) =>
+            e.projectCode === response.projectCode &&
+            e.evaluatorID === response.evaluatorID
+        );
+
+        let row = [response.projectCode]; // Start row with project code
+
+        // Fill in general question responses in sorted order
+        generalQuestions.forEach((q) => {
+          row.push(response.general?.[q.id] || "-");
+        });
+
+        // Fill in student-specific responses
+        [project.student1, project.student2].forEach((student, i) => {
+          if (student && student.id) {
+            row.push(`${student.firstName} ${student.lastName}`); // Student name
+
+            studentQuestions.forEach((q) => {
+              // Ensure response.students and the student entry exist before accessing properties
+              const studentResponses = response.students?.[student.id] || {};
+              row.push(studentResponses[q.id] || "-");
+            });
+
+            // Get the student's grade from the matched evaluation
+            const studentGrade = evaluationEntry?.grades?.[student.id] || "-";
+            row.push(studentGrade);
+          } else {
+            row.push("-"); // No student name
+            studentQuestions.forEach(() => row.push("-")); // Fill empty responses
+            row.push("-"); // No grade
+          }
+        });
+
+        sheetData.push(row);
+      });
+
+      exportData[formID] = sheetData;
+    }
+
+    return exportData;
+  };
 
   const handleExportToExcel = () => {
     try {
-      // Prepare data for export with the selected columns
+      // Prepare and export Final Grades Excel
       const exportData = prepareExportData(projects);
       console.log("Export Data:", exportData);
-      // Create a new workbook and add the data
       const workbook = XLSX.utils.book_new();
       const worksheet = XLSX.utils.json_to_sheet(exportData);
-
-      // Append worksheet to workbook
       XLSX.utils.book_append_sheet(workbook, worksheet, "Final Grades");
-
-      // Export the workbook
       XLSX.writeFile(workbook, "Students_final_grades_export.xlsx");
 
       toast.success("Grades exported successfully!");
+
+      // Prepare and export Evaluations/Responses Excel
+      const responsesExportData = prepareResponsesExportData(
+        projects,
+        responses,
+        evaluations,
+        formQuestions
+      );
+
+      const responsesWorkbook = XLSX.utils.book_new();
+      for (const formID in responsesExportData) {
+        const worksheet = XLSX.utils.aoa_to_sheet(responsesExportData[formID]);
+        XLSX.utils.book_append_sheet(responsesWorkbook, worksheet, formID);
+      }
+      XLSX.writeFile(responsesWorkbook, "Project_Evaluations_Export.xlsx");
+
+      toast.success("Project evaluations exported successfully!");
     } catch (error) {
       console.error("Error exporting data:", error);
       toast.error("Failed to export data.");

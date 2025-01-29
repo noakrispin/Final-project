@@ -3,6 +3,8 @@ import { Table } from "../components/ui/Table";
 import ProjectAssessmentPopup from "../components/ui/ProjectAssessmentPopup";
 import { gradesApi } from "../services/finalGradesAPI";
 import { projectsApi } from "../services/projectsAPI";
+import { formsApi } from "../services/formAPI";
+import { userApi } from "../services/userAPI";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "../components/ui/Button";
 import * as XLSX from "xlsx";
@@ -111,15 +113,16 @@ const SupervisorGradesFeedback = () => {
               : "No Deadline";
 
           console.log("Rendering status(in preprocess):", grade.status);
-
+          const roundGrade = (value) =>
+            typeof value === "number" ? Math.round(value) : value;
           return {
             ...project, // Include project details
             projectCode: grade.projectCode,
             studentName,
-            presentationGrade: grade.CalculatedPresentationGrade || "N/A",
-            bookGrade: grade.CalculatedBookGrade || "N/A",
-            supervisorGrade: grade.CalculatedSupervisorGrade || "N/A",
-            finalGrade: grade.finalGrade || "N/A",
+            presentationGrade: roundGrade(grade.CalculatedPresentationGrade || ""),
+            bookGrade: roundGrade(grade.CalculatedBookGrade || ""),
+            supervisorGrade: roundGrade(grade.CalculatedSupervisorGrade || ""),
+            finalGrade: roundGrade(grade.finalGrade || ""),
             status: grade.status || "Not graded",
             deadline: deadline, // Add fallback value for undefined deadline
           };
@@ -134,11 +137,11 @@ const SupervisorGradesFeedback = () => {
     try {
       setIsLoading(true);
       toast.info("Refreshing grades...");
-
+  
       for (const project of projects) {
         const { projectCode } = project;
         const evaluationsByForm = [];
-
+  
         for (const formID of [
           "SupervisorForm",
           "PresentationFormA",
@@ -151,17 +154,17 @@ const SupervisorGradesFeedback = () => {
             const filteredEvaluations = response?.filter(
               (evaluation) => evaluation.projectCode === projectCode
             );
+  
             const gradesByStudent = {};
             filteredEvaluations.forEach((evaluation) => {
-              Object.entries(evaluation.grades).forEach(
-                ([studentID, grade]) => {
-                  if (!gradesByStudent[studentID]) {
-                    gradesByStudent[studentID] = [];
-                  }
-                  gradesByStudent[studentID].push(grade);
+              Object.entries(evaluation.grades).forEach(([studentID, grade]) => {
+                if (!gradesByStudent[studentID]) {
+                  gradesByStudent[studentID] = [];
                 }
-              );
+                gradesByStudent[studentID].push(grade);
+              });
             });
+  
             evaluationsByForm.push({
               formID,
               grades: Object.entries(gradesByStudent).map(
@@ -175,7 +178,7 @@ const SupervisorGradesFeedback = () => {
             );
           }
         }
-
+  
         if (evaluationsByForm.length > 0) {
           try {
             await gradesApi.addOrUpdateGrade({
@@ -187,30 +190,21 @@ const SupervisorGradesFeedback = () => {
           }
         }
       }
-
-      const updatedProjects = await gradesApi.getAllGrades();
-      const allProjects = await projectsApi.getAllProjects();
-      const allUsers = await userApi.getAllUsers();
-      console.log("Updated Projects after Refresh:", updatedProjects);
-
-      if (updatedProjects.data && updatedProjects.data.length > 0) {
-        const processedData = preprocessProjects(
-          updatedProjects.data,
-          allProjects,
-          allUsers
-        );
-        setProjects(processedData);
-        toast.success("Grades refreshed successfully!");
-      } else {
-        toast.warn("No projects found after refreshing grades.");
-      }
+  
+      toast.success("Grades updated! Refreshing...");
+      
     } catch (error) {
       console.error("Error refreshing grades:", error.message);
       toast.error("Failed to refresh grades.");
     } finally {
       setIsLoading(false);
+      setTimeout(() => {
+        window.location.reload(); // Full page reload
+      }, 100);
     }
   };
+  
+  
 
   const projectColumns = useMemo(
     () => [
