@@ -5,7 +5,7 @@ import FormField from "./FormField";
 import { Button } from "../ui/Button";
 import { formsApi } from "../../services/formAPI";
 import { evaluatorsApi } from "../../services/evaluatorsAPI";
-import { gradesApi } from "../../services/finalGradesAPI";
+import ConfirmationModal from "../shared/ConfirmationModal";
 
 export default function UnifiedFormComponent({
   formTitle,
@@ -26,6 +26,9 @@ export default function UnifiedFormComponent({
   const [progress, setProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -61,11 +64,19 @@ export default function UnifiedFormComponent({
     }
   }, [user, questions]);
 
-  useEffect(() => {
-    console.log("Questions on load:", questions);
-    console.log("General Questions:", generalQuestions);
-    console.log("Student Questions:", studentQuestions);
 
+  useEffect(() => {
+    if (showSuccessModal) {
+      const timer = setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate(-1); // Redirect after timeout
+      }, 2000); // 2000ms = 2 seconds
+  
+      return () => clearTimeout(timer); // Cleanup if component unmounts
+    }
+  }, [showSuccessModal, navigate]);
+
+  useEffect(() => {
     if (user && generalQuestions.length > 0 && studentQuestions.length > 0) {
       // Fetch the last response once questions are ready
       fetchLastResponse();
@@ -86,7 +97,7 @@ export default function UnifiedFormComponent({
 
       // Check if the response contains valid data
       if (!lastResponse) {
-        console.warn(
+        console.log(
           "No last response data found. Initializing empty form data."
         );
         initializeFormData(); // Initialize empty data if no response
@@ -109,15 +120,11 @@ export default function UnifiedFormComponent({
         });
       });
 
-      // Debugging logs
-      console.log("Fetched Last Response:", lastResponse);
-      console.log("Processed Initial Form Data:", initialData);
-
       // Update state
       setFormData(initialData);
       updateProgress(initialData);
     } catch (error) {
-      console.error("Error fetching last response:", error.message);
+      console.log("Error fetching last response:", error);
       initializeFormData(); // Fallback to initialize empty form data
     }
   };
@@ -147,9 +154,10 @@ export default function UnifiedFormComponent({
     e.preventDefault();
 
     if (!isFormValid()) {
-      alert(
+      setErrorMessage(
         "Please fill in all required fields. Text areas must have at least 5 words."
       );
+      setShowErrorModal(true);
       return;
     }
 
@@ -193,12 +201,12 @@ export default function UnifiedFormComponent({
       await evaluatorsApi.addOrUpdateEvaluator(evaluatorData);
       console.log("Evaluator status updated successfully");
 
-      
-      alert("Form submitted successfully!");
-      navigate(-1); // Redirect to the previous page
+      setShowSuccessModal(true);
+
     } catch (error) {
       console.error("Error submitting form or updating evaluator:", error);
-      alert("Failed to submit the evaluation. Please try again.");
+       setErrorMessage("Failed to submit the evaluation. Please try again.");
+      setShowErrorModal(true);
     }
   };
 
@@ -418,6 +426,35 @@ export default function UnifiedFormComponent({
           </div>
         )}
       </form>
+      {/* Error Modal (Only shows when an error occurs) */}
+      <ConfirmationModal
+        isOpen={showErrorModal}
+        title="Submission Failed"
+        message={errorMessage}
+        onCancel={() => setShowErrorModal(false)}
+        onConfirm={() => setShowErrorModal(false)}
+      />
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96 text-center">
+            <h2 className="text-xl font-bold mb-4 text-green-700">Success!</h2>
+            <p>Your evaluation has been submitted successfully.</p>
+            <div className="flex justify-center mt-4">
+              {/* <button
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  navigate(-1); // Redirect after closing
+                }}
+                className="px-4 py-2 bg-green-400 text-white rounded-md hover:bg-green-700"
+              >
+                OK
+              </button> */}
+            </div>
+          </div>
+        </div>
+      )}
+      
     </div>
   );
 }

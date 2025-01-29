@@ -343,6 +343,18 @@ export default function EditFormComponent({
     }
   }, [user, questions]);
 
+
+  useEffect(() => {
+      if (showSuccessModal) {
+        const timer = setTimeout(() => {
+          setShowSuccessModal(false);
+          navigate(-1); // Redirect after timeout
+        }, 2000); // 2000ms = 2 seconds
+    
+        return () => clearTimeout(timer); // Cleanup if component unmounts
+      }
+    }, [showSuccessModal, navigate]);
+
   const confirmSaveChanges = () => {
     const totalWeight = [...generalQuestions, ...studentQuestions].reduce(
       (sum, q) => sum + parseFloat(q.weight || 0),
@@ -572,14 +584,14 @@ export default function EditFormComponent({
               <h2 className="text-xl font-bold mb-4 text-green-700">
                 Success!
               </h2>
-              <p>Your form has been updated successfully!</p>
+              <p>The form has been updated successfully!</p>
               <div className="flex justify-center mt-4">
-                <button
+                {/* <button
                   onClick={() => setShowSuccessModal(false)} // Close the modal
                   className="px-4 py-2 bg-green-400 text-white rounded-md hover:bg-green-700"
                 >
                   OK
-                </button>
+                </button> */}
               </div>
             </div>
           </div>
