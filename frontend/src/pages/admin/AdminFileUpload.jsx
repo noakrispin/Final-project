@@ -28,7 +28,9 @@ const AdminFileUpload = () => {
       console.log("Processed Data:", processedData);
 
       if (!processedData || processedData.length === 0) {
-        throw new Error("The processed data is empty. Please check the file format.");
+        throw new Error(
+          "The processed data is empty. Please check the file format."
+        );
       }
 
       // Step 2: Insert projects into the database
@@ -63,28 +65,32 @@ const AdminFileUpload = () => {
   };
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen p-0">
       <div className="max-w-4xl mx-auto">
-        {/* Tabs Navigation */}
-        <div className="flex justify-center py-6 bg-white shadow-md">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              className={`inline-flex items-center px-5 py-3 text-lg font-medium border-b-4 ${
-                activeTab === tab
-                  ? "border-blue-900 text-blue-900"
-                  : "border-transparent text-gray-500 hover:border-blue-900 hover:text-blue-900"
-              }`}
-              onClick={() => {
-                setActiveTab(tab);
-                if (tab === "Evaluators") {
-                  navigate("/admin-evaluators");
-                }
-              }}
-            >
-              {tab}
-            </button>
-          ))}
+        {/* Tabs Section */}
+        <div className="relative z-10 bg-white border-b border-gray-300">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="flex justify-center py-4">
+              {tabs.map((tab) => (
+                <button
+                  key={tab}
+                  className={`inline-flex items-center px-3 pt-2 pb-3 border-b-2 text-base font-medium ${
+                    activeTab === tab
+                      ? "border-blue-900 text-blue-900"
+                      : "border-transparent text-gray-500 hover:border-blue-900 hover:text-blue-900"
+                  }`}
+                  onClick={() => {
+                    setActiveTab(tab);
+                    if (tab === "Evaluators") {
+                      navigate("/admin-evaluators");
+                    }
+                  }}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Tab Content */}
@@ -95,7 +101,8 @@ const AdminFileUpload = () => {
                 Project Upload Instructions
               </h2>
               <p className="text-gray-600 mb-4 max-w-3xl mx-auto break-words leading-relaxed text-center">
-                Please ensure your Excel file follows the format below before uploading.
+                Please ensure your Excel file follows the format below before
+                uploading.
               </p>
             </div>
 
@@ -107,17 +114,23 @@ const AdminFileUpload = () => {
                     <li>Column 2: Student 1 First Name (Required)</li>
                     <li>Column 3: Student 1 Last Name (Required)</li>
                     <li>Column 4: Student 1 ID (Required - 9 digits)</li>
-                    <li>Column 5: Student 1 Email (Required - @e.braude.ac.il)</li>
+                    <li>
+                      Column 5: Student 1 Email (Required - @e.braude.ac.il)
+                    </li>
                     <li>Column 6: Student 2 First Name (Optional)</li>
                     <li>Column 7: Student 2 Last Name (Optional)</li>
                     <li>Column 8: Student 2 ID (Optional - 9 digits)</li>
-                    <li>Column 9: Student 2 Email (Optional - @e.braude.ac.il)</li>
+                    <li>
+                      Column 9: Student 2 Email (Optional - @e.braude.ac.il)
+                    </li>
                     <li>Column 10: Supervisor 1 Email (Required)</li>
                     <li>Column 11: Supervisor 2 Email (Optional)</li>
                     <li>Column 12: Project Title (Required)</li>
                     <li>Column 13: Project Description (Optional)</li>
                     <li>Column 14: Part (Required - A or B)</li>
-                    <li>Column 15: Type (Required - Development or Research)</li>
+                    <li>
+                      Column 15: Type (Required - Development or Research)
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -139,27 +152,18 @@ const AdminFileUpload = () => {
                   View Projects
                 </Button>
               </div>
-
-              {error && (
-                <div className="mt-6 text-center text-red-600">
-                  <p>Error: {error}</p>
-                </div>
-              )}
-
-              {uploadSuccess && (
-                <div className="mt-6 text-center text-green-600">
-                  <p>Projects uploaded successfully!</p>
-                </div>
-              )}
             </div>
           </div>
         )}
 
         {activeTab === "Evaluators" && (
           <div className="p-6 bg-gray-100 border border-gray-300 rounded-lg shadow-sm text-center">
-            <h2 className="text-2xl text-blue-900 font-bold mb-2">Evaluators</h2>
+            <h2 className="text-2xl text-blue-900 font-bold mb-2">
+              Evaluators
+            </h2>
             <p className="text-gray-600">
-              Coming Soon: A separate page will handle uploading evaluator files.
+              Coming Soon: A separate page will handle uploading evaluator
+              files.
             </p>
             <Button
               onClick={() => navigate("/admin-evaluators")}

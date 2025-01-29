@@ -83,11 +83,11 @@ const AdminProjects = () => {
               console.log(`Fetched supervisor data for ID ${id}:`, userResponse);
               return {
                 id,
-                fullName: userResponse.fullName || `Unknown (${id})`,
+                fullName: userResponse.fullName || `${id}`,
               };
             } catch (error) {
               console.error(`Error fetching supervisor with ID ${id}:`, error);
-              return { id, fullName: `Unknown (${id})` };
+              return { id, fullName: `${id}` };
             }
           })
         );
