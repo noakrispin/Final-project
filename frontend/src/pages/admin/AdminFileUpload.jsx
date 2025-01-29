@@ -69,8 +69,8 @@ const AdminFileUpload = () => {
       <div className="max-w-4xl mx-auto">
         {/* Tabs Section */}
         <div className="relative z-10 bg-white border-b border-gray-300">
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div className="flex justify-center py-4">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-center py-4">
               {tabs.map((tab) => (
                 <button
                   key={tab}
