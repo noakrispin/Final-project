@@ -32,6 +32,20 @@ export const projectsApi = {
     }
   },
 
+
+  getProjectsBySupervisor : async (supervisorEmail) => {
+    try {
+      const response = await fetch(`/api/projects/supervisor?supervisorEmail=${encodeURIComponent(supervisorEmail)}`);
+      if (!response.ok) throw new Error("Failed to fetch supervised projects.");
+      return await response.json();
+    } catch (error) {
+      console.error("Error fetching supervised projects:", error);
+      return [];
+    }
+  },
+ 
+  
+
   /**
    * Get all projects.
    */

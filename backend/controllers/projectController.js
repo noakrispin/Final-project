@@ -49,6 +49,36 @@ exports.getProject = async (req, res) => {
   }
 };
 
+// Get projects supervised by a specific user
+exports.getProjectsBySupervisor = async (req, res) => {
+  const { supervisorEmail } = req.query;
+
+  try {
+    if (!supervisorEmail) {
+      return res.status(400).json({ error: "Supervisor email is required" });
+    }
+
+    const projectsSnapshot = await admin.firestore()
+      .collection("projects")
+      .where("supervisor1", "==", supervisorEmail)
+      .get();
+
+    const additionalProjectsSnapshot = await admin.firestore()
+      .collection("projects")
+      .where("supervisor2", "==", supervisorEmail)
+      .get();
+
+    const projects = [...projectsSnapshot.docs, ...additionalProjectsSnapshot.docs].map((doc) => ({
+      projectCode: doc.id,
+      ...doc.data(),
+    }));
+
+    res.status(200).json(projects);
+  } catch (error) {
+    console.error("Error fetching projects for supervisor:", error.message);
+    res.status(500).json({ error: "Failed to fetch projects." });
+  }
+};
 
 // Get all projects
 exports.getAllProjects = async (req, res) => {

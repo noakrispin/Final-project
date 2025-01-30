@@ -363,10 +363,10 @@ const SupervisorGradesFeedback = () => {
         <div className="p-6 border-b border-gray-200 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">
-              Supervisor Grades Feedback
+            Supervised Project Grades & Evaluations 
             </h1>
-            <p className="text-gray-600 mt-1">
-              View and manage grades for projects assigned to you.
+            <p className="text-gray-600 mt-1 text-lg">
+            Review the weighted grades and final assessments for your supervised projects. 
             </p>
           </div>
           {/* Refresh Grades Button */}
