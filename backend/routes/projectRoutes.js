@@ -2,7 +2,6 @@ const express = require("express");
 const {
   addProject,
   getProject,
-  getProjectsBySupervisor,
   getAllProjects,
   updateProject,
   deleteProject,
@@ -25,12 +24,6 @@ router.post("/", asyncHandler(async (req, res) => {
 // Get details of a specific project
 router.get("/:projectCode", asyncHandler(async (req, res) => {
   const result = await getProject(req, res);
-  return result;
-}));
-
-
-router.get("/supervisor/:email", asyncHandler(async (req, res) => {
-  const result = await getProjectsBySupervisor(req, res);
   return result;
 }));
 

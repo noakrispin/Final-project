@@ -154,53 +154,6 @@ exports.addOrUpdateGrade = async (req, res) => {
 };
 
 
-const fetchGradesInChunks = async (projectCodes) => {
-  const chunkSize = 30; // Firestore limitation
-  let allGrades = [];
-
-  for (let i = 0; i < projectCodes.length; i += chunkSize) {
-    const chunk = projectCodes.slice(i, i + chunkSize);
-
-    const snapshot = await admin
-      .firestore()
-      .collection("finalGrades")
-      .where("projectCode", "in", chunk)
-      .get();
-
-    if (!snapshot.empty) {
-      allGrades = [...allGrades, ...snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }))];
-    }
-  }
-  return allGrades;
-};
-
-exports.getGradesForProjects = async (req, res) => {
-  const { projectCodes } = req.body;
-
-  if (!projectCodes || projectCodes.length === 0) {
-    return res.status(400).json({ error: "Project codes are required." });
-  }
-
-  try {
-    console.log(`Fetching grades for projects: ${projectCodes}`);
-
-    const grades = await fetchGradesInChunks(projectCodes);
-
-    if (grades.length === 0) {
-      console.warn("No grades found for the given projects.");
-      return res.status(200).json({ success: true, data: [] });
-    }
-
-    console.log("Grades fetched successfully:", grades);
-    res.status(200).json({ success: true, data: grades });
-  } catch (error) {
-    console.error("Error fetching grades:", error.message);
-    res.status(500).json({ success: false, error: "Failed to fetch grades." });
-  }
-};
 
 
 
@@ -273,4 +226,3 @@ exports.deleteGrade = async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to delete grade" });
   }
 };
-
