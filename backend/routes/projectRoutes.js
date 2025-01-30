@@ -2,6 +2,7 @@ const express = require("express");
 const {
   addProject,
   getProject,
+  getProjectsBySupervisor,
   getAllProjects,
   updateProject,
   deleteProject,
@@ -26,6 +27,13 @@ router.get("/:projectCode", asyncHandler(async (req, res) => {
   const result = await getProject(req, res);
   return result;
 }));
+
+//  Get projects supervised by a specific user 
+router.get("/supervisor/:email", asyncHandler(async (req, res) => {
+  const result = await getProjectsBySupervisor(req, res);
+  return result;
+}));
+
 
 // Get all projects
 router.get("/", asyncHandler(async (req, res) => {
