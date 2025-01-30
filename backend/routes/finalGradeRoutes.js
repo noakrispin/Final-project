@@ -82,7 +82,7 @@ router.post("/supervisor", asyncHandler(async (req, res) => {
   console.log("Fetching grades for projects:", projectCodes);
 
   const result = await getGradesForProjects(req, res);
-  return res.status(200).json(result);
+return res.status(200).json(result);
 }));
 
 

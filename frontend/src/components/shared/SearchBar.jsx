@@ -7,7 +7,7 @@ const SearchBar = ({ value, onChange, placeholder }) => (
     <input
       type="text"
       placeholder={placeholder}
-      className="w-full h-10 pl-9 pr-3 bg-[#ebecf5] rounded-md text-base"
+      className="w-full h-10 pl-9 pr-3 bg-gray-200 rounded-md font-semibold text-base border border-gray-700"
       value={value}
       onChange={(e) => onChange(e.target.value)}
     />
@@ -15,4 +15,3 @@ const SearchBar = ({ value, onChange, placeholder }) => (
 );
 
 export default SearchBar;
-

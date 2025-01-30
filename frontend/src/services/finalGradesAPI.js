@@ -10,13 +10,13 @@ export const gradesApi = {
   addOrUpdateGrade: async (data) => {
     console.log("Adding/updating grades...");
     console.log("Received data:", data);
-  
+
     // Ensure the required fields are present
     const { projectCode, evaluationsByForm } = data;
     if (!projectCode || !evaluationsByForm || evaluationsByForm.length === 0) {
       throw new Error("Missing required fields: projectCode or evaluationsByForm.");
     }
-  
+
     try {
       // Make the API request to the backend
       const response = await api.post(`/grades`, data);
@@ -28,24 +28,24 @@ export const gradesApi = {
         error.response?.data || error.message
       );
       throw new Error(
-        `Failed to update grades: ${
-          error.response?.data?.error?.message || error.message
+        `Failed to update grades: ${error.response?.data?.error?.message || error.message
         }`
       );
     }
   },
-  
-   getGradesForProjects : async (projectCodes) => {
+
+  getGradesForProjects: async (projectCodes) => {
     try {
       const response = await api.post("/grades/supervisor", { projectCodes });
-      return response.data.data || [];
+      return response.data?.data || [];
+
     } catch (error) {
       console.error("Error fetching grades:", error);
       return [];
     }
   },
-  
-  
+
+
   /**
    * Get a specific grade by ID.
    */
