@@ -35,7 +35,16 @@ export const gradesApi = {
     }
   },
   
-
+   getGradesForProjects : async (projectCodes) => {
+    try {
+      const response = await api.post("/grades/supervisor", { projectCodes });
+      return response.data.data || [];
+    } catch (error) {
+      console.error("Error fetching grades:", error);
+      return [];
+    }
+  },
+  
   
   /**
    * Get a specific grade by ID.

@@ -66,6 +66,25 @@ router.post("/", asyncHandler(async (req, res) => {
   return res.status(200).json(result);
 }));
 
+// Get grades only for projects supervised by the logged-in user
+router.post("/supervisor", asyncHandler(async (req, res) => {
+  const { projectCodes } = req.body;
+
+  if (!projectCodes || projectCodes.length === 0) {
+    return res.status(400).json({
+      error: {
+        message: "Project codes are required.",
+        status: 400,
+      },
+    });
+  }
+
+  console.log("Fetching grades for projects:", projectCodes);
+
+  const result = await getGradesForProjects(req, res);
+  return res.status(200).json(result);
+}));
+
 
 
 // Get a specific grade by ID
