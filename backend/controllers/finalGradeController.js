@@ -154,8 +154,31 @@ exports.addOrUpdateGrade = async (req, res) => {
 };
 
 
+const fetchGradesInChunks = async (projectCodes) => {
+  const chunkSize = 30; // Firestore limitation
+  let allGrades = [];
+
+  for (let i = 0; i < projectCodes.length; i += chunkSize) {
+    const chunk = projectCodes.slice(i, i + chunkSize);
+
+    const snapshot = await admin
+      .firestore()
+      .collection("finalGrades")
+      .where("projectCode", "in", chunk)
+      .get();
+
+    if (!snapshot.empty) {
+      allGrades = [...allGrades, ...snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }))];
+    }
+  }
+  return allGrades;
+};
+
 exports.getGradesForProjects = async (req, res) => {
-  const { projectCodes } = req.body; // Expect projectCodes as input
+  const { projectCodes } = req.body;
 
   if (!projectCodes || projectCodes.length === 0) {
     return res.status(400).json({ error: "Project codes are required." });
@@ -164,22 +187,12 @@ exports.getGradesForProjects = async (req, res) => {
   try {
     console.log(`Fetching grades for projects: ${projectCodes}`);
 
-    // Fetch grades only for the received projectCodes
-    const gradesSnapshot = await admin
-      .firestore()
-      .collection("finalGrades")
-      .where("projectCode", "in", projectCodes)
-      .get();
+    const grades = await fetchGradesInChunks(projectCodes);
 
-    if (gradesSnapshot.empty) {
+    if (grades.length === 0) {
       console.warn("No grades found for the given projects.");
       return res.status(200).json({ success: true, data: [] });
     }
-
-    const grades = gradesSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
 
     console.log("Grades fetched successfully:", grades);
     res.status(200).json({ success: true, data: grades });

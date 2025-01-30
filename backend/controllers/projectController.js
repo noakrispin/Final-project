@@ -49,29 +49,37 @@ exports.getProject = async (req, res) => {
   }
 };
 
-// Get projects supervised by a specific user
 exports.getProjectsBySupervisor = async (req, res) => {
-  const { supervisorEmail } = req.query;
+  const { email } = req.params; // Extract the supervisor's email from the request params
+  console.log("Received supervisorEmail:", email);
 
   try {
-    if (!supervisorEmail) {
+    if (!email) {
       return res.status(400).json({ error: "Supervisor email is required" });
     }
 
-    const projectsSnapshot = await admin.firestore()
+    // Fetch projects where supervisor1 matches the email
+    const supervisor1Snapshot = await admin.firestore()
       .collection("projects")
-      .where("supervisor1", "==", supervisorEmail)
+      .where("supervisor1", "==", email)
       .get();
 
-    const additionalProjectsSnapshot = await admin.firestore()
+    // Fetch projects where supervisor2 matches the email
+    const supervisor2Snapshot = await admin.firestore()
       .collection("projects")
-      .where("supervisor2", "==", supervisorEmail)
+      .where("supervisor2", "==", email)
       .get();
 
-    const projects = [...projectsSnapshot.docs, ...additionalProjectsSnapshot.docs].map((doc) => ({
-      projectCode: doc.id,
+    // Combine both query results
+    const projects = [...supervisor1Snapshot.docs, ...supervisor2Snapshot.docs].map((doc) => ({
+      projectCode: doc.id, // Use the document ID as project code
       ...doc.data(),
     }));
+
+    // If no projects are found, return an error
+    if (projects.length === 0) {
+      return res.status(404).json({ error: "No projects found for the given supervisor email." });
+    }
 
     res.status(200).json(projects);
   } catch (error) {
@@ -80,36 +88,38 @@ exports.getProjectsBySupervisor = async (req, res) => {
   }
 };
 
+
+
 // Get all projects
 exports.getAllProjects = async (req, res) => {
   try {
-      const projectsSnapshot = await admin.firestore().collection("projects").get();
+    const projectsSnapshot = await admin.firestore().collection("projects").get();
 
-      // If no documents exist, return an empty array
-      if (projectsSnapshot.empty) {
-          console.log("No projects found in Firestore.");
-          return res.status(200).json([]);
-      }
+    // If no documents exist, return an empty array
+    if (projectsSnapshot.empty) {
+      console.log("No projects found in Firestore.");
+      return res.status(200).json([]);
+    }
 
-      const projects = projectsSnapshot.docs.map((doc) => {
-          const projectData = doc.data();
+    const projects = projectsSnapshot.docs.map((doc) => {
+      const projectData = doc.data();
 
-          // Transform individual student fields into an array
-          const students = [];
-          if (projectData.Student1) students.push({ id: projectData.Student1.ID, name: projectData.Student1.fullName });
-          if (projectData.Student2) students.push({ id: projectData.Student2.ID, name: projectData.Student2.fullName });
+      // Transform individual student fields into an array
+      const students = [];
+      if (projectData.Student1) students.push({ id: projectData.Student1.ID, name: projectData.Student1.fullName });
+      if (projectData.Student2) students.push({ id: projectData.Student2.ID, name: projectData.Student2.fullName });
 
-          return {
-              projectCode: doc.id,
-              ...projectData,
-              students, // Replace separate student fields with the array
-          };
-      });
+      return {
+        projectCode: doc.id,
+        ...projectData,
+        students, // Replace separate student fields with the array
+      };
+    });
 
-      res.status(200).json(projects);
+    res.status(200).json(projects);
   } catch (error) {
-      console.error("Error fetching projects:", error.message);
-      res.status(500).json({ error: "Failed to fetch projects" });
+    console.error("Error fetching projects:", error.message);
+    res.status(500).json({ error: "Failed to fetch projects" });
   }
 };
 
