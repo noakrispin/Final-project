@@ -2,49 +2,17 @@ import { api } from "./api"; // Import the shared API utilities
 
 export const gradesApi = {
   /**
-   * Add or update a grade by its ID.
-   * 
-   * @param {string} id - The unique ID of the grade document.
-   * @param {Object} data - The payload containing evaluatorID, formID, and grades.
+   * Add or update a grade.
    */
-  addOrUpdateGrade: async (data) => {
-    console.log("Adding/updating grades...");
-    console.log("Received data:", data);
-
-    // Ensure the required fields are present
-    const { projectCode, evaluationsByForm } = data;
-    if (!projectCode || !evaluationsByForm || evaluationsByForm.length === 0) {
-      throw new Error("Missing required fields: projectCode or evaluationsByForm.");
-    }
-
+  addOrUpdateGrade: async (id, data) => {
     try {
-      // Make the API request to the backend
-      const response = await api.post(`/grades`, data);
-      console.log("Response from addOrUpdateGrade:", response);
-      return response;
+      const response = await api.post(`/grades`, { id, ...data });
+      return response.data;
     } catch (error) {
-      console.error(
-        "Error adding/updating grades:",
-        error.response?.data || error.message
-      );
-      throw new Error(
-        `Failed to update grades: ${error.response?.data?.error?.message || error.message
-        }`
-      );
+      console.error("Error adding/updating grade:", error);
+      throw error;
     }
   },
-
-  getGradesForProjects: async (projectCodes) => {
-    try {
-      const response = await api.post("/grades/supervisor", { projectCodes });
-      return response.data?.data || [];
-
-    } catch (error) {
-      console.error("Error fetching grades:", error);
-      return [];
-    }
-  },
-
 
   /**
    * Get a specific grade by ID.

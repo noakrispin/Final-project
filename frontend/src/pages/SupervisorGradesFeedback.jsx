@@ -23,30 +23,28 @@ const SupervisorGradesFeedback = () => {
   useEffect(() => {
     const fetchAndProcessGrades = async () => {
       try {
-        console.log("Fetching projects supervised by user...");
-        const projectsResponse = await projectsApi.getProjectsBySupervisor(user.email);
-        const supervisedProjects = projectsResponse || [];
-        console.log("Supervised projects fetched:", supervisedProjects);
-    
-        if (supervisedProjects.length === 0) {
-          console.warn("No projects found for this supervisor.");
-          setProjects([]); 
-          setIsLoading(false); 
-          return;
-        }
-    
-        const projectCodes = supervisedProjects.map((project) => project.projectCode);
-        console.log("Project codes:", projectCodes);
-    
-        console.log("Fetching grades for supervisor's projects...");
-        const gradesResponse = await gradesApi.getGradesForProjects({ projectCodes });
-        const grades = gradesResponse.data || [];
-        console.log("Grades fetched:", grades);
-    
+        console.log("Starting data fetch and preprocessing...");
+
+        console.log("Fetching final grades...");
+        const gradesResponse = await gradesApi.getAllGrades();
+        const grades = gradesResponse || [];
+        console.log("Final grades fetched:", grades);
+
+        console.log("Fetching all projects...");
+        const projects = await projectsApi.getAllProjects();
+        console.log("All projects fetched:", projects);
+
+        console.log("Filtering projects for supervisor...");
+        const filteredProjects = filterProjectsForSupervisor(
+          projects,
+          user.email
+        );
+        console.log("Filtered projects:", filteredProjects);
+
         console.log("Processing final grades...");
-        const processedData = preprocessProjects(grades, supervisedProjects);
+        const processedData = preprocessProjects(grades, filteredProjects);
         console.log("Processed Data:", processedData);
-    
+
         setProjects(processedData);
       } catch (error) {
         console.error("Error during preprocessing:", error);
@@ -55,60 +53,86 @@ const SupervisorGradesFeedback = () => {
         setIsLoading(false);
       }
     };
-    
 
     fetchAndProcessGrades();
   }, [user]);
 
-  
+  const filterProjectsForSupervisor = (projects, supervisorEmail) => {
+    return projects.filter(
+      (project) =>
+        project.supervisor1 === supervisorEmail ||
+        project.supervisor2 === supervisorEmail
+    );
+  };
+
   const preprocessProjects = (grades, projects) => {
     try {
-      // Create a Map 
-      const projectMap = new Map(
-        projects.map((project) => [project.projectCode, project])
+      console.log("Preprocessing projects with grades and projects...");
+      console.log("Grades:", grades);
+      console.log("Projects:", projects);
+
+      // Get the project codes from the filtered projects
+      const filteredProjectCodes = projects.map(
+        (project) => project.projectCode
       );
-  
-      console.log("Filtered Project Codes:", [...projectMap.keys()]);
-  
-      // Process grades efficiently using reduce()
-      return grades.reduce((result, grade) => {
-        if (!grade.projectCode || !projectMap.has(grade.projectCode) || grade.projectCode === "placeholderProject") {
-          return result;
-        }
-  
-        const project = projectMap.get(grade.projectCode);
-        const student = [project.Student1, project.Student2].find(
-          (s) => s && s.ID === grade.studentID
-        );
-  
-        const studentName = student?.fullName || `${student?.firstName || ""} ${student?.lastName || ""}`.trim() || "Unknown Student";
-  
-        const deadline = project.deadline?._seconds
-          ? new Date(project.deadline._seconds * 1000).toLocaleDateString()
-          : "No Deadline";
-  
-        const roundGrade = (value) => (typeof value === "number" ? Math.round(value) : value);
-  
-        result.push({
-          projectCode: grade.projectCode,
-          studentName,
-          presentationGrade: roundGrade(grade.CalculatedPresentationGrade),
-          bookGrade: roundGrade(grade.CalculatedBookGrade),
-          supervisorGrade: roundGrade(grade.CalculatedSupervisorGrade),
-          finalGrade: roundGrade(grade.finalGrade),
-          status: grade.status || "Not graded",
-          deadline,
-        });
-  
-        return result;
-      }, []);
+      console.log("Filtered Project Codes:", filteredProjectCodes);
+
+      // Filter grades to only include those matching the filtered project codes
+      const filteredGrades = grades.filter(
+        (grade) =>
+          grade.projectCode &&
+          filteredProjectCodes.includes(grade.projectCode) &&
+          grade.projectCode !== "placeholderProject"
+      );
+      console.log("Filtered Grades:", filteredGrades);
+
+      // Map grades to project details
+      return filteredGrades
+        .map((grade) => {
+          const project = projects.find(
+            (proj) => proj.projectCode === grade.projectCode
+          );
+
+          if (!project) {
+            console.warn(`Project not found for grade: ${grade.projectCode}`);
+            return null;
+          }
+
+          const studentName =
+            [project.Student1, project.Student2]
+              .filter((student) => student && student.ID === grade.studentID)
+              .map(
+                (student) =>
+                  student.fullName || `${student.firstName} ${student.lastName}`
+              )
+              .join(", ") || "Unknown Student";
+
+          const deadline =
+            project.deadline && project.deadline._seconds
+              ? new Date(project.deadline._seconds * 1000).toLocaleDateString()
+              : "No Deadline";
+
+          console.log("Rendering status(in preprocess):", grade.status);
+          const roundGrade = (value) =>
+            typeof value === "number" ? Math.round(value) : value;
+          return {
+            ...project, // Include project details
+            projectCode: grade.projectCode,
+            studentName,
+            presentationGrade: roundGrade(grade.CalculatedPresentationGrade || ""),
+            bookGrade: roundGrade(grade.CalculatedBookGrade || ""),
+            supervisorGrade: roundGrade(grade.CalculatedSupervisorGrade || ""),
+            finalGrade: roundGrade(grade.finalGrade || ""),
+            status: grade.status || "Not graded",
+            deadline: deadline, // Add fallback value for undefined deadline
+          };
+        })
+        .filter(Boolean); // Filter out null values
     } catch (error) {
       console.error("Error preprocessing projects:", error.message);
       throw new Error("Failed to preprocess project data.");
     }
   };
-  
-  
   const handleRefreshClick = async () => {
     try {
       setIsLoading(true);
@@ -116,60 +140,59 @@ const SupervisorGradesFeedback = () => {
   
       for (const project of projects) {
         const { projectCode } = project;
+        const evaluationsByForm = [];
   
-        // Run all form evaluations in parallel
-        const formIDs = [
+        for (const formID of [
           "SupervisorForm",
           "PresentationFormA",
           "PresentationFormB",
           "bookReviewerFormA",
           "bookReviewerFormB",
-        ];
+        ]) {
+          try {
+            const response = await formsApi.getEvaluations(formID);
+            const filteredEvaluations = response?.filter(
+              (evaluation) => evaluation.projectCode === projectCode
+            );
   
-        try {
-          const evaluationsResponses = await Promise.all(
-            formIDs.map((formID) =>
-              formsApi.getEvaluations(formID).catch((error) => {
-                console.error(`Error fetching evaluations for formID: ${formID}`, error.message);
-                return []; // Return empty array instead of failing
-              })
-            )
-          );
+            const gradesByStudent = {};
+            filteredEvaluations.forEach((evaluation) => {
+              Object.entries(evaluation.grades).forEach(([studentID, grade]) => {
+                if (!gradesByStudent[studentID]) {
+                  gradesByStudent[studentID] = [];
+                }
+                gradesByStudent[studentID].push(grade);
+              });
+            });
   
-          const evaluationsByForm = evaluationsResponses.map((response, index) => {
-            const formID = formIDs[index];
-  
-            const gradesByStudent = response
-              ?.filter((evaluation) => evaluation.projectCode === projectCode)
-              .reduce((acc, evaluation) => {
-                Object.entries(evaluation.grades).forEach(([studentID, grade]) => {
-                  acc[studentID] = acc[studentID] || [];
-                  acc[studentID].push(grade);
-                });
-                return acc;
-              }, {});
-  
-            return {
+            evaluationsByForm.push({
               formID,
-              grades: Object.entries(gradesByStudent).map(([studentID, grades]) => ({
-                studentID,
-                grades,
-              })),
-            };
-          });
+              grades: Object.entries(gradesByStudent).map(
+                ([studentID, grades]) => ({ studentID, grades })
+              ),
+            });
+          } catch (error) {
+            console.error(
+              `Error fetching evaluations for formID: ${formID}`,
+              error.message
+            );
+          }
+        }
   
-          if (evaluationsByForm.some((form) => form.grades.length > 0)) {
+        if (evaluationsByForm.length > 0) {
+          try {
             await gradesApi.addOrUpdateGrade({
               projectCode,
               evaluationsByForm,
             });
+          } catch (error) {
+            toast.error(`Failed to update grades for project ${projectCode}.`);
           }
-        } catch (error) {
-          toast.error(`Failed to update grades for project ${projectCode}.`);
         }
       }
   
       toast.success("Grades updated! Refreshing...");
+      
     } catch (error) {
       console.error("Error refreshing grades:", error.message);
       toast.error("Failed to refresh grades.");
@@ -180,7 +203,6 @@ const SupervisorGradesFeedback = () => {
       }, 100);
     }
   };
-  
   
   
 
