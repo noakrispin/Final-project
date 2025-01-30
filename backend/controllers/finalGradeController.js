@@ -154,6 +154,40 @@ exports.addOrUpdateGrade = async (req, res) => {
 };
 
 
+exports.getGradesForProjects = async (req, res) => {
+  const { projectCodes } = req.body; // Expect projectCodes as input
+
+  if (!projectCodes || projectCodes.length === 0) {
+    return res.status(400).json({ error: "Project codes are required." });
+  }
+
+  try {
+    console.log(`Fetching grades for projects: ${projectCodes}`);
+
+    // Fetch grades only for the received projectCodes
+    const gradesSnapshot = await admin
+      .firestore()
+      .collection("finalGrades")
+      .where("projectCode", "in", projectCodes)
+      .get();
+
+    if (gradesSnapshot.empty) {
+      console.warn("No grades found for the given projects.");
+      return res.status(200).json({ success: true, data: [] });
+    }
+
+    const grades = gradesSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    console.log("Grades fetched successfully:", grades);
+    res.status(200).json({ success: true, data: grades });
+  } catch (error) {
+    console.error("Error fetching grades:", error.message);
+    res.status(500).json({ success: false, error: "Failed to fetch grades." });
+  }
+};
 
 
 

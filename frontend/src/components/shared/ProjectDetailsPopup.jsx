@@ -248,7 +248,7 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
                   project.supervisor2 === user?.emailId) && (
                   <div>
                     <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                      Personal Notes
+                      Your Personal Notes
                     </h3>
                     <textarea
                       value={personalNotes}
@@ -370,7 +370,7 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
               {/* Special Notes */}
               <div className="bg-green-50 rounded-md p-6 shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-700 mb-3">
-                  Special Notes
+                  Special Notes about the project
                 </h3>
                 <p className="text-gray-600">
                   {project.specialNotes || "No special notes available."}
