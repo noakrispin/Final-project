@@ -15,7 +15,7 @@ export default function UnifiedFormComponent({
   projectName,
   formID,
   questions, //questions from DynamicFormPage
-  readOnly,
+  //readOnly,
 }) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -268,7 +268,7 @@ export default function UnifiedFormComponent({
   };
 
   const handleChange = (e) => {
-    if (readOnly) return; // Prevent changes if in read-only mode
+    //if (readOnly) return; // Prevent changes if in read-only mode
     const { name, value } = e.target;
 
     setFormData((prevData) => {
@@ -385,7 +385,7 @@ export default function UnifiedFormComponent({
                   {...field}
                   value={formData[field.name] || ""}
                   onChange={handleChange}
-                  disabled={readOnly}
+                  //disabled={readOnly}
                 />
               </>
             </div>
@@ -410,7 +410,7 @@ export default function UnifiedFormComponent({
                     name={fieldName}
                     value={formData[fieldName] || ""}
                     onChange={(e) => handleChange(e)}
-                    disabled={readOnly}
+                    //disabled={readOnly}
                   />
                 );
               })}
@@ -418,13 +418,13 @@ export default function UnifiedFormComponent({
           ))}
 
         {/* Submit Button */}
-        {!readOnly && (
+        (
           <div className="flex justify-center mt-6">
             <Button type="submit" className="w-64" disabled={!isFormValid()}>
               Submit Evaluation
             </Button>
           </div>
-        )}
+        )
       </form>
       {/* Error Modal (Only shows when an error occurs) */}
       <ConfirmationModal

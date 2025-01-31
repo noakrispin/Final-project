@@ -113,12 +113,10 @@ export const Table = ({
           }`}
           data-grade-action={JSON.stringify({ gradeType, project, formID })}
           onClick={() => {
-            if (!isDeadlinePassed) {
-              handleRowClick(
-                { gradeType, project, studentName: null, formID },
-                true
-              );
-            }
+            handleRowClick(
+              { gradeType, project, studentName: null, formID },
+              true
+            );
           }}
         >
           {`Grade ${gradeType.charAt(0).toUpperCase() + gradeType.slice(1)}`}
@@ -148,7 +146,7 @@ export const Table = ({
             project,
             studentName: student.fullName,
             formID,
-            readOnly: isDeadlinePassed,
+            //readOnly: isDeadlinePassed,
           };
 
           return (

@@ -16,7 +16,7 @@ const DynamicFormPage = () => {
   const source = searchParams.get("source");
   const projectCode = searchParams.get("projectCode");
   const projectName = searchParams.get("projectName");
-  const readOnly = searchParams.get("readOnly") === "true";
+  //const readOnly = searchParams.get("readOnly") === "true";
   const students = JSON.parse(searchParams.get("students") || "[]");
 
   const [formDetails, setFormDetails] = useState({
@@ -91,7 +91,7 @@ const DynamicFormPage = () => {
         projectCode={projectCode}
         projectName={projectName}
         students={students}
-        readOnly={readOnly}
+        //readOnly={readOnly}
       />
     );
   }
