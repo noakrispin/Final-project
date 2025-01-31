@@ -158,7 +158,6 @@ function QuestionEditor({ questions, setQuestions, reference, formID }) {
               >
                 <option value="textarea">Text</option>
                 <option value="number">Number</option>
-                
               </select>
             </div>
 
@@ -171,13 +170,17 @@ function QuestionEditor({ questions, setQuestions, reference, formID }) {
                 className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 shadow-sm"
                 value={field.weight}
                 onChange={(e) =>
-                  handleUpdateQuestion(index, "weight", parseFloat(e.target.value))
+                  handleUpdateQuestion(
+                    index,
+                    "weight",
+                    parseFloat(e.target.value)
+                  )
                 }
               />
             </div>
             <div>
               <label className="block text-gray-700 font-medium mb-2">
-                Reference 
+                Reference
               </label>
               <select
                 className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 shadow-sm"
@@ -295,12 +298,14 @@ export default function EditFormComponent({
   const [generalQuestions, setGeneralQuestions] = useState([]);
   const [studentQuestions, setStudentQuestions] = useState([]);
   const [editedFormName, setEditedFormName] = useState(formTitle);
-  const [editedFormDescription, setEditedFormDescription] =useState(formDescription);
+  const [editedFormDescription, setEditedFormDescription] =
+    useState(formDescription);
   const [isEditMode, setIsEditMode] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showConfirmExit, setShowConfirmExit] = useState(false);
   const [showConfirmSave, setShowConfirmSave] = useState(false);
-  const [showWeightValidationModal, setShowWeightValidationModal] =useState(false);
+  const [showWeightValidationModal, setShowWeightValidationModal] =
+    useState(false);
   const [currentTotalWeight, setCurrentTotalWeight] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -343,82 +348,91 @@ export default function EditFormComponent({
     }
   }, [user, questions]);
 
-
   useEffect(() => {
-      if (showSuccessModal) {
-        const timer = setTimeout(() => {
-          setShowSuccessModal(false);
-          navigate(-1); // Redirect after timeout
-        }, 2000); // 2000ms = 2 seconds
-    
-        return () => clearTimeout(timer); // Cleanup if component unmounts
-      }
-    }, [showSuccessModal, navigate]);
+    if (showSuccessModal) {
+      const timer = setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate(-1); // Redirect after timeout
+      }, 2000); // 2000ms = 2 seconds
+
+      return () => clearTimeout(timer); // Cleanup if component unmounts
+    }
+  }, [showSuccessModal, navigate]);
 
   const confirmSaveChanges = () => {
     const totalWeight = [...generalQuestions, ...studentQuestions].reduce(
       (sum, q) => sum + parseFloat(q.weight || 0),
       0
     );
-  
+
     // Round to 2 decimal places
     const roundedTotalWeight = parseFloat(totalWeight.toFixed(2));
-  
+
     // Validate weight sum
     if (roundedTotalWeight !== 1.0) {
       setCurrentTotalWeight(roundedTotalWeight);
       setShowWeightValidationModal(true);
       return;
     }
-  
+
     // Show the save confirmation modal if validation passes
     setShowConfirmSave(true);
   };
-  
+
   const handleSave = async () => {
     setIsProcessing(true);
-    console.log("Updating form:", formID, editedFormName, editedFormDescription);
+    console.log(
+      "Updating form:",
+      formID,
+      editedFormName,
+      editedFormDescription
+    );
 
     try {
-        // Prepare the form update object (renamed 'title' to 'formName')
-        const formUpdate = {
-            formName: editedFormName, 
-            description: editedFormDescription,
-            questions: [...generalQuestions, ...studentQuestions].map(q => ({
-                ...q,
-                order: parseInt(q.order, 10), // Ensure order is an integer
-                weight: parseFloat(q.weight), // Ensure weight is a float
-            }))
-        };
+      // Prepare the form update object (renamed 'title' to 'formName')
+      const formUpdate = {
+        formName: editedFormName,
+        description: editedFormDescription,
+        questions: [...generalQuestions, ...studentQuestions].map((q) => ({
+          ...q,
+          order: parseInt(q.order, 10), // Ensure order is an integer
+          weight: parseFloat(q.weight), // Ensure weight is a float
+        })),
+      };
 
-        // Send a single API call to update the form + questions
-        const response = await formsApi.updateForm(formID, formUpdate);
-        console.log("Update response:", response);
+      // Send a single API call to update the form + questions
+      const response = await formsApi.updateForm(formID, formUpdate);
+      console.log("Update response:", response);
 
-        // Refresh questions from the DB
-        const allQuestions = await formsApi.getQuestions(formID);
+      // Refresh questions from the DB
+      const allQuestions = await formsApi.getQuestions(formID);
 
-        // Sort questions before setting state
-        const sortedQuestions = allQuestions.sort((a, b) => a.order - b.order);
-        setGeneralQuestions(sortedQuestions.filter(q => q.reference === "general"));
-        setStudentQuestions(sortedQuestions.filter(q => q.reference === "student"));
+      // Sort questions before setting state
+      const sortedQuestions = allQuestions.sort((a, b) => a.order - b.order);
+      setGeneralQuestions(
+        sortedQuestions.filter((q) => q.reference === "general")
+      );
+      setStudentQuestions(
+        sortedQuestions.filter((q) => q.reference === "student")
+      );
 
-        // Show success message
-        setShowSuccessModal(true);
-
-        // Reset edit mode and unsaved changes tracking
-        setIsEditMode(false);
-        setHasUnsavedChanges(false);
-        setShowConfirmSave(false);
-        setIsProcessing(false);
+      // Show success message
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false); 
+      }, 1000);
+      // Reset edit mode and unsaved changes tracking
+      setIsEditMode(false);
+      setHasUnsavedChanges(false);
+      setShowConfirmSave(false);
+      setIsProcessing(false);
     } catch (error) {
-        console.error("Error saving form:", error.message);
-        alert(error.message || "Failed to save form. Please try again.");
+      console.error("Error saving form:", error.message);
+      alert(error.message || "Failed to save form. Please try again.");
     } finally {
-        setIsProcessing(false);
+      setIsProcessing(false);
     }
-};
-
+  };
 
   return (
     <div className="relative p-4 md:p-6">
@@ -529,24 +543,27 @@ export default function EditFormComponent({
           </Button>
         )}
         {/* Weight Validation Modal */}
-      {showWeightValidationModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96 text-center">
-            <h2 className="text-xl font-bold mb-4 text-red-700">
-              Weight Validation Error
-            </h2>
-            <p>Total question weights must add up to 100% (1.00). Currently: {currentTotalWeight}</p>
-            <div className="flex justify-center mt-4">
-              <button
-                onClick={() => setShowWeightValidationModal(false)}
-                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-700"
-              >
-                OK
-              </button>
+        {showWeightValidationModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-96 text-center">
+              <h2 className="text-xl font-bold mb-4 text-red-700">
+                Weight Validation Error
+              </h2>
+              <p>
+                Total question weights must add up to 100% (1.00). Currently:{" "}
+                {currentTotalWeight}
+              </p>
+              <div className="flex justify-center mt-4">
+                <button
+                  onClick={() => setShowWeightValidationModal(false)}
+                  className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-700"
+                >
+                  OK
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
         <ConfirmationModal
           isOpen={showConfirmExit}
           title="Exit Edit Mode?"
@@ -578,24 +595,13 @@ export default function EditFormComponent({
           onConfirm={handleSave}
           isProcessing={isProcessing}
         />
-        {showSuccessModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-96 text-center">
-              <h2 className="text-xl font-bold mb-4 text-green-700">
-                Success!
-              </h2>
-              <p>The form has been updated successfully!</p>
-              <div className="flex justify-center mt-4">
-                {/* <button
-                  onClick={() => setShowSuccessModal(false)} // Close the modal
-                  className="px-4 py-2 bg-green-400 text-white rounded-md hover:bg-green-700"
-                >
-                  OK
-                </button> */}
-              </div>
-            </div>
-          </div>
-        )}
+        <ConfirmationModal
+          isOpen={showSuccessModal}
+          title="Success!"
+          message="The form has been updated successfully!"
+          onCancel={() => setShowSuccessModal(false)}
+          isSuccess={true}
+        />
       </form>
     </div>
   );

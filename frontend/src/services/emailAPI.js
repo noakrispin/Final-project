@@ -1,21 +1,18 @@
 import { api } from "./api";
 
 export const emailAPI = {
-  /**
-   * Send reminders to all supervisors immediately.
-   * @param {string|null} [message] - The custom reminder message (optional).
-   */
-  sendRemindersToAll: async (message = null) => {
+
+  sendRemindersToEvaluators: async (message = null) => {
     try {
-      const response = await api.post("/users/schedule-reminders", {
-        message, // Send null if no message is provided
+      const response = await api.post("/evaluators/schedule-reminders", {
+        message, // Default message will be handled in the backend if null
       });
   
       console.log("Reminders sent successfully:", response.data);
       return response;
     } catch (error) {
       console.error(
-        "Error sending reminders to all users:",
+        "Error sending reminders to pending evaluators:",
         error.response?.data || error.message
       );
       throw new Error(
@@ -23,7 +20,7 @@ export const emailAPI = {
       );
     }
   },
-
+  
   /**
    * Notify all supervisors about a global deadline.
    * @param {string} deadline - The global deadline to notify.
