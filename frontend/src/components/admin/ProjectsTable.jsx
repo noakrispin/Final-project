@@ -7,7 +7,6 @@ import { MdDeleteForever } from "react-icons/md";
 import SearchBar from "../shared/SearchBar";
 import { useState } from "react";
 
-
 const ProjectsTable = ({
   projects,
   activeTab,
@@ -17,15 +16,32 @@ const ProjectsTable = ({
   onDelete,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
+  //search in table
   const filteredProjects = projects.filter((project) => {
-    return (
-      project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.projectCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.students.some((student) =>
-        student.fullName.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    );
+    if (!project) return false; // Ensure project exists
+  
+    // Convert all fields into a searchable string safely
+    const projectText = Object.entries(project)
+      .flatMap(([key, value]) => {
+        if (value === null || value === undefined) return []; // Skip null/undefined values
+  
+        if (Array.isArray(value)) {
+          return value.flatMap((item) =>
+            typeof item === "object"
+              ? Object.values(item || {}).join(" ").toLowerCase()
+              : item.toString().toLowerCase()
+          );
+        }
+  
+        return typeof value === "object"
+          ? Object.values(value || {}).join(" ").toLowerCase()
+          : value.toString().toLowerCase();
+      })
+      .join(" "); // Join all values for search
+  
+    return projectText.includes(searchTerm.toLowerCase());
   });
+  
 
   const renderEditableCell = (
     value,
@@ -181,7 +197,7 @@ const ProjectsTable = ({
           <SearchBar
             value={searchTerm}
             onChange={setSearchTerm}
-            placeholder="Search Projects"
+            placeholder="Search"
           />
         </div>
       </div>
