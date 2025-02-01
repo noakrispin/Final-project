@@ -14,6 +14,7 @@ const AdminReminders = () => {
   const [error, setError] = useState(null);
   const [deadline, setDeadline] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
   const [confirmationModal, setConfirmationModal] = useState({
     isOpen: false,
     title: "",
@@ -125,76 +126,124 @@ const AdminReminders = () => {
         title: "Missing Deadline",
         message: "Please select a deadline before saving.",
         isWarning: true,
+        isSuccess: false,
+        isProcessing: false,
+        onConfirm: null, // No confirm action needed
       });
       return;
     }
-  
+
+    // Ask user to confirm action
     setConfirmationModal({
       isOpen: true,
       title: "Confirm Deadline",
-      message: "Are you sure you want to set this deadline? This will notify all users.",
+      message:
+        "Are you sure you want to set this deadline? This will notify all users.",
       isWarning: false,
-      onConfirm: async () => {
-        try {
-          const timestamp = new Date(deadline).getTime();
-          await emailAPI.notifyGlobalDeadline(timestamp, emailMessage);
-  
-          setConfirmationModal({
-            isOpen: true,
-            title: "Success!",
-            message: "Deadline set successfully.",
-            isSuccess: true,
-          });
-  
-          setDeadline("");
-          setEmailMessage("");
-        } catch (error) {
-          console.error("Error setting deadline:", error);
-          setConfirmationModal({
-            isOpen: true,
-            title: "Failed to Set Deadline",
-            message: "An error occurred while saving the deadline.",
-            isWarning: true,
-          });
-        }
-      },
+      isSuccess: false,
+      isProcessing: false,
+      onConfirm: () => processSaveDeadline(), //  Wait for user to click Confirm
     });
   };
-  
+
+  const processSaveDeadline = async () => {
+    setConfirmationModal({
+      isOpen: true,
+      title: "Setting Deadline...",
+      message: "Please wait while we update the deadline.",
+      isWarning: false,
+      isSuccess: false,
+      isProcessing: true, //  Show loading animation
+      onConfirm: null, // Remove confirm button
+    });
+
+    setIsProcessing(true);
+
+    try {
+      const timestamp = new Date(deadline).getTime();
+      await emailAPI.notifyGlobalDeadline(timestamp, emailMessage);
+
+      setConfirmationModal({
+        isOpen: true,
+        title: "Success!",
+        message: "Deadline set successfully.",
+        isWarning: false,
+        isSuccess: true,
+        isProcessing: false,
+      });
+
+      setDeadline("");
+      setEmailMessage("");
+    } catch (error) {
+      console.error("Error setting deadline:", error);
+      setConfirmationModal({
+        isOpen: true,
+        title: "Failed to Set Deadline",
+        message: "An error occurred while saving the deadline.",
+        isWarning: true,
+        isSuccess: false,
+        isProcessing: false,
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   // Handle sending reminders
   const handleSendReminders = () => {
     setConfirmationModal({
       isOpen: true,
       title: "Confirm Reminder",
-      message: "Are you sure you want to send reminders? This will notify all pending evaluators.",
+      message:
+        "Are you sure you want to send reminders? This will notify all pending evaluators.",
       isWarning: false,
-      onConfirm: async () => {
-        try {
-          const reminderMessage = emailMessage.trim() || null;
-          await emailAPI.sendRemindersToEvaluators(reminderMessage);
-  
-          setConfirmationModal({
-            isOpen: true,
-            title: "Reminders Sent!",
-            message: "All pending evaluators have been notified.",
-            isSuccess: true,
-          });
-  
-          setEmailMessage("");
-        } catch (error) {
-          console.error("Error sending reminders:", error);
-          setConfirmationModal({
-            isOpen: true,
-            title: "Failed to Send Reminders",
-            message: "An error occurred while sending reminders.",
-            isWarning: true,
-          });
-        }
-      },
+      isSuccess: false,
+      isProcessing: false,
+      onConfirm: () => processSendReminders(), //  Wait for user to click Confirm
     });
   };
-  
+
+  const processSendReminders = async () => {
+    setConfirmationModal({
+      isOpen: true,
+      title: "Sending Reminders...",
+      message: "Please wait while we notify evaluators.",
+      isWarning: false,
+      isSuccess: false,
+      isProcessing: true, // Show loading animation
+      onConfirm: null, // Remove confirm button
+    });
+
+    setIsProcessing(true);
+
+    try {
+      const reminderMessage = emailMessage.trim() || null;
+      await emailAPI.sendRemindersToEvaluators(reminderMessage);
+
+      setConfirmationModal({
+        isOpen: true,
+        title: "Reminders Sent!",
+        message: "All pending evaluators have been notified.",
+        isWarning: false,
+        isSuccess: true,
+        isProcessing: false,
+      });
+
+      setEmailMessage("");
+    } catch (error) {
+      console.error("Error sending reminders:", error);
+      setConfirmationModal({
+        isOpen: true,
+        title: "Failed to Send Reminders",
+        message: "An error occurred while sending reminders.",
+        isWarning: true,
+        isSuccess: false,
+        isProcessing: false,
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const projectColumns = useMemo(
     () => [
@@ -286,7 +335,6 @@ const AdminReminders = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen p-6">
-      
       {/* Set Deadline Section */}
       <div className="max-w-7xl mx-auto bg-white shadow-md rounded-lg mb-8">
         <div className="p-6 border-b border-gray-200">
@@ -429,7 +477,9 @@ const AdminReminders = () => {
         message={confirmationModal.message}
         isWarning={confirmationModal.isWarning}
         isSuccess={confirmationModal.isSuccess}
-        onCancel={() => setConfirmationModal({ isOpen: false, title: "", message: "", isWarning: false, isSuccess: false })}
+        isProcessing={isProcessing} // Pass loading state
+        onConfirm={confirmationModal.onConfirm}
+        onCancel={() => setConfirmationModal({ isOpen: false })} // Reset on cancel
       />
     </div>
   );

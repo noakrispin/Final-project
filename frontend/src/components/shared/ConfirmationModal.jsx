@@ -43,33 +43,22 @@ export default function ConfirmationModal({
         )}
 
         {/* Buttons for warnings & confirmations (not for success messages) */}
-        {!isSuccess && (
+        {!isSuccess && !isProcessing && (
           <div className="flex justify-center mt-6">
             {!isWarning && (
               <button
-                onClick={() => {
-                  onCancel();
-                }}
+                onClick={onCancel}
                 disabled={isProcessing}
-                className={`px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-400 ${
-                  isProcessing ? "cursor-not-allowed opacity-50" : ""
-                }`}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-400"
               >
                 Cancel
               </button>
             )}
             <button
-              onClick={() => {
-                if (onConfirm) {
-                  onConfirm();
-                }
-                onCancel(); // Ensure the modal closes after confirm
-              }}
+              onClick={onConfirm} 
               disabled={isProcessing}
               className={`px-4 py-2 text-white font-medium rounded-md ml-2 text-lg ${
                 isWarning ? "bg-yellow-600 hover:bg-yellow-700" : "bg-red-600 hover:bg-red-700"
-              } ${
-                isProcessing ? "cursor-not-allowed opacity-50" : ""
               }`}
             >
               {isProcessing ? (

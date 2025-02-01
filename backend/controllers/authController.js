@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const db = require("../config/firebaseAdmin");
-const { sendEmail } = require("../utils/emailService");
+
 
 // Helper function to get role-specific details
 const getRoleSpecificDetails = async (role, emailId) => {
@@ -129,20 +129,7 @@ exports.register = async (req, res) => {
   }
 };
 
-    // Temporarily comment out email-sending functionality
-    /*
-    // Send email notification
-    const emailText = `
-      Hello ${fullName},
 
-      Thank you for registering on our site. Your account has been successfully created. You can now log in and access all features.
-
-      Regards,
-      The Final Project Team
-    `;
-    await sendEmail(email, "Welcome to Final Project Portal", emailText);
-  */
- 
 
 // Get Profile function
 exports.getProfile = async (req, res) => {
