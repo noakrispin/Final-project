@@ -19,6 +19,12 @@ const SupervisorGradesFeedback = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedGrade, setSelectedGrade] = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState("All");
+
+  const filteredProjects = useMemo(() => {
+    if (selectedStatus === "All") return projects;
+    return projects.filter((project) => project.status === selectedStatus);
+  }, [projects, selectedStatus]);
 
   useEffect(() => {
     const fetchAndProcessGrades = async () => {
@@ -119,7 +125,9 @@ const SupervisorGradesFeedback = () => {
             ...project, // Include project details
             projectCode: grade.projectCode,
             studentName,
-            presentationGrade: roundGrade(grade.CalculatedPresentationGrade || ""),
+            presentationGrade: roundGrade(
+              grade.CalculatedPresentationGrade || ""
+            ),
             bookGrade: roundGrade(grade.CalculatedBookGrade || ""),
             supervisorGrade: roundGrade(grade.CalculatedSupervisorGrade || ""),
             finalGrade: roundGrade(grade.finalGrade || ""),
@@ -137,11 +145,11 @@ const SupervisorGradesFeedback = () => {
     try {
       setIsLoading(true);
       toast.info("Refreshing grades...");
-  
+
       for (const project of projects) {
         const { projectCode } = project;
         const evaluationsByForm = [];
-  
+
         for (const formID of [
           "SupervisorForm",
           "PresentationFormA",
@@ -154,17 +162,19 @@ const SupervisorGradesFeedback = () => {
             const filteredEvaluations = response?.filter(
               (evaluation) => evaluation.projectCode === projectCode
             );
-  
+
             const gradesByStudent = {};
             filteredEvaluations.forEach((evaluation) => {
-              Object.entries(evaluation.grades).forEach(([studentID, grade]) => {
-                if (!gradesByStudent[studentID]) {
-                  gradesByStudent[studentID] = [];
+              Object.entries(evaluation.grades).forEach(
+                ([studentID, grade]) => {
+                  if (!gradesByStudent[studentID]) {
+                    gradesByStudent[studentID] = [];
+                  }
+                  gradesByStudent[studentID].push(grade);
                 }
-                gradesByStudent[studentID].push(grade);
-              });
+              );
             });
-  
+
             evaluationsByForm.push({
               formID,
               grades: Object.entries(gradesByStudent).map(
@@ -178,7 +188,7 @@ const SupervisorGradesFeedback = () => {
             );
           }
         }
-  
+
         if (evaluationsByForm.length > 0) {
           try {
             await gradesApi.addOrUpdateGrade({
@@ -190,9 +200,8 @@ const SupervisorGradesFeedback = () => {
           }
         }
       }
-  
+
       toast.success("Grades updated! Refreshing...");
-      
     } catch (error) {
       console.error("Error refreshing grades:", error.message);
       toast.error("Failed to refresh grades.");
@@ -203,8 +212,6 @@ const SupervisorGradesFeedback = () => {
       }, 100);
     }
   };
-  
-  
 
   const projectColumns = useMemo(
     () => [
@@ -352,7 +359,7 @@ const SupervisorGradesFeedback = () => {
     return <div className="text-center text-red-500 mt-10">{error}</div>;
   }
 
-  const tableData = projects.map((project) => ({
+  const tableData = filteredProjects.map((project) => ({
     ...project,
     studentName: project.studentName,
   }));
@@ -363,10 +370,11 @@ const SupervisorGradesFeedback = () => {
         <div className="p-6 border-b border-gray-200 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">
-            Supervised Project Grades & Evaluations 
+              Supervised Project Grades & Evaluations
             </h1>
             <p className="text-gray-600 mt-1 text-lg">
-            Review the weighted grades and final assessments for your supervised projects. 
+              Review the weighted grades and final assessments for your
+              supervised projects.
             </p>
           </div>
           {/* Refresh Grades Button */}
@@ -385,6 +393,40 @@ const SupervisorGradesFeedback = () => {
         </div>
 
         <div className="overflow-auto p-6">
+          <div className="flex items-center space-x-3 mb-4">
+            <span className="text-gray-700 font-medium">Filter by Status:</span>
+            <div className="flex space-x-2">
+              {["All", "Fully graded", "Partially graded", "Not graded"].map(
+                (status) => {
+                  const statusClasses = {
+                    "Fully graded":
+                      "bg-green-100 text-green-700 hover:bg-green-200",
+                    "Partially graded":
+                      "bg-yellow-100 text-yellow-700 hover:bg-yellow-200",
+                    "Not graded": "bg-red-100 text-red-700 hover:bg-red-200",
+                    All: "bg-gray-100 text-gray-700 hover:bg-gray-200",
+                  };
+
+                  return (
+                    <button
+                      key={status}
+                      onClick={() => setSelectedStatus(status)}
+                      className={`px-4 py-2 rounded-full font-medium transition ${
+                        statusClasses[status]
+                      } ${
+                        selectedStatus === status
+                          ? "ring-2 ring-opacity-50"
+                          : ""
+                      }`}
+                    >
+                      {status}
+                    </button>
+                  );
+                }
+              )}
+            </div>
+          </div>
+
           <Table
             data={tableData}
             columns={projectColumns}

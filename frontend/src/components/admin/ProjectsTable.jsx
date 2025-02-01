@@ -7,7 +7,6 @@ import { MdDeleteForever } from "react-icons/md";
 import SearchBar from "../shared/SearchBar";
 import { useState } from "react";
 
-
 const ProjectsTable = ({
   projects,
   activeTab,
@@ -17,15 +16,32 @@ const ProjectsTable = ({
   onDelete,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
+  //search in table
   const filteredProjects = projects.filter((project) => {
-    return (
-      project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.projectCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.students.some((student) =>
-        student.fullName.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    );
+    if (!project) return false; // Ensure project exists
+  
+    // Convert all fields into a searchable string safely
+    const projectText = Object.entries(project)
+      .flatMap(([key, value]) => {
+        if (value === null || value === undefined) return []; // Skip null/undefined values
+  
+        if (Array.isArray(value)) {
+          return value.flatMap((item) =>
+            typeof item === "object"
+              ? Object.values(item || {}).join(" ").toLowerCase()
+              : item.toString().toLowerCase()
+          );
+        }
+  
+        return typeof value === "object"
+          ? Object.values(value || {}).join(" ").toLowerCase()
+          : value.toString().toLowerCase();
+      })
+      .join(" "); // Join all values for search
+  
+    return projectText.includes(searchTerm.toLowerCase());
   });
+  
 
   const renderEditableCell = (
     value,
@@ -34,20 +50,30 @@ const ProjectsTable = ({
     fieldName,
     fieldType = "text",
     options = []
-  ) => (
-    <div className="group relative">
-      <button
-        onClick={() => onEditField(row, field, fieldName, fieldType, options)}
-        className="w-full text-left hover:text-blue-600 text-blue-500 transition-colors group-hover:bg-gray-50 p-2 rounded"
-        title={`Click to edit ${fieldName.toLowerCase()}`}
-      >
-        {value || "N/A"} {/* Fallback for missing values */}
-      </button>
-      <div className="hidden group-hover:block absolute right-0 top-1/2 transform -translate-y-1/2 mr-2">
-        <Info className="w-4 h-4 text-gray-400" />
+  ) => {
+    let displayValue = value;
+    
+    // Convert Firestore Timestamp to readable date
+    if (fieldType === "date" && value && value.seconds) {
+      displayValue = new Date(value.seconds * 1000).toLocaleDateString(); 
+    }
+  
+    return (
+      <div className="group relative">
+        <button
+          onClick={() => onEditField(row, field, fieldName, fieldType, options)}
+          className="w-full text-left hover:text-blue-600 text-blue-500 transition-colors group-hover:bg-gray-50 p-2 rounded"
+          title={`Click to edit ${fieldName.toLowerCase()}`}
+        >
+          {displayValue || "N/A"}
+        </button>
+        <div className="hidden group-hover:block absolute right-0 top-1/2 transform -translate-y-1/2 mr-2">
+          <Info className="w-4 h-4 text-gray-400" />
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
+  
 
   const renderSupervisorCell = (supervisor1, supervisor2) => (
     <div className="space-y-1">
@@ -181,7 +207,7 @@ const ProjectsTable = ({
           <SearchBar
             value={searchTerm}
             onChange={setSearchTerm}
-            placeholder="Search Projects"
+            placeholder="Search"
           />
         </div>
       </div>

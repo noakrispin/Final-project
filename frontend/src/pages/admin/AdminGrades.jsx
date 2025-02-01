@@ -4,6 +4,7 @@ import { formsApi } from "../../services/formAPI";
 import ProjectAssessmentPopup from "../../components/ui/ProjectAssessmentPopup";
 import { gradesApi } from "../../services/finalGradesAPI";
 import { projectsApi } from "../../services/projectsAPI";
+import { evaluatorsApi } from "../../services/evaluatorsAPI";
 import { userApi } from "../../services/userAPI";
 import { Button } from "../../components/ui/Button";
 import * as XLSX from "xlsx";
@@ -20,6 +21,11 @@ const AdminGradesPage = () => {
   const [responses, setResponses] = useState({});
   const [evaluations, setEvaluations] = useState({});
   const [formQuestions, setFormQuestions] = useState({});
+  const [selectedStatus, setSelectedStatus] = useState("All"); //  Show all statuses by default
+
+  const handleStatusChange = (event) => {
+    setSelectedStatus(event.target.value);
+  };
 
   useEffect(() => {
     const fetchAndProcessGrades = async () => {
@@ -32,6 +38,9 @@ const AdminGradesPage = () => {
 
         console.log("Fetching all projects...");
         const projects = await projectsApi.getAllProjects();
+
+        console.log("Fetching all evaluators...");
+        const evaluators = await evaluatorsApi.getAllEvaluators();
 
         console.log("Fetching all users...");
         const users = await userApi.getAllUsers();
@@ -72,7 +81,12 @@ const AdminGradesPage = () => {
         setFormQuestions(questionsData);
 
         console.log("Processing final grades...");
-        const processedData = preprocessProjects(grades, projects, users);
+        const processedData = preprocessProjects(
+          grades,
+          projects,
+          users,
+          evaluators
+        );
         console.log("Processed Data:", processedData);
 
         setProjects(processedData);
@@ -87,7 +101,7 @@ const AdminGradesPage = () => {
     fetchAndProcessGrades();
   }, []);
 
-  const preprocessProjects = (grades, projects, users) => {
+  const preprocessProjects = (grades, projects, users, evaluators) => {
     try {
       console.log("Preprocessing projects with grades, projects, and users...");
 
@@ -146,6 +160,23 @@ const AdminGradesPage = () => {
               ? new Date(project.deadline._seconds * 1000).toLocaleDateString()
               : "No Deadline"; // Use a fallback for undefined deadlines
 
+          // Find book evaluator
+          const bookEvaluator = evaluators.find(
+            (evaluator) =>
+              evaluator.projectCode === grade.projectCode &&
+              evaluator.formID.startsWith("bookReviewer") // Ensure it's a book review form
+          );
+
+          let bookEvaluatorName = "N/A";
+          if (bookEvaluator) {
+            const evaluatorUser = users.find(
+              (user) => user.email === bookEvaluator.evaluatorID
+            );
+            bookEvaluatorName = evaluatorUser
+              ? evaluatorUser.fullName
+              : bookEvaluator.evaluatorID;
+          }
+
           const roundGrade = (value) =>
             typeof value === "number" ? Math.round(value) : value;
           return {
@@ -153,7 +184,10 @@ const AdminGradesPage = () => {
             projectCode: grade.projectCode,
             studentName,
             supervisors: projectSupervisors,
-            presentationGrade: roundGrade(grade.CalculatedPresentationGrade || ""),
+            bookEvaluator: bookEvaluatorName,
+            presentationGrade: roundGrade(
+              grade.CalculatedPresentationGrade || ""
+            ),
             bookGrade: roundGrade(grade.CalculatedBookGrade || ""),
             supervisorGrade: roundGrade(grade.CalculatedSupervisorGrade || ""),
             finalGrade: roundGrade(grade.finalGrade || ""),
@@ -163,13 +197,17 @@ const AdminGradesPage = () => {
               id: student1.ID,
               firstName: student1.firstName || "",
               lastName: student1.lastName || "",
-              finalGrade: roundGrade(student1Grade ? student1Grade.finalGrade : ""),
+              finalGrade: roundGrade(
+                student1Grade ? student1Grade.finalGrade : ""
+              ),
             },
             student2: {
               id: student2.ID,
               firstName: student2.firstName || "",
               lastName: student2.lastName || "",
-              finalGrade: roundGrade(student2Grade ? student2Grade.finalGrade : ""),
+              finalGrade: roundGrade(
+                student2Grade ? student2Grade.finalGrade : ""
+              ),
             },
           };
         })
@@ -179,6 +217,11 @@ const AdminGradesPage = () => {
       throw new Error("Failed to preprocess project data.");
     }
   };
+
+  const filteredProjects = useMemo(() => {
+    if (selectedStatus === "All") return projects;
+    return projects.filter((project) => project.status === selectedStatus);
+  }, [projects, selectedStatus]);
 
   const handleRefreshClick = async () => {
     try {
@@ -238,8 +281,7 @@ const AdminGradesPage = () => {
         }
       }
 
-        toast.success("Grades refreshed successfully!");
-      
+      toast.success("Grades refreshed successfully!");
     } catch (error) {
       console.error("Error refreshing grades:", error.message);
       toast.error("Failed to refresh grades.");
@@ -320,7 +362,18 @@ const AdminGradesPage = () => {
           );
         },
       },
-
+      {
+        key: "bookEvaluator",
+        header: "Book Evaluator",
+        className: "text-base",
+        render: (value, row) => {
+          return (
+            <div className="whitespace-pre-line text-center">
+              {row.bookEvaluator !== "N/A" ? row.bookEvaluator : "-"}
+            </div>
+          );
+        },
+      },
       {
         key: "bookGrade",
         header: "Book Grade",
@@ -405,10 +458,9 @@ const AdminGradesPage = () => {
   const prepareExportData = (projects) => {
     const exportData = [];
     const seenStudentIds = new Set(); // Track processed student IDs
-    console.log("Projects before export:", projects);
-
     projects.forEach((project) => {
-      const roundGrade = (value) => (typeof value === "number" ? Math.round(value) : value);
+      const roundGrade = (value) =>
+        typeof value === "number" ? Math.round(value) : value;
       // Ensure final grades come from the correct filtered grades
       const student1FinalGrade = project.student1
         ? project.student1.finalGrade
@@ -573,7 +625,7 @@ const AdminGradesPage = () => {
     return <div className="text-center text-red-500 mt-10">{error}</div>;
   }
 
-  const tableData = projects.map((project) => ({
+  const tableData = filteredProjects.map((project) => ({
     ...project,
     studentName: project.studentName,
     supervisors: project.supervisors,
@@ -618,6 +670,40 @@ const AdminGradesPage = () => {
         </div>
 
         <div className="overflow-auto p-6">
+          <div className="flex items-center space-x-3 mb-4">
+            <span className="text-gray-700 font-medium">Filter by Status:</span>
+            <div className="flex space-x-2">
+              {["All", "Fully graded", "Partially graded", "Not graded"].map(
+                (status) => {
+                  const statusClasses = {
+                    "Fully graded":
+                      "bg-green-100 text-green-700 hover:bg-green-200",
+                    "Partially graded":
+                      "bg-yellow-100 text-yellow-700 hover:bg-yellow-200",
+                    "Not graded": "bg-red-100 text-red-700 hover:bg-red-200",
+                    All: "bg-gray-100 text-gray-700 hover:bg-gray-200",
+                  };
+
+                  return (
+                    <button
+                      key={status}
+                      onClick={() => setSelectedStatus(status)}
+                      className={`px-4 py-2 rounded-full font-medium transition ${
+                        statusClasses[status]
+                      } ${
+                        selectedStatus === status
+                          ? "ring-2 ring-opacity-50"
+                          : ""
+                      }`}
+                    >
+                      {status}
+                    </button>
+                  );
+                }
+              )}
+            </div>
+          </div>
+
           <Table
             data={tableData}
             columns={projectColumns}
