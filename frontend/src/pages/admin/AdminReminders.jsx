@@ -6,8 +6,7 @@ import { projectsApi } from "../../services/projectsAPI";
 import { userApi } from "../../services/userAPI";
 import { emailAPI } from "../../services/emailAPI";
 import LoadingScreen from "../../components/shared/LoadingScreen";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import ConfirmationModal from "../../components/shared/ConfirmationModal";
 
 const AdminReminders = () => {
   const [projects, setProjects] = useState([]);
@@ -15,6 +14,14 @@ const AdminReminders = () => {
   const [error, setError] = useState(null);
   const [deadline, setDeadline] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
+  const [confirmationModal, setConfirmationModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    isWarning: false,
+    isSuccess: false,
+  });
+
   // const [scheduleDate, setScheduleDate] = useState("");
   // const [scheduleTime, setScheduleTime] = useState("");
   // const [scheduledReminder, setScheduledReminder] = useState(null);
@@ -111,47 +118,83 @@ const AdminReminders = () => {
     return Object.values(mergedRows);
   };
 
-  const handleSaveDeadline = async () => {
+  const handleSaveDeadline = () => {
     if (!deadline) {
-      toast.error("Please select a deadline.");
+      setConfirmationModal({
+        isOpen: true,
+        title: "Missing Deadline",
+        message: "Please select a deadline before saving.",
+        isWarning: true,
+      });
       return;
     }
-
-    try {
-      const timestamp = new Date(deadline).getTime();
-
-      // Include emailMessage in the API call
-      await emailAPI.notifyGlobalDeadline(timestamp, emailMessage);
-
-      toast.success("Deadline set successfully.");
-
-      // Clear the deadline and message box
-      setDeadline("");
-      setEmailMessage("");
-    } catch (error) {
-      console.error("Error setting deadline:", error);
-      toast.error("Failed to set deadline.");
-    }
+  
+    setConfirmationModal({
+      isOpen: true,
+      title: "Confirm Deadline",
+      message: "Are you sure you want to set this deadline? This will notify all users.",
+      isWarning: false,
+      onConfirm: async () => {
+        try {
+          const timestamp = new Date(deadline).getTime();
+          await emailAPI.notifyGlobalDeadline(timestamp, emailMessage);
+  
+          setConfirmationModal({
+            isOpen: true,
+            title: "Success!",
+            message: "Deadline set successfully.",
+            isSuccess: true,
+          });
+  
+          setDeadline("");
+          setEmailMessage("");
+        } catch (error) {
+          console.error("Error setting deadline:", error);
+          setConfirmationModal({
+            isOpen: true,
+            title: "Failed to Set Deadline",
+            message: "An error occurred while saving the deadline.",
+            isWarning: true,
+          });
+        }
+      },
+    });
   };
+  
 
   // Handle sending reminders
-  const handleSendReminders = async () => {
-    try {
-      // Trim the email message and allow sending null if empty
-      const reminderMessage = emailMessage.trim() || null;
-
-      // Call the email API to send reminders
-      await emailAPI.sendRemindersToEvaluators(reminderMessage);
-
-      toast.success("Reminders sent successfully.");
-
-      // Clear the message input after sending reminders
-      setEmailMessage("");
-    } catch (error) {
-      console.error("Error sending reminders:", error);
-      toast.error("Failed to send reminders.");
-    }
+  const handleSendReminders = () => {
+    setConfirmationModal({
+      isOpen: true,
+      title: "Confirm Reminder",
+      message: "Are you sure you want to send reminders? This will notify all pending evaluators.",
+      isWarning: false,
+      onConfirm: async () => {
+        try {
+          const reminderMessage = emailMessage.trim() || null;
+          await emailAPI.sendRemindersToEvaluators(reminderMessage);
+  
+          setConfirmationModal({
+            isOpen: true,
+            title: "Reminders Sent!",
+            message: "All pending evaluators have been notified.",
+            isSuccess: true,
+          });
+  
+          setEmailMessage("");
+        } catch (error) {
+          console.error("Error sending reminders:", error);
+          setConfirmationModal({
+            isOpen: true,
+            title: "Failed to Send Reminders",
+            message: "An error occurred while sending reminders.",
+            isWarning: true,
+          });
+        }
+      },
+    });
   };
+  
 
   const projectColumns = useMemo(
     () => [
@@ -243,7 +286,7 @@ const AdminReminders = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen p-6">
-      <ToastContainer position="top-right" autoClose={3000} />
+      
       {/* Set Deadline Section */}
       <div className="max-w-7xl mx-auto bg-white shadow-md rounded-lg mb-8">
         <div className="p-6 border-b border-gray-200">
@@ -352,11 +395,11 @@ const AdminReminders = () => {
           </h1>
           <p className="text-gray-600 mt-1 text-base">
             This table lists all evaluators assigned to projects, along with
-            their grading status. 
+            their grading status.
             <p className="text-gray-600 mt-1 text-base">
-            Evaluators who have at least one pending
-            submission (<span className="text-red-500 font-semibold text-lg">✘</span>)
-            will be sent a reminder email.
+              Evaluators who have at least one pending submission (
+              <span className="text-red-500 font-semibold text-lg">✘</span>)
+              will be sent a reminder email.
             </p>
           </p>
         </div>
@@ -380,6 +423,14 @@ const AdminReminders = () => {
           )}
         </div>
       </div>
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        title={confirmationModal.title}
+        message={confirmationModal.message}
+        isWarning={confirmationModal.isWarning}
+        isSuccess={confirmationModal.isSuccess}
+        onCancel={() => setConfirmationModal({ isOpen: false, title: "", message: "", isWarning: false, isSuccess: false })}
+      />
     </div>
   );
 };
