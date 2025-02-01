@@ -21,6 +21,11 @@ const AdminGradesPage = () => {
   const [responses, setResponses] = useState({});
   const [evaluations, setEvaluations] = useState({});
   const [formQuestions, setFormQuestions] = useState({});
+  const [selectedStatus, setSelectedStatus] = useState("All"); //  Show all statuses by default
+
+  const handleStatusChange = (event) => {
+    setSelectedStatus(event.target.value);
+  };
 
   useEffect(() => {
     const fetchAndProcessGrades = async () => {
@@ -212,6 +217,11 @@ const AdminGradesPage = () => {
       throw new Error("Failed to preprocess project data.");
     }
   };
+
+  const filteredProjects = useMemo(() => {
+    if (selectedStatus === "All") return projects;
+    return projects.filter((project) => project.status === selectedStatus);
+  }, [projects, selectedStatus]);
 
   const handleRefreshClick = async () => {
     try {
@@ -448,8 +458,6 @@ const AdminGradesPage = () => {
   const prepareExportData = (projects) => {
     const exportData = [];
     const seenStudentIds = new Set(); // Track processed student IDs
-    console.log("Projects before export:", projects);
-
     projects.forEach((project) => {
       const roundGrade = (value) =>
         typeof value === "number" ? Math.round(value) : value;
@@ -617,7 +625,7 @@ const AdminGradesPage = () => {
     return <div className="text-center text-red-500 mt-10">{error}</div>;
   }
 
-  const tableData = projects.map((project) => ({
+  const tableData = filteredProjects.map((project) => ({
     ...project,
     studentName: project.studentName,
     supervisors: project.supervisors,
@@ -662,6 +670,40 @@ const AdminGradesPage = () => {
         </div>
 
         <div className="overflow-auto p-6">
+          <div className="flex items-center space-x-3 mb-4">
+            <span className="text-gray-700 font-medium">Filter by Status:</span>
+            <div className="flex space-x-2">
+              {["All", "Fully graded", "Partially graded", "Not graded"].map(
+                (status) => {
+                  const statusClasses = {
+                    "Fully graded":
+                      "bg-green-100 text-green-700 hover:bg-green-200",
+                    "Partially graded":
+                      "bg-yellow-100 text-yellow-700 hover:bg-yellow-200",
+                    "Not graded": "bg-red-100 text-red-700 hover:bg-red-200",
+                    All: "bg-gray-100 text-gray-700 hover:bg-gray-200",
+                  };
+
+                  return (
+                    <button
+                      key={status}
+                      onClick={() => setSelectedStatus(status)}
+                      className={`px-4 py-2 rounded-full font-medium transition ${
+                        statusClasses[status]
+                      } ${
+                        selectedStatus === status
+                          ? "ring-2 ring-opacity-50"
+                          : ""
+                      }`}
+                    >
+                      {status}
+                    </button>
+                  );
+                }
+              )}
+            </div>
+          </div>
+
           <Table
             data={tableData}
             columns={projectColumns}
