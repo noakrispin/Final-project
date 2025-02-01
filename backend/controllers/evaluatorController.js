@@ -1,4 +1,5 @@
 const admin = require("firebase-admin");
+const { sendEmail } = require("../utils/emailService");
 
 // Add or update an evaluator
 exports.addOrUpdateEvaluator = async (req, res) => {
@@ -46,8 +47,6 @@ exports.addOrUpdateEvaluator = async (req, res) => {
     res.status(500).json({ error: "Failed to add/update evaluator" });
   }
 };
-
-
 
 
 // Get a specific evaluator by ID
@@ -164,10 +163,10 @@ exports.getProjectsForEvaluatorByForm = async (req, res) => {
       .where("formID", "==", formID)
       .get();
 
-      if (evaluatorSnapshot.empty) {
-        return res.status(200).json({ success: true, data: [] });
-      }
-      
+    if (evaluatorSnapshot.empty) {
+      return res.status(200).json({ success: true, data: [] });
+    }
+
     const evaluatorData = evaluatorSnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
@@ -198,49 +197,66 @@ exports.getProjectsForEvaluatorByForm = async (req, res) => {
 
 //reminders controller - send reminders only to evaluators with status = "Not Submitted"
 exports.sendRemindersToEvaluators = async (req, res) => {
-  const { message } = req.body;
-
-  // Default reminder message
-  const defaultTemplate =
-    "This is a reminder to submit your project evaluation. Please log in to the system to complete your assessment.";
-  const finalMessage = message || defaultTemplate;
-
   try {
-    // Fetch evaluators where status is "Not Submitted"
+    console.log("Fetching evaluators with 'Not Submitted' status...");
+
     const evaluatorsSnapshot = await admin
       .firestore()
       .collection("evaluators")
       .where("status", "==", "Not Submitted")
       .get();
 
-    // Extract evaluator emails (removing duplicates using Set)
-    const evaluatorEmails = new Set(
-      evaluatorsSnapshot.docs
-        .map((doc) => doc.data().evaluatorID) // evaluatorID is the email
-        .filter(Boolean) // Exclude null or undefined emails
-    );
+    console.log(`Firestore returned ${evaluatorsSnapshot.size} results.`);
 
-    console.log(`Fetched ${evaluatorEmails.size} unique evaluators who have not submitted.`);
-
-    if (evaluatorEmails.size === 0) {
+    if (evaluatorsSnapshot.empty) {
+      console.log("No evaluators found with 'Not Submitted' status.");
       return res.status(404).json({ error: "No pending evaluators found to send reminders." });
     }
 
-    // Send emails to only unique evaluators
+    const evaluatorEmails = new Set();
+    evaluatorsSnapshot.docs.forEach((doc) => {
+      const evaluatorData = doc.data();
+
+      if (doc.id === "placeholderEvaluator") {
+        console.log(`Skipping placeholder evaluator: ${doc.id}`);
+        return;
+      }
+
+      console.log(`Evaluator ID: ${evaluatorData.evaluatorID}, Status: ${evaluatorData.status}`);
+
+      if (evaluatorData.evaluatorID && evaluatorData.evaluatorID.includes("@")) {
+        evaluatorEmails.add(evaluatorData.evaluatorID.trim());
+      }
+    });
+
+    console.log(`Found ${evaluatorEmails.size} evaluators to notify:`, [...evaluatorEmails]);
+
+    if (evaluatorEmails.size === 0) {
+      return res.status(404).json({ error: "No valid evaluator emails found." });
+    }
+
+    console.log("Sending reminder emails...");
+    
+    // Ensure the message is coming from the request
+    const emailMessage = req.body.message || "Please submit your evaluation.";
+    
     const results = await Promise.allSettled(
-      [...evaluatorEmails].map((email) =>
-        sendEmail(email, "Submission Reminder", finalMessage)
-      )
+      [...evaluatorEmails].map(async (email) => {
+        try {
+          await sendEmail(email, "Submission Reminder", emailMessage);
+          console.log(`Successfully sent reminder to ${email}`);
+        } catch (error) {
+          console.error(`Failed to send email to ${email}:`, error.message);
+        }
+      })
     );
 
     const successCount = results.filter((result) => result.status === "fulfilled").length;
     const failureCount = results.filter((result) => result.status === "rejected").length;
 
-    if (failureCount > 0) {
-      console.error(`Failed to send emails to ${failureCount} evaluators.`);
-    }
+    console.log(`Successfully sent reminders to ${successCount} evaluators.`);
+    console.log(`Failed to send reminders to ${failureCount} evaluators.`);
 
-    // Respond with a summary
     res.status(201).json({
       success: true,
       message: `Reminders sent to ${successCount} pending evaluators. ${failureCount} failed.`,
@@ -250,3 +266,6 @@ exports.sendRemindersToEvaluators = async (req, res) => {
     res.status(500).json({ error: "Failed to send reminders.", details: error.message });
   }
 };
+
+
+

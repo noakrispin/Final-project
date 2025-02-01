@@ -4,8 +4,10 @@ export const emailAPI = {
 
   sendRemindersToEvaluators: async (message = null) => {
     try {
+      console.log("Sending request to backend for reminders with message:", message);
+      
       const response = await api.post("/evaluators/schedule-reminders", {
-        message, // Default message will be handled in the backend if null
+        message: message || "This is a reminder to review the project's status. Please log in to the system to take action.",
       });
   
       console.log("Reminders sent successfully:", response.data);
@@ -20,6 +22,8 @@ export const emailAPI = {
       );
     }
   },
+  
+
   
   /**
    * Notify all supervisors about a global deadline.

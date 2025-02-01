@@ -112,7 +112,6 @@ router.get('/:evaluatorID/projects/:formID',
   })
 );
 
-// scheduling reminders
 router.post("/schedule-reminders", async (req, res) => {
   try {
     await sendRemindersToEvaluators(req, res);
