@@ -1,5 +1,6 @@
 const admin = require("firebase-admin");
 const { sendEmail } = require("../utils/emailService");
+const { appendDoNotReply } = require("../utils/emailUtils");
 
 // Add or update an evaluator
 exports.addOrUpdateEvaluator = async (req, res) => {
@@ -198,7 +199,18 @@ exports.getProjectsForEvaluatorByForm = async (req, res) => {
 //reminders controller - send reminders only to evaluators with status = "Not Submitted"
 exports.sendRemindersToEvaluators = async (req, res) => {
   try {
-    console.log("Fetching evaluators with 'Not Submitted' status...");
+    console.log("Received request to send reminders.");
+    
+
+    const defaultMessage = 
+  "You have pending project evaluations that require your attention. " + 
+  "Please log in to the system to complete your evaluations." ;
+
+    
+    // Use the provided emailMessage or the default reminder template
+    const emailBody = appendDoNotReply(req.body.message || defaultMessage);
+
+    console.log("Final email message to be sent:", emailBody);
 
     const evaluatorsSnapshot = await admin
       .firestore()
@@ -216,13 +228,7 @@ exports.sendRemindersToEvaluators = async (req, res) => {
     const evaluatorEmails = new Set();
     evaluatorsSnapshot.docs.forEach((doc) => {
       const evaluatorData = doc.data();
-
-      if (doc.id === "placeholderEvaluator") {
-        console.log(`Skipping placeholder evaluator: ${doc.id}`);
-        return;
-      }
-
-      console.log(`Evaluator ID: ${evaluatorData.evaluatorID}, Status: ${evaluatorData.status}`);
+      console.log(`Document: ${doc.id}, Evaluator Data:`, evaluatorData);
 
       if (evaluatorData.evaluatorID && evaluatorData.evaluatorID.includes("@")) {
         evaluatorEmails.add(evaluatorData.evaluatorID.trim());
@@ -236,14 +242,11 @@ exports.sendRemindersToEvaluators = async (req, res) => {
     }
 
     console.log("Sending reminder emails...");
-    
-    // Ensure the message is coming from the request
-    const emailMessage = req.body.message || "Please submit your evaluation.";
-    
+
     const results = await Promise.allSettled(
       [...evaluatorEmails].map(async (email) => {
         try {
-          await sendEmail(email, "Submission Reminder", emailMessage);
+          await sendEmail(email, "Submission Reminder", emailBody);
           console.log(`Successfully sent reminder to ${email}`);
         } catch (error) {
           console.error(`Failed to send email to ${email}:`, error.message);
