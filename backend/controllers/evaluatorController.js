@@ -246,7 +246,7 @@ exports.sendRemindersToEvaluators = async (req, res) => {
     const results = await Promise.allSettled(
       [...evaluatorEmails].map(async (email) => {
         try {
-          await sendEmail(email, "Submission Reminder", emailBody);
+          await sendEmail(email, "Submit Evaluations Reminder", emailBody);
           console.log(`Successfully sent reminder to ${email}`);
         } catch (error) {
           console.error(`Failed to send email to ${email}:`, error.message);

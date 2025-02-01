@@ -27,7 +27,7 @@ const AdminEvaluatorUpload = () => {
 
       setUploadSuccess(true);
       setTimeout(() => {
-        navigate("/admin-grades");
+        navigate("/admin-reminders");
       }, 2000);
     } catch (err) {
       setError(
