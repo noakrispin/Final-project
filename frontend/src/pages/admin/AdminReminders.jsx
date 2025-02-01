@@ -410,8 +410,8 @@ const AdminReminders = () => {
               sent:
               <br />
               <em>
-                "This is a reminder to review the project's status. Please log
-                in to the system to take action."
+                "You have pending project evaluations that require your attention.  
+                Please log in to the system to complete your evaluations."
               </em>
             </p>
             <textarea

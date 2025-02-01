@@ -7,10 +7,10 @@ export const emailAPI = {
       console.log("Sending request to backend for reminders with message:", message);
       
       const response = await api.post("/evaluators/schedule-reminders", {
-        message: message || "This is a reminder to review the project's status. Please log in to the system to take action.",
+        message,
       });
   
-      console.log("Reminders sent successfully:", response.data);
+      console.log("Reminders sent successfully:", response);
       return response;
     } catch (error) {
       console.error(
