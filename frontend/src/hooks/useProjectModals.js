@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
+import { Timestamp } from "firebase/firestore";
+
 
 export const useProjectModals = (projects, setProjects) => {
   const [editModal, setEditModal] = useState({
@@ -28,33 +30,41 @@ export const useProjectModals = (projects, setProjects) => {
       isOpen: true,
       field, // e.g., "projectCode" or "title"
       fieldName, // e.g., "Project Code" or "Project Title"
-      value: project[field] || '', // Ensure the correct value for the field is set
+      value: project[field] || '', //correct value for the field is set
       projectId: project.id, // Use the project's unique ID
       fieldType,
       options,
     });
   };
 
-  const handleSaveField = async (newValue) => {
-    const { field, projectId } = editModal;
-  
+ const handleSaveField = async (newValue) => {
+    const { field, projectId, fieldType } = editModal;
     try {
-      // Update Firestore
-      const projectRef = doc(db, 'projects', projectId);
-      await updateDoc(projectRef, { [field]: newValue });
-  
-      // Update State
-      setProjects(currentProjects =>
-        currentProjects.map(project =>
-          project.id === projectId ? { ...project, [field]: newValue } : project
+      const projectRef = doc(db, "projects", projectId);
+      let updatedValue = newValue;
+
+      //  Convert to Firestore Timestamp if fieldType is 'date'
+      if (fieldType === "date") {
+        updatedValue = Timestamp.fromDate(new Date(newValue));
+      }
+
+      await updateDoc(projectRef, { [field]: updatedValue });
+
+      setProjects((currentProjects) =>
+        currentProjects.map((project) =>
+          project.id === projectId ? { ...project, [field]: updatedValue } : project
         )
       );
+
+      console.log(` Successfully updated ${field} for project ${projectId}`);
+
     } catch (error) {
-      console.error('Error updating project field:', error);
+      console.error(`Error updating project field (${field}):`, error);
     } finally {
       setEditModal({ ...editModal, isOpen: false });
     }
   };
+
 
   const handleStudentClick = (student) => {
     console.log("Student clicked:", student);

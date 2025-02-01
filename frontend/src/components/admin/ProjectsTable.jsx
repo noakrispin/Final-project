@@ -50,20 +50,30 @@ const ProjectsTable = ({
     fieldName,
     fieldType = "text",
     options = []
-  ) => (
-    <div className="group relative">
-      <button
-        onClick={() => onEditField(row, field, fieldName, fieldType, options)}
-        className="w-full text-left hover:text-blue-600 text-blue-500 transition-colors group-hover:bg-gray-50 p-2 rounded"
-        title={`Click to edit ${fieldName.toLowerCase()}`}
-      >
-        {value || "N/A"} {/* Fallback for missing values */}
-      </button>
-      <div className="hidden group-hover:block absolute right-0 top-1/2 transform -translate-y-1/2 mr-2">
-        <Info className="w-4 h-4 text-gray-400" />
+  ) => {
+    let displayValue = value;
+    
+    // Convert Firestore Timestamp to readable date
+    if (fieldType === "date" && value && value.seconds) {
+      displayValue = new Date(value.seconds * 1000).toLocaleDateString(); 
+    }
+  
+    return (
+      <div className="group relative">
+        <button
+          onClick={() => onEditField(row, field, fieldName, fieldType, options)}
+          className="w-full text-left hover:text-blue-600 text-blue-500 transition-colors group-hover:bg-gray-50 p-2 rounded"
+          title={`Click to edit ${fieldName.toLowerCase()}`}
+        >
+          {displayValue || "N/A"}
+        </button>
+        <div className="hidden group-hover:block absolute right-0 top-1/2 transform -translate-y-1/2 mr-2">
+          <Info className="w-4 h-4 text-gray-400" />
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
+  
 
   const renderSupervisorCell = (supervisor1, supervisor2) => (
     <div className="space-y-1">
