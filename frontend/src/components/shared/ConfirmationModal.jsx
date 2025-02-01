@@ -19,6 +19,7 @@ export default function ConfirmationModal({
       return () => clearTimeout(timer); 
     }
   }, [isSuccess, onCancel]);
+
   if (!isOpen) return null;
 
   return (
@@ -34,12 +35,21 @@ export default function ConfirmationModal({
 
         <p className="text-gray-700 text-lg">{message}</p>
 
+        {/* Loading animation when processing */}
+        {isProcessing && (
+          <div className="flex justify-center items-center mt-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-blue-600"></div>
+          </div>
+        )}
+
         {/* Buttons for warnings & confirmations (not for success messages) */}
         {!isSuccess && (
           <div className="flex justify-center mt-6">
             {!isWarning && (
               <button
-                onClick={onCancel}
+                onClick={() => {
+                  onCancel();
+                }}
                 disabled={isProcessing}
                 className={`px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-400 ${
                   isProcessing ? "cursor-not-allowed opacity-50" : ""
@@ -49,7 +59,12 @@ export default function ConfirmationModal({
               </button>
             )}
             <button
-              onClick={onConfirm} 
+              onClick={() => {
+                if (onConfirm) {
+                  onConfirm();
+                }
+                onCancel(); // Ensure the modal closes after confirm
+              }}
               disabled={isProcessing}
               className={`px-4 py-2 text-white font-medium rounded-md ml-2 text-lg ${
                 isWarning ? "bg-yellow-600 hover:bg-yellow-700" : "bg-red-600 hover:bg-red-700"
@@ -57,7 +72,14 @@ export default function ConfirmationModal({
                 isProcessing ? "cursor-not-allowed opacity-50" : ""
               }`}
             >
-              {isWarning ? "OK" : "Confirm"}
+              {isProcessing ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-white mr-2"></div>
+                  Processing...
+                </div>
+              ) : (
+                isWarning ? "OK" : "Confirm"
+              )}
             </button>
           </div>
         )}
