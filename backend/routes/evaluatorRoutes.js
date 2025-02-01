@@ -7,6 +7,7 @@ const {
   getProjectsByEvaluator,
   getProjectsForEvaluatorByForm,
   getEvaluatorsByProject,
+  sendRemindersToEvaluators,
 } = require("../controllers/evaluatorController");
 
 const router = express.Router();
@@ -110,6 +111,16 @@ router.get('/:evaluatorID/projects/:formID',
     return result;
   })
 );
+
+// scheduling reminders
+router.post("/schedule-reminders", async (req, res) => {
+  try {
+    await sendRemindersToEvaluators(req, res);
+  } catch (error) {
+    console.error("Error in evaluator reminder scheduling route:", error.message);
+    res.status(500).json({ error: "Failed to send reminders." });
+  }
+});
 
 // Error handling middleware specific to evaluator routes
 router.use((err, req, res, next) => {

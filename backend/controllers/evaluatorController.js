@@ -196,4 +196,57 @@ exports.getProjectsForEvaluatorByForm = async (req, res) => {
   }
 };
 
+//reminders controller - send reminders only to evaluators with status = "Not Submitted"
+exports.sendRemindersToEvaluators = async (req, res) => {
+  const { message } = req.body;
 
+  // Default reminder message
+  const defaultTemplate =
+    "This is a reminder to submit your project evaluation. Please log in to the system to complete your assessment.";
+  const finalMessage = message || defaultTemplate;
+
+  try {
+    // Fetch evaluators where status is "Not Submitted"
+    const evaluatorsSnapshot = await admin
+      .firestore()
+      .collection("evaluators")
+      .where("status", "==", "Not Submitted")
+      .get();
+
+    // Extract evaluator emails (removing duplicates using Set)
+    const evaluatorEmails = new Set(
+      evaluatorsSnapshot.docs
+        .map((doc) => doc.data().evaluatorID) // evaluatorID is the email
+        .filter(Boolean) // Exclude null or undefined emails
+    );
+
+    console.log(`Fetched ${evaluatorEmails.size} unique evaluators who have not submitted.`);
+
+    if (evaluatorEmails.size === 0) {
+      return res.status(404).json({ error: "No pending evaluators found to send reminders." });
+    }
+
+    // Send emails to only unique evaluators
+    const results = await Promise.allSettled(
+      [...evaluatorEmails].map((email) =>
+        sendEmail(email, "Submission Reminder", finalMessage)
+      )
+    );
+
+    const successCount = results.filter((result) => result.status === "fulfilled").length;
+    const failureCount = results.filter((result) => result.status === "rejected").length;
+
+    if (failureCount > 0) {
+      console.error(`Failed to send emails to ${failureCount} evaluators.`);
+    }
+
+    // Respond with a summary
+    res.status(201).json({
+      success: true,
+      message: `Reminders sent to ${successCount} pending evaluators. ${failureCount} failed.`,
+    });
+  } catch (error) {
+    console.error("Error sending reminders:", error.message);
+    res.status(500).json({ error: "Failed to send reminders.", details: error.message });
+  }
+};

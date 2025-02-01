@@ -77,7 +77,7 @@ export default function UnifiedFormComponent({
   }, [showSuccessModal, navigate]);
 
   useEffect(() => {
-    if (user && generalQuestions.length > 0 && studentQuestions.length > 0) {
+    if (user && (generalQuestions.length > 0 || studentQuestions.length > 0)) {
       // Fetch the last response once questions are ready
       fetchLastResponse();
     } else if (questions && questions.length > 0) {
@@ -418,13 +418,13 @@ export default function UnifiedFormComponent({
           ))}
 
         {/* Submit Button */}
-        (
+        
           <div className="flex justify-center mt-6">
             <Button type="submit" className="w-64" disabled={!isFormValid()}>
               Submit Evaluation
             </Button>
           </div>
-        )
+        
       </form>
       {/* Error Modal (Only shows when an error occurs) */}
       <ConfirmationModal

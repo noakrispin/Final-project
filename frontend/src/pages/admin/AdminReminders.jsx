@@ -15,9 +15,9 @@ const AdminReminders = () => {
   const [error, setError] = useState(null);
   const [deadline, setDeadline] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
-  const [scheduleDate, setScheduleDate] = useState("");
-  const [scheduleTime, setScheduleTime] = useState("");
-  const [scheduledReminder, setScheduledReminder] = useState(null);
+  // const [scheduleDate, setScheduleDate] = useState("");
+  // const [scheduleTime, setScheduleTime] = useState("");
+  // const [scheduledReminder, setScheduledReminder] = useState(null);
 
   useEffect(() => {
     const fetchAndProcessData = async () => {
@@ -27,13 +27,9 @@ const AdminReminders = () => {
         // Fetch projects, evaluators, and users
         const [projects, evaluators, users] = await Promise.all([
           projectsApi.getAllProjects(),
-          evaluatorsApi.getAllEvaluators(), // Replace with the actual API call for evaluators
+          evaluatorsApi.getAllEvaluators(),
           userApi.getAllUsers(),
         ]);
-
-        console.log("Projects:", projects);
-        console.log("Evaluators:", evaluators);
-        console.log("Users:", users);
 
         // Process data for the table
         const processedData = preprocessProjects(projects, evaluators, users);
@@ -51,19 +47,32 @@ const AdminReminders = () => {
 
   const preprocessProjects = (projects, evaluators, users) => {
     const mergedRows = {};
-  
+
     projects.forEach((project) => {
       const projectEvaluators = evaluators.filter(
         (evaluator) => evaluator.projectCode === project.projectCode
       );
-  
-      projectEvaluators.forEach((evaluator) => {
+      // Keep only evaluators who have at least one "Not Submitted" status
+      const pendingEvaluators = projectEvaluators.filter(
+        (evaluator) => evaluator.status === "Not Submitted"
+      );
+
+      // If an evaluator has at least one "Not Submitted" status, include all their evaluations
+      const filteredEvaluators = projectEvaluators.filter((evaluator) =>
+        pendingEvaluators.some(
+          (pending) => pending.evaluatorID === evaluator.evaluatorID
+        )
+      );
+
+      filteredEvaluators.forEach((evaluator) => {
         const evaluatorUser = users.find(
           (user) => user.email === evaluator.evaluatorID
         );
-  
-        const key = `${project.projectCode}-${evaluatorUser?.fullName || evaluator.evaluatorID}`;
-  
+
+        const key = `${project.projectCode}-${
+          evaluatorUser?.fullName || evaluator.evaluatorID
+        }`;
+
         if (!mergedRows[key]) {
           mergedRows[key] = {
             projectCode: project.projectCode,
@@ -73,36 +82,34 @@ const AdminReminders = () => {
             supervisorGrade: "",
             deadline: project.deadline
               ? project.deadline._seconds
-                ? new Date(project.deadline._seconds * 1000).toLocaleDateString()
+                ? new Date(
+                    project.deadline._seconds * 1000
+                  ).toLocaleDateString()
                 : new Date(project.deadline).toLocaleDateString()
               : "No Deadline",
-            part: project.part , 
+            part: project.part,
           };
         }
-  
+
         if (evaluator.formID.startsWith("Presentation")) {
           mergedRows[key].presentationGrade =
             evaluator.status === "Submitted" ? "✔" : "✘";
         }
-  
+
         if (evaluator.formID.startsWith("bookReviewer")) {
           mergedRows[key].bookGrade =
             evaluator.status === "Submitted" ? "✔" : "✘";
         }
-  
+
         if (evaluator.formID === "SupervisorForm") {
           mergedRows[key].supervisorGrade =
             evaluator.status === "Submitted" ? "✔" : "✘";
         }
       });
     });
-  
+
     return Object.values(mergedRows);
   };
-  
-  
-  
-  
 
   const handleSaveDeadline = async () => {
     if (!deadline) {
@@ -134,7 +141,7 @@ const AdminReminders = () => {
       const reminderMessage = emailMessage.trim() || null;
 
       // Call the email API to send reminders
-      await emailAPI.sendRemindersToAll(reminderMessage);
+      await emailAPI.sendRemindersToEvaluators(reminderMessage);
 
       toast.success("Reminders sent successfully.");
 
@@ -218,7 +225,6 @@ const AdminReminders = () => {
     ],
     []
   );
-  
 
   if (isLoading) {
     return (
@@ -320,7 +326,7 @@ const AdminReminders = () => {
             <textarea
               value={emailMessage}
               onChange={(e) => setEmailMessage(e.target.value)}
-              placeholder="Enter a custom reminder message for supervisors."
+              placeholder="Enter a custom reminder message for evaluators."
               className="border p-2 rounded-md w-full"
               rows="4"
             />
@@ -341,9 +347,17 @@ const AdminReminders = () => {
       <div className="max-w-7xl mx-auto bg-white shadow-md rounded-lg mt-8">
         {/* Title Section for the Table */}
         <div className="p-6 border-b border-gray-200">
-          <h1 className="text-3xl font-bold">Projects Evaluators and Grades</h1>
-          <p className="text-gray-600 mt-1">
-            Overview of evaluators, deadlines, and grades for all projects.
+          <h1 className="text-3xl font-bold">
+            Pending Evaluations & Submission Status
+          </h1>
+          <p className="text-gray-600 mt-1 text-base">
+            This table lists all evaluators assigned to projects, along with
+            their grading status. 
+            <p className="text-gray-600 mt-1 text-base">
+            Evaluators who have at least one pending
+            submission (<span className="text-red-500 font-semibold text-lg">✘</span>)
+            will be sent a reminder email.
+            </p>
           </p>
         </div>
 
@@ -360,6 +374,8 @@ const AdminReminders = () => {
               rowClassName="hover:bg-gray-50 transition duration-200"
               useCustomColumns={false}
               className="table-auto min-w-full"
+              showDescription={true}
+              description=" Only evaluators with at least one pending submission are listed. ✔ indicates a submitted evaluation, ✘ indicates pending."
             />
           )}
         </div>
