@@ -4,6 +4,7 @@ import { formsApi } from "../../services/formAPI";
 import ProjectAssessmentPopup from "../../components/ui/ProjectAssessmentPopup";
 import { gradesApi } from "../../services/finalGradesAPI";
 import { projectsApi } from "../../services/projectsAPI";
+import { evaluatorsApi } from "../../services/evaluatorsAPI";
 import { userApi } from "../../services/userAPI";
 import { Button } from "../../components/ui/Button";
 import * as XLSX from "xlsx";
@@ -32,6 +33,9 @@ const AdminGradesPage = () => {
 
         console.log("Fetching all projects...");
         const projects = await projectsApi.getAllProjects();
+
+        console.log("Fetching all evaluators...");
+        const evaluators = await evaluatorsApi.getAllEvaluators();
 
         console.log("Fetching all users...");
         const users = await userApi.getAllUsers();
@@ -72,7 +76,12 @@ const AdminGradesPage = () => {
         setFormQuestions(questionsData);
 
         console.log("Processing final grades...");
-        const processedData = preprocessProjects(grades, projects, users);
+        const processedData = preprocessProjects(
+          grades,
+          projects,
+          users,
+          evaluators
+        );
         console.log("Processed Data:", processedData);
 
         setProjects(processedData);
@@ -87,7 +96,7 @@ const AdminGradesPage = () => {
     fetchAndProcessGrades();
   }, []);
 
-  const preprocessProjects = (grades, projects, users) => {
+  const preprocessProjects = (grades, projects, users, evaluators) => {
     try {
       console.log("Preprocessing projects with grades, projects, and users...");
 
@@ -146,6 +155,23 @@ const AdminGradesPage = () => {
               ? new Date(project.deadline._seconds * 1000).toLocaleDateString()
               : "No Deadline"; // Use a fallback for undefined deadlines
 
+          // Find book evaluator
+          const bookEvaluator = evaluators.find(
+            (evaluator) =>
+              evaluator.projectCode === grade.projectCode &&
+              evaluator.formID.startsWith("bookReviewer") // Ensure it's a book review form
+          );
+
+          let bookEvaluatorName = "N/A";
+          if (bookEvaluator) {
+            const evaluatorUser = users.find(
+              (user) => user.email === bookEvaluator.evaluatorID
+            );
+            bookEvaluatorName = evaluatorUser
+              ? evaluatorUser.fullName
+              : bookEvaluator.evaluatorID;
+          }
+
           const roundGrade = (value) =>
             typeof value === "number" ? Math.round(value) : value;
           return {
@@ -153,7 +179,10 @@ const AdminGradesPage = () => {
             projectCode: grade.projectCode,
             studentName,
             supervisors: projectSupervisors,
-            presentationGrade: roundGrade(grade.CalculatedPresentationGrade || ""),
+            bookEvaluator: bookEvaluatorName,
+            presentationGrade: roundGrade(
+              grade.CalculatedPresentationGrade || ""
+            ),
             bookGrade: roundGrade(grade.CalculatedBookGrade || ""),
             supervisorGrade: roundGrade(grade.CalculatedSupervisorGrade || ""),
             finalGrade: roundGrade(grade.finalGrade || ""),
@@ -163,13 +192,17 @@ const AdminGradesPage = () => {
               id: student1.ID,
               firstName: student1.firstName || "",
               lastName: student1.lastName || "",
-              finalGrade: roundGrade(student1Grade ? student1Grade.finalGrade : ""),
+              finalGrade: roundGrade(
+                student1Grade ? student1Grade.finalGrade : ""
+              ),
             },
             student2: {
               id: student2.ID,
               firstName: student2.firstName || "",
               lastName: student2.lastName || "",
-              finalGrade: roundGrade(student2Grade ? student2Grade.finalGrade : ""),
+              finalGrade: roundGrade(
+                student2Grade ? student2Grade.finalGrade : ""
+              ),
             },
           };
         })
@@ -238,8 +271,7 @@ const AdminGradesPage = () => {
         }
       }
 
-        toast.success("Grades refreshed successfully!");
-      
+      toast.success("Grades refreshed successfully!");
     } catch (error) {
       console.error("Error refreshing grades:", error.message);
       toast.error("Failed to refresh grades.");
@@ -320,7 +352,18 @@ const AdminGradesPage = () => {
           );
         },
       },
-
+      {
+        key: "bookEvaluator",
+        header: "Book Evaluator",
+        className: "text-base",
+        render: (value, row) => {
+          return (
+            <div className="whitespace-pre-line text-center">
+              {row.bookEvaluator !== "N/A" ? row.bookEvaluator : "-"}
+            </div>
+          );
+        },
+      },
       {
         key: "bookGrade",
         header: "Book Grade",
@@ -408,7 +451,8 @@ const AdminGradesPage = () => {
     console.log("Projects before export:", projects);
 
     projects.forEach((project) => {
-      const roundGrade = (value) => (typeof value === "number" ? Math.round(value) : value);
+      const roundGrade = (value) =>
+        typeof value === "number" ? Math.round(value) : value;
       // Ensure final grades come from the correct filtered grades
       const student1FinalGrade = project.student1
         ? project.student1.finalGrade
