@@ -27,14 +27,15 @@ export const emailAPI = {
   
   /**
    * Notify all supervisors about a global deadline.
-   * @param {string} deadline - The global deadline to notify.
    */
-  notifyGlobalDeadline: async (deadline, emailMessage) => {
+  notifyGlobalDeadline: async (deadline, emailMessage, supervisorEmails) => {
     try {
       console.log("Notifying supervisors of global deadline:", deadline);
+      // Include the supervisorEmails in the payload
       const response = await api.post("/projects/global-deadline", {
         deadline,
         emailMessage, // Include custom email message
+        supervisorEmails, // list of unique supervisor emails
       });
       return response;
     } catch (error) {
@@ -42,4 +43,5 @@ export const emailAPI = {
       throw error;
     }
   },
+  
 };

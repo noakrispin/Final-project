@@ -110,7 +110,6 @@ const AdminGradesPage = () => {
         (grade) =>
           grade.projectCode && grade.projectCode !== "placeholderProject"
       );
-      console.log("Filtered Grades:", filteredGrades);
 
       // Map grades to project and user details
       return filteredGrades
@@ -164,7 +163,7 @@ const AdminGradesPage = () => {
           const bookEvaluator = evaluators.find(
             (evaluator) =>
               evaluator.projectCode === grade.projectCode &&
-              evaluator.formID.startsWith("bookReviewer") // Ensure it's a book review form
+              evaluator.formID.startsWith("bookReviewer")
           );
 
           let bookEvaluatorName = "N/A";
@@ -197,17 +196,13 @@ const AdminGradesPage = () => {
               id: student1.ID,
               firstName: student1.firstName || "",
               lastName: student1.lastName || "",
-              finalGrade: roundGrade(
-                student1Grade ? student1Grade.finalGrade : ""
-              ),
+              finalGrade: roundGrade(student1Grade ? student1Grade.finalGrade : "")
             },
             student2: {
               id: student2.ID,
               firstName: student2.firstName || "",
               lastName: student2.lastName || "",
-              finalGrade: roundGrade(
-                student2Grade ? student2Grade.finalGrade : ""
-              ),
+              finalGrade: roundGrade(student2Grade ? student2Grade.finalGrade : "")
             },
           };
         })
@@ -231,7 +226,7 @@ const AdminGradesPage = () => {
       for (const project of projects) {
         const { projectCode } = project;
         const evaluationsByForm = [];
-
+      
         for (const formID of [
           "SupervisorForm",
           "PresentationFormA",
@@ -246,21 +241,30 @@ const AdminGradesPage = () => {
             );
             const gradesByStudent = {};
             filteredEvaluations.forEach((evaluation) => {
-              Object.entries(evaluation.grades).forEach(
-                ([studentID, grade]) => {
-                  if (!gradesByStudent[studentID]) {
-                    gradesByStudent[studentID] = [];
+              // Only process if evaluation.grades exists
+              if (evaluation.grades) {
+                Object.entries(evaluation.grades).forEach(
+                  ([studentID, grade]) => {
+                    if (!gradesByStudent[studentID]) {
+                      gradesByStudent[studentID] = [];
+                    }
+                    gradesByStudent[studentID].push(grade);
                   }
-                  gradesByStudent[studentID].push(grade);
-                }
-              );
+                );
+              }
             });
-            evaluationsByForm.push({
+            // Create the evaluation entry for this formID
+            const evaluationEntry = {
               formID,
               grades: Object.entries(gradesByStudent).map(
                 ([studentID, grades]) => ({ studentID, grades })
               ),
-            });
+            };
+      
+            // Only push if there is at least one grade recorded
+            if (evaluationEntry.grades.length > 0) {
+              evaluationsByForm.push(evaluationEntry);
+            }
           } catch (error) {
             console.error(
               `Error fetching evaluations for formID: ${formID}`,
@@ -268,19 +272,29 @@ const AdminGradesPage = () => {
             );
           }
         }
-
-        if (evaluationsByForm.length > 0) {
+      
+        // Filter evaluationsByForm once more just in case
+        const validEvaluationsByForm = evaluationsByForm.filter(
+          (entry) => entry.grades && entry.grades.length > 0
+        );
+      
+        if (validEvaluationsByForm.length > 0) {
           try {
-            await gradesApi.addOrUpdateGrade({
-              projectCode,
-              evaluationsByForm,
-            });
+            console.log(
+              `Updating grades for project ${projectCode} with payload:`,
+              { projectCode, evaluationsByForm: validEvaluationsByForm }
+            );
+            await gradesApi.addOrUpdateGrade(projectCode, { evaluationsByForm });
+
           } catch (error) {
             toast.error(`Failed to update grades for project ${projectCode}.`);
+            console.error(
+              `Error updating grades for project ${projectCode}:`,
+              error
+            );
           }
         }
       }
-
       toast.success("Grades refreshed successfully!");
     } catch (error) {
       console.error("Error refreshing grades:", error.message);
@@ -289,7 +303,7 @@ const AdminGradesPage = () => {
       setIsLoading(false);
       setTimeout(() => {
         window.location.reload(); // Force full page reload
-      }, 100);
+      }, 500);
     }
   };
 
@@ -470,23 +484,22 @@ const AdminGradesPage = () => {
         : "";
 
       // Add Student 1 data if not already added
-      if (project.Student1 && !seenStudentIds.has(project.Student1.ID)) {
-        seenStudentIds.add(project.Student1.ID);
+      if (project.student1 && !seenStudentIds.has(project.student1.id)) {
+        seenStudentIds.add(project.student1.id);
         exportData.push({
-          "Student ID": project.Student1.ID || "",
-          "Student Last Name": project.Student1.lastName || "",
-          "Student First Name": project.Student1.firstName || "",
+          "Student ID": project.student1.id || "",
+          "Student Last Name": project.student1.lastName || "",
+          "Student First Name": project.student1.firstName || "",
           "Student Final Grade": roundGrade(student1FinalGrade),
         });
       }
-
       // Add Student 2 data if not already added
-      if (project.Student2 && !seenStudentIds.has(project.Student2.ID)) {
-        seenStudentIds.add(project.Student2.ID);
+      if (project.student2 && !seenStudentIds.has(project.student2.id)) {
+        seenStudentIds.add(project.student2.id);
         exportData.push({
-          "Student ID": project.Student2.ID || "",
-          "Student Last Name": project.Student2.lastName || "",
-          "Student First Name": project.Student2.firstName || "",
+          "Student ID": project.student2.id || "",
+          "Student Last Name": project.student2.lastName || "",
+          "Student First Name": project.student2.firstName || "",
           "Student Final Grade": roundGrade(student2FinalGrade),
         });
       }

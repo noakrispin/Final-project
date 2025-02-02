@@ -1,6 +1,6 @@
 const admin = require("firebase-admin");
 const { addDocument, getDocument, addSubcollection, getSubcollection } = require("../utils/firebaseHelper");
-const { sendEmail } = require("../utils/emailService");
+
 
 
 // Helper function to handle subcollections
