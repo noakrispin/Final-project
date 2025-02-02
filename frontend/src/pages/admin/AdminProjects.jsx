@@ -253,6 +253,7 @@ const AdminProjects = () => {
             CalculatedSupervisorGrade: null,
             finalGrade: null,
             part: "B", // Update the part field to "B"
+            status: "Not graded",
           });
           console.log(
             `Updated grade with ID: ${gradeDoc.id} and set part to B`
@@ -326,7 +327,7 @@ const AdminProjects = () => {
       isOpen: true,
       title: "Confirm Export & Delete",
       message:
-        "Are you sure you want to export and delete all Part B projects? This action cannot be undone.",
+        "Are you sure you want to export and delete all Part B projects?  Please ensure that you have exported the files from Grades tab. This action cannot be undone. ",
       onConfirm: async () => {
         setConfirmationModal((prev) => ({ ...prev, isProcessing: true }));
         await exportToExcel();
@@ -356,45 +357,66 @@ const AdminProjects = () => {
       console.log("supervisor mapping:", supervisorMap);
 
       //export details of part B projects to excel
-      const exportData = partBProjects.map((project) => ({
+      // Export Part B Projects
+      // ========================
+      const projectExportData = partBProjects.map((project) => ({
         "Project Code": project.projectCode,
         "Project Title": project.title,
         "Project Description": project.description,
         "Project Type": project.type,
-        "GitHub Link": project.gitLink,
+        "GitHub Link": project.gitLink|| "",
         "Special Notes": project.specialNotes || "",
-
         "Student 1 Full Name": project.Student1?.fullName || "",
         "Student 1 ID": project.Student1?.ID || "",
         "Student 1 Email": project.Student1?.Email || "",
-
         "Student 2 Full Name": project.Student2?.fullName || "",
         "Student 2 ID": project.Student2?.ID || "",
         "Student 2 Email": project.Student2?.Email || "",
-
         "Supervisor 1 Full Name": project.supervisor1FullName,
         "Supervisor 1 Email": project.supervisor1Email,
-        "Supervisor 2 Full Name": project.supervisor2FullName,
-        "Supervisor 2 Email": project.supervisor2Email,
+        "Supervisor 2 Full Name": project.supervisor2FullName|| "",
+        "Supervisor 2 Email": project.supervisor2Email|| "",
       }));
-
-      // Export data to Excel
-      const projectSheet = XLSX.utils.json_to_sheet(exportData);
+      const projectSheet = XLSX.utils.json_to_sheet(projectExportData);
       const projectWorkbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(projectWorkbook, projectSheet, "Part B Projects");
+      XLSX.utils.book_append_sheet(
+        projectWorkbook,
+        projectSheet,
+        "Part B Projects"
+      );
       XLSX.writeFile(projectWorkbook, "PartB_Projects.xlsx");
+      console.log("Exported Part B projects to Excel");
 
-      // Export Final Grades Excel File
+
+      // Export Final Grades
       const grades = await gradesApi.getAllGrades();
+      // Filter out placeholder grade records
       const validGrades = grades.filter((grade) => !isPlaceholderRecord(grade));
-
       const finalGradesExportData = validGrades.map((grade) => {
+        // Find the corresponding project by projectCode
         const project = projects.find(
           (p) => p.projectCode === grade.projectCode
         );
-        const studentFullName = project
-          ? project.Student1?.fullName || project.Student2?.fullName || ""
-          : "";
+        let studentFullName = "Unknown Student";
+        if (project) {
+          // Check which student (Student1 or Student2) matches the grade's studentID
+          if (project.Student1 && project.Student1.ID === grade.studentID) {
+            studentFullName =
+              project.Student1.fullName ||
+              `${project.Student1.firstName || ""} ${
+                project.Student1.lastName || ""
+              }`.trim();
+          } else if (
+            project.Student2 &&
+            project.Student2.ID === grade.studentID
+          ) {
+            studentFullName =
+              project.Student2.fullName ||
+              `${project.Student2.firstName || ""} ${
+                project.Student2.lastName || ""
+              }`.trim();
+          }
+        }
         return {
           "Project Code": grade.projectCode,
           "Student Full Name": studentFullName,
@@ -406,35 +428,38 @@ const AdminProjects = () => {
           "Final Grade": Math.round(grade.finalGrade),
         };
       });
-
-      //export data to excel
       const gradesSheet = XLSX.utils.json_to_sheet(finalGradesExportData);
       const gradesWorkbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(gradesWorkbook, gradesSheet, "Final Grades");
       XLSX.writeFile(gradesWorkbook, "FinalGrades.xlsx");
+      console.log("Exported Final Grades to Excel");
 
-      // Export Evaluators Excel File
+    
+      // Export Evaluators
       const evaluators = await evaluatorsApi.getAllEvaluators();
-    const validEvaluators = evaluators.filter(
-      (evaluator) => !isPlaceholderRecord(evaluator)
-    );
-
-    const evaluatorsExportData = validEvaluators.map((evaluator) => ({
-      "Project Code": evaluator.projectCode,
-      "Evaluator Email": evaluator.evaluatorID,
-      "Evaluator Full Name":
-        supervisorMap[evaluator.evaluatorID] || evaluator.evaluatorID,
-      "Form ID": evaluator.formID,
-      Status: evaluator.status,
-    }));
-
-    //export data to excel
-    const evaluatorSheet = XLSX.utils.json_to_sheet(evaluatorsExportData);
+      const validEvaluators = evaluators.filter(
+        (evaluator) => !isPlaceholderRecord(evaluator)
+      );
+      const evaluatorsExportData = validEvaluators.map((evaluator) => {
+        return {
+          "Project Code": evaluator.projectCode,
+          "Evaluator Email": evaluator.evaluatorID,
+          "Evaluator Full Name":
+            supervisorMap[evaluator.evaluatorID] || evaluator.evaluatorID,
+          "Form ID": evaluator.formID,
+          Status: evaluator.status,
+        };
+      });
+      const evaluatorSheet = XLSX.utils.json_to_sheet(evaluatorsExportData);
       const evaluatorWorkbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(evaluatorWorkbook, evaluatorSheet, "Evaluators");
+      XLSX.utils.book_append_sheet(
+        evaluatorWorkbook,
+        evaluatorSheet,
+        "Evaluators"
+      );
       XLSX.writeFile(evaluatorWorkbook, "Evaluators.xlsx");
-
-    console.log("Exported Evaluators and Final Grades to Excel");
+      console.log("Exported Evaluators to Excel");
+      console.log("Exported Evaluators and Final Grades to Excel");
 
       // Delete related data for Part B Projects
       for (const project of partBProjects) {
