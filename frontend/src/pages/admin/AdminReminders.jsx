@@ -96,6 +96,8 @@ const AdminReminders = () => {
                 : new Date(project.deadline).toLocaleDateString()
               : "No Deadline",
             part: project.part,
+            supervisor1: project.supervisor1,
+          supervisor2: project.supervisor2,
           };
         }
 
@@ -147,31 +149,49 @@ const AdminReminders = () => {
   };
 
   const processSaveDeadline = async () => {
+    // Show a "processing" modal
     setConfirmationModal({
       isOpen: true,
       title: "Setting Deadline...",
       message: "Please wait while we update the deadline.",
       isWarning: false,
       isSuccess: false,
-      isProcessing: true, //  Show loading animation
-      onConfirm: null, // Remove confirm button
+      isProcessing: true,
+      onConfirm: null,
     });
-
     setIsProcessing(true);
-
+  
     try {
       const timestamp = new Date(deadline).getTime();
-      await emailAPI.notifyGlobalDeadline(timestamp, emailMessage);
+  
+      // fetch unique supervisor emails from all projects
+      const supervisorEmails = new Set();
+      projects.forEach((project) => {
+        // Skip any email that contains "placeholder" (case-insensitive)
+        if (project.supervisor1) {
+          console.log("Supervisor 1:", project.supervisor1);
+          supervisorEmails.add(project.supervisor1);
+        }
+        if (project.supervisor2 ) {
+          console.log("Supervisor 2:", project.supervisor2);
+          supervisorEmails.add(project.supervisor2);
+        }
+      });
+      const uniqueSupervisorEmails = Array.from(supervisorEmails);
+      console.log("Unique supervisor emails:", uniqueSupervisorEmails);
+      //send deadline mails to supervisors 
+      await emailAPI.notifyGlobalDeadline(timestamp, emailMessage, uniqueSupervisorEmails);
 
+      // Update the confirmation modal to show success
       setConfirmationModal({
         isOpen: true,
         title: "Success!",
-        message: "Deadline set successfully.",
+        message:
+          "Deadline set successfully and reminders sent to all supervisors.",
         isWarning: false,
         isSuccess: true,
         isProcessing: false,
       });
-
       setDeadline("");
       setEmailMessage("");
     } catch (error) {
@@ -188,6 +208,7 @@ const AdminReminders = () => {
       setIsProcessing(false);
     }
   };
+  
 
   // Handle sending reminders
   const handleSendReminders = () => {

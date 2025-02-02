@@ -123,10 +123,14 @@ exports.deleteProject = async (req, res) => {
 const emailTemplate = "A new deadline has been set for project submissions. Please log in to the system to view the details.";
 
 exports.setGlobalDeadlineAndNotify = async (req, res) => {
-  const { deadline, emailMessage } = req.body;
+  const { deadline, emailMessage, supervisorEmails } = req.body;
 
+  // Ensure that deadline and supervisorEmails are provided
   if (!deadline) {
     return res.status(400).json({ error: "Deadline is required" });
+  }
+  if (!supervisorEmails || !Array.isArray(supervisorEmails) || supervisorEmails.length === 0) {
+    return res.status(400).json({ error: "Supervisor emails are required" });
   }
 
   try {
@@ -135,20 +139,18 @@ exports.setGlobalDeadlineAndNotify = async (req, res) => {
     const snapshot = await projectsRef.get();
     const batch = admin.firestore().batch();
     snapshot.forEach(doc => {
-      batch.update(doc.ref, { deadline: new admin.firestore.Timestamp(Math.floor(deadline / 1000), 0) });
+      batch.update(doc.ref, {
+        deadline: new admin.firestore.Timestamp(Math.floor(deadline / 1000), 0)
+      });
     });
     await batch.commit();
 
-    // Get all supervisor emails
-    const usersSnapshot = await admin.firestore().collection("users").where("role", "==", "Supervisor").get();
-    const recipientEmails = usersSnapshot.docs.map(doc => doc.data().email).filter(Boolean);
-
-    // Use the updated email template or the provided custom message
+    // Use the provided custom email message or a default template
     const emailBody = appendDoNotReply(emailMessage || emailTemplate);
 
-    // Send emails
+    // Send emails to each unique supervisor email provided in the payload
     await Promise.all(
-      recipientEmails.map(email => sendEmail(email, "New Deadline Notification", emailBody))
+      supervisorEmails.map(email => sendEmail(email, "New Deadline Notification", emailBody))
     );
 
     res.status(200).json({ message: "Global deadline set and emails sent successfully." });
@@ -157,3 +159,4 @@ exports.setGlobalDeadlineAndNotify = async (req, res) => {
     res.status(500).json({ error: "Failed to set global deadline and notify supervisors." });
   }
 };
+

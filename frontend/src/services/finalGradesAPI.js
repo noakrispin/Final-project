@@ -1,13 +1,13 @@
-import { api } from "./api"; // Import the shared API utilities
+import { api } from "./api"; 
 
 export const gradesApi = {
   /**
-   * Add or update a grade.
+   * Add or update a grade. - this is the main logic in refresh grades - its calculating all final grades 
    */
-  addOrUpdateGrade: async (id, data) => {
+  addOrUpdateGrade: async (projectCode, data) => {
     try {
-      const response = await api.post(`/grades`, { id, ...data });
-      return response.data;
+      const response = await api.post("/grades", { projectCode, ...data });
+      return response;
     } catch (error) {
       console.error("Error adding/updating grade:", error);
       throw error;

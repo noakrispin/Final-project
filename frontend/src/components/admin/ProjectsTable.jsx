@@ -67,9 +67,7 @@ const ProjectsTable = ({
         >
           {displayValue || "N/A"}
         </button>
-        <div className="hidden group-hover:block absolute right-0 top-1/2 transform -translate-y-1/2 mr-2">
-          <Info className="w-4 h-4 text-gray-400" />
-        </div>
+        
       </div>
     );
   };

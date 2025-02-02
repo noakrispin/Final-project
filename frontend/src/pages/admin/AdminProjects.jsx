@@ -9,6 +9,9 @@ import StudentDetailsModal from "../../components/ui/StudentDetailsModal";
 import EditFieldModal from "../../components/actions/EditTitleModal";
 import { useProjectModals } from "../../hooks/useProjectModals";
 import { projectsApi } from "../../services/projectsAPI";
+import { evaluatorsApi } from "../../services/evaluatorsAPI";
+import { gradesApi } from "../../services/finalGradesAPI";
+
 import { userApi } from "../../services/userAPI";
 import { db } from "../../firebaseConfig";
 import ConfirmationModal from "../../components/shared/ConfirmationModal";
@@ -47,6 +50,7 @@ const AdminProjects = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [supervisorMap, setSupervisorMap] = useState({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [confirmationModal, setConfirmationModal] = useState({
     isOpen: false,
@@ -92,47 +96,46 @@ const AdminProjects = () => {
 
         // Fetch all projects
         const fetchedProjects = await projectsApi.getAllProjects();
-        console.log("Fetched projects:", fetchedProjects);
 
-        // Extract unique supervisor email
-        const supervisorIds = [
+        // Extract unique supervisor emails
+        const supervisorEmails = [
           ...new Set(
             fetchedProjects
               .flatMap((project) => [project.supervisor1, project.supervisor2])
-              .filter(Boolean)
+              .filter(Boolean) // Remove empty values
           ),
         ];
-        console.log("Supervisor IDs to fetch:", supervisorIds);
 
         // Fetch supervisor details
         const supervisorDetails = await Promise.all(
-          supervisorIds.map(async (id) => {
+          supervisorEmails.map(async (email) => {
             try {
-              const userResponse = await userApi.getUser(id);
-              console.log(
-                `Fetched supervisor data for ID ${id}:`,
-                userResponse
-              );
+              const userResponse = await userApi.getUser(email);
               return {
-                id,
-                fullName: userResponse.fullName || `${id}`,
+                email: userResponse.email,
+                fullName: userResponse.fullName || email, // Use email as fallback
               };
             } catch (error) {
-              console.error(`Error fetching supervisor with ID ${id}:`, error);
-              return { id, fullName: `${id}` };
+              console.error(
+                `Error fetching supervisor with ID ${email}:`,
+                error
+              );
+              // If the user doesn't exist, just return the email.
+              return { email, fullName: email };
             }
           })
         );
 
-        console.log("Fetched Supervisor Details:", supervisorDetails);
+        // Create a map of supervisor emails to their full names
+        const supervisorMapping = supervisorDetails.reduce(
+          (acc, supervisor) => {
+            acc[supervisor.email] = supervisor.fullName;
+            return acc;
+          },
+          {}
+        );
 
-        // Create a map of supervisor IDs to their full names
-        const supervisorMap = supervisorDetails.reduce((acc, supervisor) => {
-          acc[supervisor.id] = supervisor.fullName;
-          return acc;
-        }, {});
-
-        console.log("Supervisor Map:", supervisorMap);
+        setSupervisorMap(supervisorMapping); // Update the state
 
         // Map supervisor names, students, and formatted deadlines to projects
         const projectsWithDetails = fetchedProjects.map((project) => {
@@ -145,17 +148,28 @@ const AdminProjects = () => {
             project.Student1 || null,
             project.Student2 || null,
           ].filter(Boolean); // Keep only valid student objects
-          console.log("Students :", students);
+
+          // Use supervisorMapping if available; otherwise, fallback to the email.
+          const s1Full =
+            supervisorMapping[project.supervisor1] || project.supervisor1;
+          const s2Full = project.supervisor2
+            ? supervisorMapping[project.supervisor2] || project.supervisor2
+            : "";
+
           return {
             ...project,
-            supervisor1: supervisorMap[project.supervisor1] || "Unknown",
-            supervisor2: supervisorMap[project.supervisor2],
+            // For UI display
+            supervisor1: s1Full,
+            supervisor2: s2Full,
+            // Additional fields for export purposes:
+            supervisor1FullName: s1Full,
+            supervisor1Email: project.supervisor1,
+            supervisor2FullName: s2Full || "",
+            supervisor2Email: project.supervisor2 || "",
             students,
             deadline,
           };
         });
-
-        console.log("Projects with details:", projectsWithDetails);
 
         setProjects(projectsWithDetails);
       } catch (err) {
@@ -194,15 +208,6 @@ const AdminProjects = () => {
 
   const moveToPartB = async () => {
     try {
-      // const partBProjects = projects.filter((project) => project.part === "B");
-      // if (partBProjects.length > 0) {
-      //   showWarningModal(
-      //     "Cannot Move to Part B",
-      //     "Part B must be empty before transferring projects from Part A."
-      //   );
-      //   return;
-      // }
-
       const batch = [];
 
       const partAProjects = projects.filter((project) => project.part === "A");
@@ -331,6 +336,15 @@ const AdminProjects = () => {
     });
   };
 
+  const isPlaceholderRecord = (record) => {
+    return (
+      record.projectCode?.toLowerCase().includes("placeholder") ||
+      record.studentID === null ||
+      record.evaluatorID?.toLowerCase().includes("placeholder") ||
+      record.evaluatorID?.toLowerCase() === null
+    );
+  };
+
   const exportToExcel = async () => {
     try {
       const partBProjects = projects.filter((project) => project.part === "B");
@@ -339,15 +353,88 @@ const AdminProjects = () => {
         alert("No projects in Part B to export.");
         return;
       }
+      console.log("supervisor mapping:", supervisorMap);
 
-      // Prepare data for Excel
-      const worksheet = XLSX.utils.json_to_sheet(partBProjects);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Part B Projects");
+      //export details of part B projects to excel
+      const exportData = partBProjects.map((project) => ({
+        "Project Code": project.projectCode,
+        "Project Title": project.title,
+        "Project Description": project.description,
+        "Project Type": project.type,
+        "GitHub Link": project.gitLink,
+        "Special Notes": project.specialNotes || "",
 
-      // Export to Excel
-      XLSX.writeFile(workbook, "PartB_Projects.xlsx");
-      console.log("Exported Part B projects to Excel");
+        "Student 1 Full Name": project.Student1?.fullName || "",
+        "Student 1 ID": project.Student1?.ID || "",
+        "Student 1 Email": project.Student1?.Email || "",
+
+        "Student 2 Full Name": project.Student2?.fullName || "",
+        "Student 2 ID": project.Student2?.ID || "",
+        "Student 2 Email": project.Student2?.Email || "",
+
+        "Supervisor 1 Full Name": project.supervisor1FullName,
+        "Supervisor 1 Email": project.supervisor1Email,
+        "Supervisor 2 Full Name": project.supervisor2FullName,
+        "Supervisor 2 Email": project.supervisor2Email,
+      }));
+
+      // Export data to Excel
+      const projectSheet = XLSX.utils.json_to_sheet(exportData);
+      const projectWorkbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(projectWorkbook, projectSheet, "Part B Projects");
+      XLSX.writeFile(projectWorkbook, "PartB_Projects.xlsx");
+
+      // Export Final Grades Excel File
+      const grades = await gradesApi.getAllGrades();
+      const validGrades = grades.filter((grade) => !isPlaceholderRecord(grade));
+
+      const finalGradesExportData = validGrades.map((grade) => {
+        const project = projects.find(
+          (p) => p.projectCode === grade.projectCode
+        );
+        const studentFullName = project
+          ? project.Student1?.fullName || project.Student2?.fullName || ""
+          : "";
+        return {
+          "Project Code": grade.projectCode,
+          "Student Full Name": studentFullName,
+          "Student ID": grade.studentID,
+          Part: grade.part,
+          "Calculated Book Grade": grade.CalculatedBookGrade,
+          "Calculated Presentation Grade": grade.CalculatedPresentationGrade,
+          "Calculated Supervisor Grade": grade.CalculatedSupervisorGrade,
+          "Final Grade": Math.round(grade.finalGrade),
+        };
+      });
+
+      //export data to excel
+      const gradesSheet = XLSX.utils.json_to_sheet(finalGradesExportData);
+      const gradesWorkbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(gradesWorkbook, gradesSheet, "Final Grades");
+      XLSX.writeFile(gradesWorkbook, "FinalGrades.xlsx");
+
+      // Export Evaluators Excel File
+      const evaluators = await evaluatorsApi.getAllEvaluators();
+    const validEvaluators = evaluators.filter(
+      (evaluator) => !isPlaceholderRecord(evaluator)
+    );
+
+    const evaluatorsExportData = validEvaluators.map((evaluator) => ({
+      "Project Code": evaluator.projectCode,
+      "Evaluator Email": evaluator.evaluatorID,
+      "Evaluator Full Name":
+        supervisorMap[evaluator.evaluatorID] || evaluator.evaluatorID,
+      "Form ID": evaluator.formID,
+      Status: evaluator.status,
+    }));
+
+    //export data to excel
+    const evaluatorSheet = XLSX.utils.json_to_sheet(evaluatorsExportData);
+      const evaluatorWorkbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(evaluatorWorkbook, evaluatorSheet, "Evaluators");
+      XLSX.writeFile(evaluatorWorkbook, "Evaluators.xlsx");
+
+    console.log("Exported Evaluators and Final Grades to Excel");
 
       // Delete related data for Part B Projects
       for (const project of partBProjects) {
@@ -727,7 +814,7 @@ const AdminProjects = () => {
         fieldType={editModal.fieldType}
         options={editModal.options}
       />
-{/* Warning Modal */}
+      {/* Warning Modal */}
       <ConfirmationModal
         isOpen={confirmationModal.isOpen}
         title={confirmationModal.title}
@@ -737,13 +824,13 @@ const AdminProjects = () => {
         isProcessing={confirmationModal.isProcessing}
         isWarning={confirmationModal.isWarning}
       />
-{/* Success Modal */}
+      {/* Success Modal */}
       <ConfirmationModal
         isOpen={showSuccessModal}
         title="Success!"
         message="Successfully moved!"
         onCancel={() => setShowSuccessModal(false)}
-        isSuccess={true} 
+        isSuccess={true}
       />
     </div>
   );

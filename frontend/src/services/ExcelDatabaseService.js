@@ -86,7 +86,7 @@ insertSupervisorsEvaluators: async (projects) => {
 },
 
 
-  insertStudentsToFinalGrades: async (projects) => {
+insertStudentsToFinalGrades: async (projects) => {
     try {
       // Fetch all existing finalGrades and map by unique combination of studentID, projectCode, and part
       const finalGradesSnapshot = await getDocs(collection(db, "finalGrades"));
@@ -156,7 +156,7 @@ insertSupervisorsEvaluators: async (projects) => {
 
   //functions for Evaluators Upload files
   //Inserting evaluators by evaluators excel file (for presentation and book evaluators)
-  insertEvaluators: async (processedData) => {
+insertEvaluators: async (processedData) => {
     try {
       if (!Array.isArray(processedData) || processedData.length === 0) {
         throw new Error('No valid data found in the processed data.');
@@ -168,8 +168,10 @@ insertSupervisorsEvaluators: async (projects) => {
         projectsSnapshot.docs.map((doc) => [doc.data().projectCode, doc.data()])
       );
   
-      // Fetch all existing evaluators once and map by unique combination of fields
+      // Fetch all existing evaluators once
       const evaluatorsSnapshot = await getDocs(collection(db, 'evaluators'));
+  
+      // Build a Set of existing evaluator records (for presentation evaluators and others)
       const existingEvaluatorsSet = new Set(
         evaluatorsSnapshot.docs.map((doc) =>
           JSON.stringify({
@@ -179,6 +181,15 @@ insertSupervisorsEvaluators: async (projects) => {
           })
         )
       );
+  
+      // Build a map of existing book evaluators (keyed by projectCode)
+      const bookEvaluatorsMap = new Map();
+      evaluatorsSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.formID && data.formID.startsWith("bookReviewerForm")) {
+          bookEvaluatorsMap.set(data.projectCode, { docRef: doc.ref, data });
+        }
+      });
   
       // Create a local Set to track unique evaluator records in the current batch
       const localEvaluatorSet = new Set();
@@ -220,11 +231,11 @@ insertSupervisorsEvaluators: async (projects) => {
                 ...evaluatorRecord,
                 status: 'Not Submitted',
               });
-              localEvaluatorSet.add(evaluatorKey); // Add to local Set to prevent duplicates in the batch
+              localEvaluatorSet.add(evaluatorKey);
             }
           }
   
-          // Add Book Evaluator
+          // Add Book Evaluator with replacement logic
           if (bookEvaluator) {
             const evaluatorRecord = {
               evaluatorID: bookEvaluator,
@@ -232,8 +243,17 @@ insertSupervisorsEvaluators: async (projects) => {
               projectCode,
             };
   
-            const evaluatorKey = JSON.stringify(evaluatorRecord);
+            // Check if a book reviewer already exists for this project.
+            const existingBookEvaluator = bookEvaluatorsMap.get(projectCode);
+            if (existingBookEvaluator) {
+              // Schedule deletion of the existing book reviewer.
+              batch.delete(existingBookEvaluator.docRef);
+              // Remove it from the map so that if multiple rows target the same project,
+              // only the first deletion is scheduled.
+              bookEvaluatorsMap.delete(projectCode);
+            }
   
+            const evaluatorKey = JSON.stringify(evaluatorRecord);
             if (
               !existingEvaluatorsSet.has(evaluatorKey) &&
               !localEvaluatorSet.has(evaluatorKey)
@@ -243,7 +263,7 @@ insertSupervisorsEvaluators: async (projects) => {
                 ...evaluatorRecord,
                 status: 'Not Submitted',
               });
-              localEvaluatorSet.add(evaluatorKey); // Add to local Set to prevent duplicates in the batch
+              localEvaluatorSet.add(evaluatorKey);
             }
           }
         } catch (error) {
@@ -267,6 +287,7 @@ insertSupervisorsEvaluators: async (projects) => {
       throw new Error('Database error: ' + error.message);
     }
   },
+  
   
 getProjects: async () => {
     const snapshot = await getDocs(collection(db, "projects"));

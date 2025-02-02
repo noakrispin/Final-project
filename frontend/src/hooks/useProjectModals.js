@@ -26,16 +26,26 @@ export const useProjectModals = (projects, setProjects) => {
   });
 
   const handleEditField = (project, field, fieldName, fieldType = 'text', options = []) => {
+    let fieldValue = project[field];
+  
+    
+    if (typeof fieldValue === "object" && fieldValue !== null) {
+      fieldValue = fieldValue.text || ""; 
+    }
+  
     setEditModal({
       isOpen: true,
-      field, // e.g., "projectCode" or "title"
-      fieldName, // e.g., "Project Code" or "Project Title"
-      value: project[field] || '', //correct value for the field is set
-      projectId: project.id, // Use the project's unique ID
+      field,
+      fieldName,
+      value: fieldValue,
+      projectId: project.id,
       fieldType,
       options,
     });
+  
+    console.log(`Editing ${field}:`, fieldValue); // Debugging Log
   };
+  
 
  const handleSaveField = async (newValue) => {
     const { field, projectId, fieldType } = editModal;

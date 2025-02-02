@@ -191,10 +191,8 @@ const SupervisorGradesFeedback = () => {
 
         if (evaluationsByForm.length > 0) {
           try {
-            await gradesApi.addOrUpdateGrade({
-              projectCode,
-              evaluationsByForm,
-            });
+            await gradesApi.addOrUpdateGrade(projectCode, { evaluationsByForm });
+
           } catch (error) {
             toast.error(`Failed to update grades for project ${projectCode}.`);
           }

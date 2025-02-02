@@ -368,7 +368,7 @@ const MyProjectsReview = () => {
               showTabs={true}
               useCustomColumns={true}
               showDescription={true}
-              description="Click on a row to view project details and on a grade to add or edit evaluations."
+              description="Click on a row to view/update project details and on a grade to add/edit evaluations."
             />
           </Card>
         </div>
