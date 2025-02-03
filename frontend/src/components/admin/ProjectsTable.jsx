@@ -1,11 +1,21 @@
-import React from "react";
+/**
+ * This component renders a table of projects with various functionalities.
+ * 
+ * Props:
+ * - projects: Array of project objects to display.
+ * - activeTab: The currently active tab.
+ * - onEditField: Function to handle editing a field.
+ * - onAddNote: Function to handle adding a note.
+ * - onStudentClick: Function to handle clicking on a student.
+ * - onDelete: Function to handle deleting a project.
+ */
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { Table } from "../ui/Table";
 import { Card } from "../ui/Card";
 import { Info } from "lucide-react";
 import { MdDeleteForever } from "react-icons/md";
 import SearchBar from "../shared/SearchBar";
-import { useState } from "react";
 
 const ProjectsTable = ({
   projects,
@@ -16,7 +26,10 @@ const ProjectsTable = ({
   onDelete,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  //search in table
+
+  /**
+   * Filters projects based on the search term.
+   */
   const filteredProjects = projects.filter((project) => {
     if (!project) return false; // Ensure project exists
   
@@ -41,8 +54,10 @@ const ProjectsTable = ({
   
     return projectText.includes(searchTerm.toLowerCase());
   });
-  
 
+  /**
+   * Renders an editable cell.
+   */
   const renderEditableCell = (
     value,
     row,
@@ -67,12 +82,13 @@ const ProjectsTable = ({
         >
           {displayValue || "N/A"}
         </button>
-        
       </div>
     );
   };
-  
 
+  /**
+   * Renders the supervisor cell.
+   */
   const renderSupervisorCell = (supervisor1, supervisor2) => (
     <div className="space-y-1">
       <div className="text-gray-700">{supervisor1 || "Unknown"}</div>
@@ -80,10 +96,16 @@ const ProjectsTable = ({
     </div>
   );
 
+  /**
+   * Renders a non-editable cell.
+   */
   const renderNonEditableCell = (value) => (
     <div className="text-gray-700">{value || "N/A"}</div>
   );
 
+  /**
+   * Renders the student cell.
+   */
   const renderStudentCell = (students) => (
     <div className="space-y-1">
       {students && students.length > 0 ? (

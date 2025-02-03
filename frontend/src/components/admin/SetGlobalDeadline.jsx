@@ -1,3 +1,11 @@
+/**
+ * This component provides an interface for setting a global deadline for projects.
+ * 
+ * State:
+ * - deadline: The selected deadline date.
+ * - emailMessage: Optional custom email message.
+ * - status: Status of the deadline submission.
+ */
 import React, { useState } from "react";
 
 const SetGlobalDeadline = () => {
@@ -5,6 +13,9 @@ const SetGlobalDeadline = () => {
   const [emailMessage, setEmailMessage] = useState("");
   const [status, setStatus] = useState(null);
 
+  /**
+   * Handles form submission to set the global deadline.
+   */
   const handleSubmit = async () => {
     if (!deadline) {
       setStatus({ success: false, message: "Please select a deadline." });

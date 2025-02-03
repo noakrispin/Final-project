@@ -1,3 +1,12 @@
+/**
+ * This component provides an interface for uploading Excel or CSV files.
+ * 
+ * Props:
+ * - onFileSelect: Function to handle the selected file.
+ * - isUploading: Boolean indicating if a file is currently being uploaded.
+ * - isSuccess: Boolean indicating if the file upload was successful.
+ * - error: Error message if the file upload failed.
+ */
 import React, { useState } from "react";
 import { Upload, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { processExcelFile } from "../../services/fileProcessingService"; 
@@ -5,6 +14,10 @@ import { processExcelFile } from "../../services/fileProcessingService";
 const ExcelUploader = ({ onFileSelect, isUploading, isSuccess, error }) => {
   const [dragOver, setDragOver] = useState(false);
   const [uploadError, setUploadError] = useState(null);
+
+  /**
+   * Validates the selected file type.
+   */
   const validateFile = (file) => {
     if (!file) return false;
     const validTypes = [
@@ -16,6 +29,9 @@ const ExcelUploader = ({ onFileSelect, isUploading, isSuccess, error }) => {
     return validTypes.includes(file.type);
   };
 
+  /**
+   * Handles file selection and processing.
+   */
   const handleFileSelect = async (file) => {
     setUploadError(null);
     
@@ -44,6 +60,9 @@ const ExcelUploader = ({ onFileSelect, isUploading, isSuccess, error }) => {
     }
   };
 
+  /**
+   * Handles file drop event.
+   */
   const handleDrop = (e) => {
     e.preventDefault();
     setDragOver(false);

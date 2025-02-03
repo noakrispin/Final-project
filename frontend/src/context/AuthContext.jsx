@@ -1,3 +1,17 @@
+/**
+ * This module provides an authentication context for managing user authentication state.
+ * It includes the following functionalities:
+ * 
+ * 1. AuthProvider component:
+ *    - Manages user state and loading state.
+ *    - Restores user from localStorage on initial load.
+ *    - Provides login and logout functions.
+ * 
+ * 2. useAuth hook:
+ *    - Custom hook to access the authentication context.
+ * 
+ * The module uses React's Context API and localStorage for state management.
+ */
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { api } from "../services/api";
 

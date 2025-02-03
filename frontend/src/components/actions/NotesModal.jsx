@@ -1,3 +1,13 @@
+/**
+ * This component provides a modal for editing notes related to a project.
+ * 
+ * Props:
+ * - isOpen: Boolean indicating if the modal is open.
+ * - onClose: Function to close the modal.
+ * - onSave: Function to save the edited note.
+ * - initialNote: The initial note content.
+ * - projectTitle: The title of the project.
+ */
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
@@ -6,6 +16,9 @@ const NotesModal = ({ isOpen, onClose, onSave, initialNote, projectTitle }) => {
 
   if (!isOpen) return null;
 
+  /**
+   * Handles saving the note.
+   */
   const handleSave = async () => {
     try {
       await onSave(note); // Save note via the provided onSave function

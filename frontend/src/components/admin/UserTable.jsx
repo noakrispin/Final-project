@@ -1,3 +1,11 @@
+/**
+ * This component renders a table of users with functionalities to edit roles and delete users.
+ * 
+ * Props:
+ * - users: Array of user objects to display.
+ * - onDelete: Function to handle deleting a user.
+ * - onEditRole: Function to handle editing a user's role.
+ */
 import React from "react";
 import PropTypes from "prop-types";
 import { Table } from "../ui/Table";
@@ -43,7 +51,6 @@ const UserTable = ({ users, onDelete, onEditRole }) => {
       ),
     },
   ];
-  
 
   if (!users || users.length === 0) {
     console.error("No valid user data provided to UserTable:", users);
@@ -61,8 +68,8 @@ const UserTable = ({ users, onDelete, onEditRole }) => {
         columns={userColumns}
         showTabs={false}
         onRowClick={(row) => console.log("Row clicked:", row)}
-        showDescription = {true}
-        description = "Click the Edit icon to assign or modify a user's role, or click Delete to remove the user from the system."
+        showDescription={true}
+        description="Click the Edit icon to assign or modify a user's role, or click Delete to remove the user from the system."
       />
     </Card>
   );
