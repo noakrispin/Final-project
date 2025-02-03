@@ -1,7 +1,26 @@
+/**
+ * This module provides controller functions for managing users in a Firestore database.
+ * It includes the following functionalities:
+ * 
+ * 1. Add a new user:
+ *    - Adds a new user to the Firestore database, including role-specific subcollections.
+ * 
+ * 2. Fetch user details:
+ *    - Retrieves the details of a specific user along with their subcollections using their email as the document ID.
+ * 
+ * 3. Fetch all users:
+ *    - Fetches all user records from the Firestore database.
+ * 
+ * 4. Delete a user:
+ *    - Deletes a user and their subcollections based on their email as the document ID.
+ * 
+ * 5. Update user role:
+ *    - Updates the role and admin status of a specific user, and manages their role-specific subcollections.
+ * 
+ * The module uses Firebase Admin SDK to interact with Firestore.
+ */
 const admin = require("firebase-admin");
 const { addDocument, getDocument, addSubcollection, getSubcollection } = require("../utils/firebaseHelper");
-
-
 
 // Helper function to handle subcollections
 const handleSubcollections = async (emailId, role, supervisorTopics) => {
@@ -98,7 +117,7 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-//delete user
+// Delete a user
 const deleteUser = async (req, res) => {
   const emailId = req.params.id; // Use email as the document ID
 
@@ -129,7 +148,7 @@ const deleteUser = async (req, res) => {
   }
 };
 
-//update user details& controlling admin roles
+// Update user role
 const updateUserRole = async (req, res) => {
   const { userId } = req.params; // This should now be emailId
   const { role, isAdmin ,fullName} = req.body;
@@ -165,13 +184,10 @@ const updateUserRole = async (req, res) => {
   }
 };
 
-
-
 module.exports = {
   addUser,
   getUser,
   getAllUsers,
   deleteUser,
   updateUserRole,
-  
- }
+};

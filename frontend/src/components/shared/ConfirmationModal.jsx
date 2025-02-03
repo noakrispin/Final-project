@@ -28,7 +28,7 @@ export default function ConfirmationModal({
         
         {/* Dynamic title styling */}
         <h2 className={`text-2xl font-extrabold mb-4 ${
-          isSuccess ? "text-green-700" : isWarning ? "text-yellow-700" : "text-red-700"
+          isSuccess ? "text-green-700" : isWarning ? "text-yellow-700" :isProcessing? "text-blue-700": "text-red-700"
         }`}>
           {title}
         </h2>

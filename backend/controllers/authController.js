@@ -1,7 +1,27 @@
+/**
+ * This module provides controller functions for user authentication and profile management.
+ * It includes the following functionalities:
+ * 
+ * 1. Login:
+ *    - Authenticates a user based on their email and password, generates a JWT token, and fetches role-specific details.
+ * 
+ * 2. Register:
+ *    - Registers a new user with their email, full name, password, and role. It also stores role-specific details.
+ * 
+ * 3. Get Profile:
+ *    - Retrieves the profile details of the authenticated user, including role-specific details.
+ * 
+ * 4. Verify User:
+ *    - Verifies if a user exists based on their email.
+ * 
+ * 5. Reset Password:
+ *    - Resets the password for a user based on their email and new password.
+ * 
+ * The module uses bcrypt for password hashing, jsonwebtoken for JWT token generation, and Firestore for database operations.
+ */
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const db = require("../config/firebaseAdmin");
-
 
 // Helper function to get role-specific details
 const getRoleSpecificDetails = async (role, emailId) => {

@@ -1,3 +1,21 @@
+/**
+ * This module defines the routes for managing final grades in a Firestore database.
+ * It includes the following functionalities:
+ * 
+ * 1. Add or update a grade:
+ *    - Adds a new grade or updates an existing grade based on the provided projectCode and evaluationsByForm.
+ * 
+ * 2. Get a specific grade by ID:
+ *    - Retrieves the details of a specific grade using its unique document ID.
+ * 
+ * 3. Get all grades:
+ *    - Fetches all grade records from the Firestore database.
+ * 
+ * 4. Delete a grade:
+ *    - Deletes a grade's record based on its unique document ID.
+ * 
+ * The module uses Firebase Admin SDK to interact with Firestore and includes input validation middleware.
+ */
 const express = require("express");
 const {
   addOrUpdateGrade,
@@ -12,37 +30,6 @@ const router = express.Router();
 const asyncHandler = (fn) => (req, res, next) => {
   return Promise.resolve(fn(req, res, next)).catch(next);
 };
-
-// Input validation middleware
-// const validateGradeInput = (req, res, next) => {
-//   const { grade, studentId, projectCode } = req.body;
-
-//   // Validate grade: must be null, undefined, or a number between 0 and 100
-//   if (
-//     grade !== undefined &&
-//     grade !== null &&
-//     (typeof grade !== "number" || grade < 0 || grade > 100)
-//   ) {
-//     return res.status(400).json({
-//       error: {
-//         message: "Invalid grade value. Grade must be a number between 0 and 100 or null.",
-//         status: 400,
-//       },
-//     });
-//   }
-
-//   // Validate studentId and projectCode: must be present
-//   if (!studentId || !projectCode) {
-//     return res.status(400).json({
-//       error: {
-//         message: "Student ID and Project Code are required.",
-//         status: 400,
-//       },
-//     });
-//   }
-
-//   next(); // Continue to the next middleware or route handler
-// };
 
 
 // Add or update grades for a project 
@@ -66,8 +53,6 @@ router.post("/", asyncHandler(async (req, res) => {
   return res.status(200).json(result);
 }));
 
-
-
 // Get a specific grade by ID
 router.get("/:id", asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -86,7 +71,6 @@ router.get("/:id", asyncHandler(async (req, res) => {
   const result = await getGrade(req, res);
   return res.status(200).json(result);
 }));
-////
 
 // Get all grades
 router.get("/", asyncHandler(async (req, res) => {

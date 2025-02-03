@@ -1,3 +1,33 @@
+/**
+ * This module defines the routes for managing evaluators in a Firestore database.
+ * It includes the following functionalities:
+ * 
+ * 1. Add or update an evaluator:
+ *    - Adds a new evaluator or updates an existing evaluator's record.
+ * 
+ * 2. Get a specific evaluator:
+ *    - Retrieves the details of a specific evaluator using their unique document ID.
+ * 
+ * 3. Get all evaluators:
+ *    - Fetches all evaluator records from the Firestore database.
+ * 
+ * 4. Delete an evaluator:
+ *    - Deletes an evaluator's record based on their unique document ID.
+ * 
+ * 5. Get all projects assigned to a particular evaluator:
+ *    - Retrieves all projects associated with a specific evaluator using their evaluatorID.
+ * 
+ * 6. Get evaluators assigned to a specific project:
+ *    - Fetches all evaluators assigned to a particular project using the projectCode.
+ * 
+ * 7. Get projects for evaluator by form:
+ *    - Retrieves projects assigned to a specific evaluator for a given formID.
+ * 
+ * 8. Send reminders to evaluators:
+ *    - Sends reminder emails to evaluators with a status of "Not Submitted" to prompt them to complete their evaluations.
+ * 
+ * The module uses Firebase Admin SDK to interact with Firestore and includes input validation middleware.
+ */
 const express = require("express");
 const {
   addOrUpdateEvaluator,
@@ -112,6 +142,7 @@ router.get('/:evaluatorID/projects/:formID',
   })
 );
 
+// Send reminders to evaluators
 router.post("/schedule-reminders", async (req, res) => {
   try {
     await sendRemindersToEvaluators(req, res);

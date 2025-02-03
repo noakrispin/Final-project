@@ -34,6 +34,7 @@ import AdminEvaluatorUpload from "./pages/admin/AdminEvaluatorUpload";
 import Navbar from "./components/layout/Navbar";
 import AdminNavbar from "./components/admin/AdminNavbar";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import Footer from "./components/layout/Footer";
 
 const AppContent = () => {
   const location = useLocation();
@@ -185,6 +186,7 @@ const AppContent = () => {
         {/* 404 Page */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <Footer />
     </div>
   );
 };

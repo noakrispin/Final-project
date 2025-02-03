@@ -1,3 +1,27 @@
+/**
+ * This module provides controller functions for managing projects in a Firestore database.
+ * It includes the following functionalities:
+ * 
+ * 1. Add a new project:
+ *    - Adds a new project to the Firestore database.
+ * 
+ * 2. Get details of a specific project:
+ *    - Retrieves the details of a specific project using its unique project code.
+ * 
+ * 3. Get all projects:
+ *    - Fetches all project records from the Firestore database.
+ * 
+ * 4. Update a project:
+ *    - Updates the details of a specific project based on its project code.
+ * 
+ * 5. Delete a project:
+ *    - Deletes a project based on its unique project code.
+ * 
+ * 6. Set a global deadline and notify supervisors:
+ *    - Sets a global deadline for all projects and sends notification emails to supervisors.
+ * 
+ * The module uses Firebase Admin SDK to interact with Firestore, and a custom email service to send emails.
+ */
 const admin = require("firebase-admin");
 const { sendEmail } = require("../utils/emailService");
 const mustache = require("mustache");
