@@ -1,3 +1,21 @@
+/**
+ * This module defines the routes for user authentication and profile management.
+ * It includes the following functionalities:
+ * 
+ * 1. User login:
+ *    - Authenticates a user and generates a JWT token.
+ * 
+ * 2. User registration:
+ *    - Registers a new user with validation and rate limiting.
+ * 
+ * 3. User verification:
+ *    - Verifies if a user exists based on their email.
+ * 
+ * 4. Password reset:
+ *    - Resets the password for a user with validation and rate limiting.
+ * 
+ * The module uses express-rate-limit for rate limiting and includes input validation middleware.
+ */
 const express = require("express");
 const { login, register, resetPassword, verifyUser } = require("../controllers/authController");
 const rateLimit = require('express-rate-limit');
@@ -143,8 +161,6 @@ router.post("/reset-password",
     return result;
   })
 );
-
-
 
 // Error handling middleware specific to auth routes
 router.use((err, req, res, next) => {

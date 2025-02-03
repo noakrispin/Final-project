@@ -1,3 +1,54 @@
+/**
+ * This module defines the routes for managing forms and their subcollections in a Firestore database.
+ * It includes the following functionalities:
+ * 
+ * 1. Create a new form:
+ *    - Creates a new form with subcollections.
+ * 
+ * 2. Update a specific form:
+ *    - Updates the metadata and questions of a specific form.
+ * 
+ * 3. Fetch a specific form:
+ *    - Retrieves the details of a specific form using its unique document ID.
+ * 
+ * 4. Get all forms:
+ *    - Fetches all form records from the Firestore database.
+ * 
+ * 5. Delete a form:
+ *    - Deletes a form along with its subcollections.
+ * 
+ * 6. Fetch questions for a specific form:
+ *    - Retrieves all questions for a specific form.
+ * 
+ * 7. Add a new question to a form:
+ *    - Adds a new question to a specific form.
+ * 
+ * 8. Update a specific question in a form:
+ *    - Updates the details of a specific question in a form.
+ * 
+ * 9. Delete a specific question from a form:
+ *    - Deletes a specific question from a form.
+ * 
+ * 10. Submit form data:
+ *    - Submits form data including general and student-specific responses, and calculates weighted grades.
+ * 
+ * 11. Fetch the last response for a specific form, evaluator, and project:
+ *    - Retrieves the last response for a specific form, evaluator, and project.
+ * 
+ * 12. Fetch all responses for a specific form:
+ *    - Retrieves all responses for a specific form.
+ * 
+ * 13. Fetch form evaluations:
+ *    - Retrieves all evaluations for a specific form.
+ * 
+ * 14. Fetch all evaluations for a specific evaluator:
+ *    - Retrieves all evaluations for a specific evaluator.
+ * 
+ * 15. Fetch evaluations by evaluatorID and projectCode:
+ *    - Retrieves evaluations for a specific evaluator and project.
+ * 
+ * The module uses Firebase Admin SDK to interact with Firestore and includes input validation middleware.
+ */
 const express = require("express");
 const router = express.Router();
 const formController = require("../controllers/formController");
@@ -41,7 +92,6 @@ router.post("/:formID/questions", asyncHandler(async (req, res) => {
   return result;
 }));
 
-
 router.delete("/:formID/questions/:questionId", asyncHandler(async (req, res) => {
   const result = await formController.deleteQuestion(req, res);
   return result;
@@ -73,13 +123,11 @@ router.get(
   })
 );
 
-
 // Response Routes
 router.get("/:formID/responses", asyncHandler(async (req, res) => {
   const result = await formController.getResponses(req, res);
   return result;
 }));
-
 
 router.get("/:formID/last-response", asyncHandler(async (req, res) => {
   const result = await formController.getLastResponse(req, res);

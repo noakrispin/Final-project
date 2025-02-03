@@ -1,3 +1,21 @@
+/**
+ * This module provides helper functions for interacting with Firestore.
+ * It includes the following functionalities:
+ * 
+ * 1. Add a document:
+ *    - Adds a new document to a specified collection.
+ * 
+ * 2. Get a document:
+ *    - Retrieves a document from a specified collection using its document ID.
+ * 
+ * 3. Add a subcollection:
+ *    - Adds a new document to a subcollection of a specified document.
+ * 
+ * 4. Get a subcollection:
+ *    - Retrieves a document from a subcollection of a specified document.
+ * 
+ * The module uses Firebase Admin SDK to interact with Firestore.
+ */
 const db = require("../config/firebaseAdmin");
 
 const addDocument = async (collection, docId, data) => {
@@ -20,6 +38,7 @@ const getDocument = async (collection, docId) => {
     return { success: false, error: error.message };
   }
 };
+
 const addSubcollection = async (parentCollection, docId, subcollectionName, subDocId, data) => {
   try {
     await db.collection(parentCollection).doc(docId).collection(subcollectionName).doc(subDocId).set(data);
@@ -29,7 +48,6 @@ const addSubcollection = async (parentCollection, docId, subcollectionName, subD
     return { success: false, error: error.message };
   }
 };
-
 
 const getSubcollection = async (collection, docId, subcollection) => {
   try {
@@ -42,67 +60,10 @@ const getSubcollection = async (collection, docId, subcollection) => {
   }
 };
 
-const addProject = async (projectCode, data) => {
-  try {
-    await db.collection("projects").doc(projectCode).set(data);
-    return { success: true };
-  } catch (error) {
-    console.error("Error adding project:", error.message);
-    return { success: false, error: error.message };
-  }
-};
-
-const getProject = async (projectCode) => {
-  try {
-    const doc = await db.collection("projects").doc(projectCode).get();
-    if (!doc.exists) return { success: false, message: "Project not found" };
-    return { success: true, data: doc.data() };
-  } catch (error) {
-    console.error("Error fetching project:", error.message);
-    return { success: false, error: error.message };
-  }
-};
-
-const getAllProjects = async () => {
-  try {
-    const snapshot = await db.collection("projects").get();
-    const projects = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-    return { success: true, data: projects };
-  } catch (error) {
-    console.error("Error fetching projects:", error.message);
-    return { success: false, error: error.message };
-  }
-};
-
-const updateProject = async (projectCode, data) => {
-  try {
-    await db.collection("projects").doc(projectCode).update(data);
-    return { success: true };
-  } catch (error) {
-    console.error("Error updating project:", error.message);
-    return { success: false, error: error.message };
-  }
-};
-
-const deleteProject = async (projectCode) => {
-  try {
-    await db.collection("projects").doc(projectCode).delete();
-    return { success: true };
-  } catch (error) {
-    console.error("Error deleting project:", error.message);
-    return { success: false, error: error.message };
-  }
-};
 
 module.exports = {
   addDocument,
   getDocument,
   addSubcollection,
   getSubcollection,
-  addProject,
-  getProject,
-  getAllProjects,
-  updateProject,
-  deleteProject,
 };
-

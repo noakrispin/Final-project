@@ -1,5 +1,22 @@
+/**
+ * This module provides controller functions for managing final grades in a Firestore database.
+ * It includes the following functionalities:
+ * 
+ * 1. Add or update a grade:
+ *    - Adds a new grade or updates an existing grade based on the provided projectCode and evaluationsByForm.
+ * 
+ * 2. Get a specific grade by ID:
+ *    - Retrieves a grade's details using its unique document ID.
+ * 
+ * 3. Get all grades:
+ *    - Fetches all grade records from the Firestore database.
+ * 
+ * 4. Delete a grade:
+ *    - Deletes a grade's record based on its unique document ID.
+ * 
+ * The module uses Firebase Admin SDK to interact with Firestore.
+ */
 const admin = require("firebase-admin");
-
 
 // Add or update a grade
 exports.addOrUpdateGrade = async (req, res) => {
@@ -153,11 +170,6 @@ exports.addOrUpdateGrade = async (req, res) => {
   }
 };
 
-
-
-
-
-
 // Get a specific grade by ID
 exports.getGrade = async (req, res) => {
   const { id } = req.params;
@@ -206,7 +218,6 @@ exports.getAllGrades = async (req, res) => {
     });
   }
 };
-
 
 // Delete a grade
 exports.deleteGrade = async (req, res) => {

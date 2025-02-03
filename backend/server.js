@@ -1,3 +1,13 @@
+/**
+ * This module sets up and configures the Express server for the application.
+ * 
+ * Key functionalities:
+ * - Middleware setup (security, CORS, compression, body parsing, logging).
+ * - API routes for authentication, user, project, form, grade, and evaluator management.
+ * - Health check and debug endpoints.
+ * - Error handling.
+ */
+
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
