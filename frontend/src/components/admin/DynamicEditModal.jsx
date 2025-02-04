@@ -1,3 +1,13 @@
+/**
+ * This component provides a dynamic modal for editing various fields of a row.
+ * 
+ * Props:
+ * - isOpen: Boolean indicating if the modal is open.
+ * - onClose: Function to close the modal.
+ * - onSave: Function to save the edited data.
+ * - rowData: The current data of the row being edited.
+ * - dbFields: Array of field configurations for the form.
+ */
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { X } from "lucide-react";
@@ -9,10 +19,13 @@ const DynamicEditModal = ({ isOpen, onClose, onSave, rowData, dbFields }) => {
 
   useEffect(() => {
     if (rowData) {
-      setFormData(rowData);
+      setFormData(rowData); // Initialize form data with row data
     }
   }, [rowData]);
 
+  /**
+   * Handles input changes and updates form data.
+   */
   const handleChange = (key, value) => {
     setFormData({
       ...formData,
@@ -24,6 +37,9 @@ const DynamicEditModal = ({ isOpen, onClose, onSave, rowData, dbFields }) => {
     });
   };
 
+  /**
+   * Validates the form data based on field settings.
+   */
   const validate = () => {
     const newErrors = {};
 
@@ -41,6 +57,9 @@ const DynamicEditModal = ({ isOpen, onClose, onSave, rowData, dbFields }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  /**
+   * Handles form submission to save the edited data.
+   */
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!validate()) return;

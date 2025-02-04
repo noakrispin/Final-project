@@ -1,3 +1,6 @@
+/**
+ * This component provides the layout for the admin section, including the navbar and main content area.
+ */
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import AdminNavbar from './AdminNavbar';
@@ -14,4 +17,3 @@ const AdminLayout = () => {
 };
 
 export default AdminLayout;
-

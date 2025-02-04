@@ -1,3 +1,10 @@
+/**
+ * This component displays the total number of projects based on the active tab.
+ * 
+ * Props:
+ * - projects: Array of project objects.
+ * - activeTab: The currently active tab.
+ */
 import React from 'react';
 import PropTypes from 'prop-types';
 
@@ -35,4 +42,3 @@ ProjectStats.propTypes = {
 };
 
 export default ProjectStats;
-

@@ -1,3 +1,11 @@
+/**
+ * This component provides the navigation bar for the admin section.
+ * 
+ * Features:
+ * - Navigation links to different admin pages.
+ * - Mobile menu support.
+ * - Buttons for switching to supervisor mode and logging out.
+ */
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -58,24 +66,24 @@ const AdminNavbar = () => {
           </ul>
         </MobileMenu>
 
-{/* Buttons in Navbar */}
-<div className="flex items-center gap-2 sm:gap-4 ml-auto">
-  {/* Switch to Supervisor Mode Button */}
-  <button
-    onClick={() => navigate("/profile")}
-    className="bg-yellow-100 hover:bg-yellow-200 text-yellow-700 font-medium py-1 px-2 sm:px-4 rounded-md shadow-sm hover:shadow-md transition duration-200 text-sm sm:text-base"
-  >
-    Supervisor Mode
-  </button>
+        {/* Buttons in Navbar */}
+        <div className="flex items-center gap-2 sm:gap-4 ml-auto">
+          {/* Switch to Supervisor Mode Button */}
+          <button
+            onClick={() => navigate("/profile")}
+            className="bg-yellow-100 hover:bg-yellow-200 text-yellow-700 font-medium py-1 px-2 sm:px-4 rounded-md shadow-sm hover:shadow-md transition duration-200 text-sm sm:text-base"
+          >
+            Supervisor Mode
+          </button>
 
-  {/* Logout Button */}
-  <button
-    onClick={logout}
-    className="bg-red-500 hover:bg-red-700 text-white font-medium py-1 px-2 sm:px-4 rounded-md shadow-sm hover:shadow-md transition duration-200 text-sm sm:text-base"
-  >
-    Logout
-  </button>
-</div>
+          {/* Logout Button */}
+          <button
+            onClick={logout}
+            className="bg-red-500 hover:bg-red-700 text-white font-medium py-1 px-2 sm:px-4 rounded-md shadow-sm hover:shadow-md transition duration-200 text-sm sm:text-base"
+          >
+            Logout
+          </button>
+        </div>
       </div>
     </nav>
   );

@@ -1,3 +1,10 @@
+/**
+ * This component protects routes by ensuring the user is authenticated.
+ * 
+ * Props:
+ * - children: The components to render if the user is authenticated.
+ * - adminOnly: Boolean indicating if the route is restricted to admin users.
+ */
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";

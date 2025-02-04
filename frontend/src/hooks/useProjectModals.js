@@ -1,8 +1,11 @@
+/**
+ * This module provides custom hooks for managing project-related modals.
+ * It includes functionalities for editing fields, handling student clicks, and adding notes.
+ */
 import { useState } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { Timestamp } from "firebase/firestore";
-
 
 export const useProjectModals = (projects, setProjects) => {
   const [editModal, setEditModal] = useState({
@@ -25,14 +28,14 @@ export const useProjectModals = (projects, setProjects) => {
     project: null,
   });
 
+  /**
+   * Opens the edit modal for a specific field.
+   */
   const handleEditField = (project, field, fieldName, fieldType = 'text', options = []) => {
     let fieldValue = project[field];
-  
-    
     if (typeof fieldValue === "object" && fieldValue !== null) {
-      fieldValue = fieldValue.text || ""; 
+      fieldValue = fieldValue.text || "";
     }
-  
     setEditModal({
       isOpen: true,
       field,
@@ -42,32 +45,26 @@ export const useProjectModals = (projects, setProjects) => {
       fieldType,
       options,
     });
-  
-    console.log(`Editing ${field}:`, fieldValue); // Debugging Log
   };
-  
 
- const handleSaveField = async (newValue) => {
+  /**
+   * Saves the edited field value to Firestore.
+   */
+  const handleSaveField = async (newValue) => {
     const { field, projectId, fieldType } = editModal;
     try {
       const projectRef = doc(db, "projects", projectId);
       let updatedValue = newValue;
-
-      //  Convert to Firestore Timestamp if fieldType is 'date'
       if (fieldType === "date") {
         updatedValue = Timestamp.fromDate(new Date(newValue));
       }
-
       await updateDoc(projectRef, { [field]: updatedValue });
-
       setProjects((currentProjects) =>
         currentProjects.map((project) =>
           project.id === projectId ? { ...project, [field]: updatedValue } : project
         )
       );
-
-      console.log(` Successfully updated ${field} for project ${projectId}`);
-
+      console.log(`Successfully updated ${field} for project ${projectId}`);
     } catch (error) {
       console.error(`Error updating project field (${field}):`, error);
     } finally {
@@ -75,15 +72,20 @@ export const useProjectModals = (projects, setProjects) => {
     }
   };
 
-
+  /**
+   * Opens the student modal for a specific student.
+   */
   const handleStudentClick = (student) => {
     console.log("Student clicked:", student);
     setStudentModal({
       isOpen: true,
-      student, 
+      student,
     });
   };
 
+  /**
+   * Closes the student modal.
+   */
   const closeStudentModal = () => {
     setStudentModal({
       isOpen: false,
@@ -91,6 +93,9 @@ export const useProjectModals = (projects, setProjects) => {
     });
   };
 
+  /**
+   * Opens the notes modal for a specific project.
+   */
   const handleAddNote = (project) => {
     setNotesModal({
       isOpen: true,
@@ -98,6 +103,9 @@ export const useProjectModals = (projects, setProjects) => {
     });
   };
 
+  /**
+   * Closes the notes modal.
+   */
   const closeNotesModal = () => {
     setNotesModal({
       isOpen: false,

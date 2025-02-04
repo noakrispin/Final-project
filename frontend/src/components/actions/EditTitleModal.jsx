@@ -1,4 +1,16 @@
-import React, { useState, useEffect  } from 'react';
+/**
+ * This component provides a modal for editing a specific field.
+ * 
+ * Props:
+ * - isOpen: Boolean indicating if the modal is open.
+ * - onClose: Function to close the modal.
+ * - onSave: Function to save the edited field value.
+ * - currentValue: The current value of the field being edited.
+ * - fieldName: The name of the field being edited.
+ * - fieldType: The type of the field (default is 'text').
+ * - options: Array of options for select fields.
+ */
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 const EditFieldModal = ({
@@ -16,9 +28,11 @@ const EditFieldModal = ({
     setValue(currentValue || ''); // Reset value when modal opens
   }, [currentValue]);
 
-
   if (!isOpen) return null;
 
+  /**
+   * Handles form submission to save the edited field value.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
