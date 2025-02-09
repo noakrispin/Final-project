@@ -1,6 +1,14 @@
 import React from 'react';
 import { Search } from 'lucide-react';
 
+/**
+ * This component renders a search bar with an icon.
+ * 
+ * Props:
+ * - value: The current value of the search input.
+ * - onChange: Function to handle changes to the search input.
+ * - placeholder: Placeholder text for the search input.
+ */
 const SearchBar = ({ value, onChange, placeholder }) => (
   <div className="relative">
     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" />

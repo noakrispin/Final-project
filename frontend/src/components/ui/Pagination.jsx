@@ -1,6 +1,15 @@
 import React from 'react';
 import { Button } from './Button';
 
+/**
+ * This component renders a pagination control with "Previous" and "Next" buttons.
+ * It allows users to navigate between pages.
+ * 
+ * Props:
+ * - currentPage: The current page number.
+ * - totalPages: The total number of pages.
+ * - onPageChange: Function to call when the page changes.
+ */
 export const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   return (
     <div className="flex justify-center mt-4 space-x-2">
@@ -25,3 +34,8 @@ export const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   );
 };
 
+Pagination.propTypes = {
+  currentPage: PropTypes.number.isRequired,
+  totalPages: PropTypes.number.isRequired,
+  onPageChange: PropTypes.func.isRequired,
+};

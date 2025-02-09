@@ -2,6 +2,13 @@ import React from 'react';
 import { cn } from '../../lib/utils';
 import { blurElementsPropTypes } from '../../utils/prop-types';
 
+/**
+ * This component renders animated blur elements for decorative purposes.
+ * It uses CSS animations to create a pulsing blur effect.
+ * 
+ * Props:
+ * - className: Additional class names for the container div.
+ */
 export const BlurElements = React.memo(({ className }) => (
   <div 
     className={cn(
@@ -23,4 +30,3 @@ export const BlurElements = React.memo(({ className }) => (
 
 BlurElements.propTypes = blurElementsPropTypes;
 BlurElements.displayName = 'BlurElements';
-

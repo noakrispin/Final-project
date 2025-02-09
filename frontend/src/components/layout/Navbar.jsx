@@ -8,6 +8,10 @@ import UserMenu from "./UserMenu";
 import MobileMenu from "../shared/MobileMenu";
 import SearchBar from "../shared/SearchBar";
 
+/**
+ * This component renders the navigation bar of the application.
+ * It includes links to different sections, a search bar, and user authentication controls.
+ */
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -16,7 +20,6 @@ const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
-
 
   console.log("Navbar received user:", user); // Debugging log
 
@@ -28,7 +31,7 @@ const Navbar = () => {
     setShowResults(false);
   }, [location.pathname]); // Close menu on route change
 
-
+  // Fetch search results whenever the search query changes
   useEffect(() => {
     if (searchQuery.trim() === "") {
       setSearchResults([]);
@@ -61,10 +64,18 @@ const Navbar = () => {
     fetchResults();
   }, [searchQuery]); // Trigger search whenever searchQuery changes
 
+  /**
+   * Handles changes to the search input.
+   * @param {string} query - The search query.
+   */
   const handleSearchChange = (query) => {
     setSearchQuery(query);
   };
 
+  /**
+   * Handles clicking on a search result.
+   * @param {string} projectCode - The project code of the selected result.
+   */
   const handleResultClick = (projectCode) => {
     console.log("Navigating to project code:", projectCode);
     navigate(`/project/${projectCode}`); // Navigate to the project details page
@@ -153,6 +164,14 @@ const Navbar = () => {
   );
 };
 
+/**
+ * This component renders a navigation link with active state styling.
+ * 
+ * Props:
+ * - to: The path to navigate to.
+ * - children: The content of the link.
+ * - activePaths: Array of paths that should be considered active.
+ */
 const NavLink = ({ to, children, activePaths = [] }) => {
   const location = useLocation();
   const isActive = activePaths.includes(location.pathname) || location.pathname === to;
@@ -170,6 +189,5 @@ const NavLink = ({ to, children, activePaths = [] }) => {
     </Link>
   );
 };
-
 
 export default Navbar;

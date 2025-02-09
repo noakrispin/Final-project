@@ -2,6 +2,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { cn } from '../../lib/utils';
 
+/**
+ * This component renders a customizable input field with various styles and states.
+ * It supports different types, error state, and additional class names.
+ * 
+ * Props:
+ * - className: Additional class names for the input field.
+ * - type: The type of the input field (default: "text").
+ * - error: Error message or boolean indicating if the input is in an error state.
+ * - placeholder: Placeholder text for the input field.
+ * - disabled: Boolean indicating if the input is disabled.
+ * - required: Boolean indicating if the input is required.
+ * - 'aria-label': Accessible label for the input field.
+ */
 const Input = React.forwardRef(({ 
   className, 
   type = "text",
@@ -39,4 +52,3 @@ Input.propTypes = {
 Input.displayName = "Input";
 
 export { Input };
-

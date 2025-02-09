@@ -7,6 +7,19 @@ import { formsApi } from "../../services/formAPI";
 import { evaluatorsApi } from "../../services/evaluatorsAPI";
 import ConfirmationModal from "../shared/ConfirmationModal";
 
+/**
+ * This component renders a unified form for evaluating projects and students.
+ * It handles form submission, progress tracking, and validation.
+ * 
+ * Props:
+ * - formTitle: The title of the form.
+ * - formDescription: The description of the form.
+ * - students: Array of student objects associated with the project.
+ * - projectCode: The code of the project being evaluated.
+ * - projectName: The name of the project being evaluated.
+ * - formID: The ID of the form being evaluated.
+ * - questions: Array of question objects from DynamicFormPage.
+ */
 export default function UnifiedFormComponent({
   formTitle,
   formDescription,
@@ -14,8 +27,8 @@ export default function UnifiedFormComponent({
   projectCode,
   projectName,
   formID,
-  questions, //questions from DynamicFormPage
-  //readOnly,
+  questions, // questions from DynamicFormPage
+  // readOnly,
 }) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -30,6 +43,9 @@ export default function UnifiedFormComponent({
   const [errorMessage, setErrorMessage] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  /**
+   * Initializes the form data and separates questions into general and student-specific.
+   */
   useEffect(() => {
     if (!user) {
       navigate("/login");
@@ -64,18 +80,23 @@ export default function UnifiedFormComponent({
     }
   }, [user, questions]);
 
-
+  /**
+   * Handles the success modal timeout and navigation.
+   */
   useEffect(() => {
     if (showSuccessModal) {
       const timer = setTimeout(() => {
         setShowSuccessModal(false);
         navigate(-1); // Redirect after timeout
       }, 2000); // 2000ms = 2 seconds
-  
+
       return () => clearTimeout(timer); // Cleanup if component unmounts
     }
   }, [showSuccessModal, navigate]);
 
+  /**
+   * Fetches the last response and initializes form data.
+   */
   useEffect(() => {
     if (user && (generalQuestions.length > 0 || studentQuestions.length > 0)) {
       // Fetch the last response once questions are ready
@@ -86,6 +107,9 @@ export default function UnifiedFormComponent({
     }
   }, [user, generalQuestions, studentQuestions]);
 
+  /**
+   * Fetches the last response from the API and populates the form data.
+   */
   const fetchLastResponse = async () => {
     try {
       // Fetch the last response from the API
@@ -129,6 +153,9 @@ export default function UnifiedFormComponent({
     }
   };
 
+  /**
+   * Initializes the form data with empty values.
+   */
   const initializeFormData = () => {
     const initialData = {};
 
@@ -150,6 +177,10 @@ export default function UnifiedFormComponent({
     updateProgress(initialData); // Update progress bar
   };
 
+  /**
+   * Handles form submission and validation.
+   * @param {Event} e - The form submission event.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -190,7 +221,7 @@ export default function UnifiedFormComponent({
       await formsApi.submitForm(formID, responses);
       console.log("Responses submitted successfully");
 
-      // Step 4: Update evaluator status
+      // Step 2: Update evaluator status
       const evaluatorData = {
         evaluatorID: user.email.trim(),
         formID,
@@ -210,6 +241,10 @@ export default function UnifiedFormComponent({
     }
   };
 
+  /**
+   * Updates the progress of the form based on filled fields.
+   * @param {Object} updatedFormData - The updated form data.
+   */
   const updateProgress = (updatedFormData = formData) => {
     const staticFields = ["projectCode", "title", "evaluatorName"]; // Non-editable fields
 
@@ -257,18 +292,31 @@ export default function UnifiedFormComponent({
     );
   };
 
+  /**
+   * Checks if the form is valid based on the progress.
+   * @returns {boolean} - True if the form is valid, false otherwise.
+   */
   const isFormValid = () => {
     return progress === 100;
   };
 
+  /**
+   * Returns the color for the progress circle based on the progress value.
+   * @param {number} progress - The progress value.
+   * @returns {string} - The color class for the progress circle.
+   */
   const getColor = (progress) => {
     if (progress <= 30) return "stroke-red-500";
     if (progress <= 70) return "stroke-orange-400";
     return "stroke-green-500";
   };
 
+  /**
+   * Handles changes to the form fields.
+   * @param {Event} e - The input change event.
+   */
   const handleChange = (e) => {
-    //if (readOnly) return; // Prevent changes if in read-only mode
+    // if (readOnly) return; // Prevent changes if in read-only mode
     const { name, value } = e.target;
 
     setFormData((prevData) => {
@@ -385,7 +433,7 @@ export default function UnifiedFormComponent({
                   {...field}
                   value={formData[field.name] || ""}
                   onChange={handleChange}
-                  //disabled={readOnly}
+                  // disabled={readOnly}
                 />
               </>
             </div>
@@ -410,7 +458,7 @@ export default function UnifiedFormComponent({
                     name={fieldName}
                     value={formData[fieldName] || ""}
                     onChange={(e) => handleChange(e)}
-                    //disabled={readOnly}
+                    // disabled={readOnly}
                   />
                 );
               })}
@@ -418,14 +466,13 @@ export default function UnifiedFormComponent({
           ))}
 
         {/* Submit Button */}
-        
-          <div className="flex justify-center mt-6">
-            <Button type="submit" className="w-64" disabled={!isFormValid()}>
-              Submit Evaluation
-            </Button>
-          </div>
-        
+        <div className="flex justify-center mt-6">
+          <Button type="submit" className="w-64" disabled={!isFormValid()}>
+            Submit Evaluation
+          </Button>
+        </div>
       </form>
+
       {/* Error Modal (Only shows when an error occurs) */}
       <ConfirmationModal
         isOpen={showErrorModal}
@@ -434,6 +481,7 @@ export default function UnifiedFormComponent({
         onCancel={() => setShowErrorModal(false)}
         onConfirm={() => setShowErrorModal(false)}
       />
+
       {/* Success Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -454,7 +502,6 @@ export default function UnifiedFormComponent({
           </div>
         </div>
       )}
-      
     </div>
   );
 }

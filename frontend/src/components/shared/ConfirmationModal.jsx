@@ -1,5 +1,19 @@
 import React, { useEffect } from "react";
 
+/**
+ * This component renders a confirmation modal with customizable title, message, and actions.
+ * It supports different states such as processing, warning, and success.
+ * 
+ * Props:
+ * - isOpen: Boolean indicating if the modal is open.
+ * - title: The title of the modal.
+ * - message: The message to display in the modal.
+ * - onCancel: Function to call when the cancel button is clicked.
+ * - onConfirm: Function to call when the confirm button is clicked.
+ * - isProcessing: Boolean indicating if an action is being processed.
+ * - isWarning: Boolean indicating if the modal is a warning.
+ * - isSuccess: Boolean indicating if the modal is showing a success message.
+ */
 export default function ConfirmationModal({ 
   isOpen, 
   title, 
@@ -13,10 +27,10 @@ export default function ConfirmationModal({
   useEffect(() => {
     if (isSuccess) {
       const timer = setTimeout(() => {
-        onCancel(); 
+        onCancel(); // Automatically close the modal after 2 seconds
       }, 2000); // Dismiss after 2s
   
-      return () => clearTimeout(timer); 
+      return () => clearTimeout(timer); // Cleanup timer on unmount
     }
   }, [isSuccess, onCancel]);
 

@@ -5,10 +5,23 @@ import { ColumnManagementDialog } from "./ColumnManagementDialog";
 import { sortData } from "../../utils/sortData";
 import SearchBar from "../shared/SearchBar";
 import { getGrade } from "../../utils/getGrade";
-import { Info } from "lucide-react";
 
-const FILTERS = ["All", "Part A", "Part B"];
-
+/**
+ * This component renders a table with sortable columns, search functionality, and column management.
+ * It supports custom column rendering and grade display.
+ * 
+ * Props:
+ * - data: Array of data objects to display in the table.
+ * - apiResponse: API response data for grade calculations.
+ * - columns: Array of column configurations for the table.
+ * - className: Additional class names for the table container.
+ * - onRowClick: Function to handle row click events.
+ * - userId: The ID of the current user.
+ * - showTabs: Boolean indicating if filter tabs should be displayed.
+ * - useCustomColumns: Boolean indicating if custom column rendering should be used.
+ * - showDescription: Boolean indicating if a description should be displayed.
+ * - description: The description text to display.
+ */
 export const Table = ({
   data,
   apiResponse,
@@ -30,6 +43,10 @@ export const Table = ({
     columns.map((col) => col.key)
   );
 
+  /**
+   * Handles sorting the table by the specified column.
+   * @param {string} columnKey - The key of the column to sort by.
+   */
   const handleSort = (columnKey) => {
     if (sortColumn === columnKey) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -39,6 +56,10 @@ export const Table = ({
     }
   };
 
+  /**
+   * Filters the data based on the search term and selected filter.
+   * @returns {Array} - The filtered data.
+   */
   const filteredData = useMemo(() => {
     if (!Array.isArray(data)) return [];
   
@@ -56,8 +77,11 @@ export const Table = ({
       return matchesSearch && item.part === selectedFilter.split(" ")[1];
     });
   }, [data, searchTerm, selectedFilter]);
-  
 
+  /**
+   * Sorts the filtered data based on the selected column and direction.
+   * @returns {Array} - The sorted data.
+   */
   const sortedData = useMemo(() => {
     return sortData(filteredData, columns, sortColumn, sortDirection);
   }, [filteredData, sortColumn, sortDirection, columns]);
@@ -66,10 +90,19 @@ export const Table = ({
     visibleColumns.includes(col.key)
   );
 
+  /**
+   * Restores the default column visibility.
+   */
   const handleRestoreDefaults = () => {
     setVisibleColumns(columns.map((col) => col.key));
   };
 
+  /**
+   * Renders the grade cell for a project and grade type.
+   * @param {Object} project - The project object.
+   * @param {string} gradeType - The type of grade to render.
+   * @returns {JSX.Element} - The rendered grade cell.
+   */
   const renderGradeCell = (project, gradeType) => {
     console.log(
       `Rendering grades for project: ${project.projectCode}`,

@@ -3,6 +3,14 @@ import { AlertTriangle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { errorMessagePropTypes } from '../../utils/prop-types';
 
+/**
+ * This component renders an error message with an alert icon.
+ * It uses CSS classes for styling and supports additional custom class names.
+ * 
+ * Props:
+ * - message: The error message to display.
+ * - className: Additional class names for the container div.
+ */
 const ErrorMessage = React.forwardRef(({ message, className }, ref) => {
   if (!message) return null;
 
@@ -25,4 +33,3 @@ ErrorMessage.propTypes = errorMessagePropTypes;
 ErrorMessage.displayName = 'ErrorMessage';
 
 export default ErrorMessage;
-

@@ -2,6 +2,13 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { cn } from '../../lib/utils';
 
+/**
+ * Card component that serves as a container with a border, background, and shadow.
+ * 
+ * Props:
+ * - className: Additional class names for the card.
+ * - children: The content of the card.
+ */
 const Card = React.forwardRef(({ className, ...props }, ref) => (
   <div
     ref={ref}
@@ -13,6 +20,13 @@ const Card = React.forwardRef(({ className, ...props }, ref) => (
   />
 ));
 
+/**
+ * CardHeader component that serves as the header section of the card.
+ * 
+ * Props:
+ * - className: Additional class names for the card header.
+ * - children: The content of the card header.
+ */
 const CardHeader = React.forwardRef(({ className, ...props }, ref) => (
   <div
     ref={ref}
@@ -21,6 +35,13 @@ const CardHeader = React.forwardRef(({ className, ...props }, ref) => (
   />
 ));
 
+/**
+ * CardTitle component that serves as the title of the card.
+ * 
+ * Props:
+ * - className: Additional class names for the card title.
+ * - children: The content of the card title.
+ */
 const CardTitle = React.forwardRef(({ className, ...props }, ref) => (
   <h3
     ref={ref}
@@ -32,6 +53,13 @@ const CardTitle = React.forwardRef(({ className, ...props }, ref) => (
   />
 ));
 
+/**
+ * CardDescription component that serves as the description of the card.
+ * 
+ * Props:
+ * - className: Additional class names for the card description.
+ * - children: The content of the card description.
+ */
 const CardDescription = React.forwardRef(({ className, ...props }, ref) => (
   <p
     ref={ref}
@@ -40,10 +68,24 @@ const CardDescription = React.forwardRef(({ className, ...props }, ref) => (
   />
 ));
 
+/**
+ * CardContent component that serves as the main content area of the card.
+ * 
+ * Props:
+ * - className: Additional class names for the card content.
+ * - children: The content of the card content.
+ */
 const CardContent = React.forwardRef(({ className, ...props }, ref) => (
   <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
 ));
 
+/**
+ * CardFooter component that serves as the footer section of the card.
+ * 
+ * Props:
+ * - className: Additional class names for the card footer.
+ * - children: The content of the card footer.
+ */
 const CardFooter = React.forwardRef(({ className, ...props }, ref) => (
   <div
     ref={ref}
@@ -81,4 +123,3 @@ export {
   CardDescription,
   CardContent
 };
-

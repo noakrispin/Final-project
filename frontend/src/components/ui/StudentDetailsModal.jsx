@@ -1,6 +1,15 @@
 import React from 'react';
 import { X } from 'lucide-react';
 
+/**
+ * This component renders a modal with detailed information about a student.
+ * It includes the student's name, ID, and email.
+ * 
+ * Props:
+ * - isOpen: Boolean indicating if the modal is open.
+ * - onClose: Function to call when the modal is closed.
+ * - student: The student object containing details about the student.
+ */
 const StudentDetailsModal = ({ isOpen, onClose, student }) => {
   if (!isOpen || !student) return null;
   console.log("Student Details Modal:", student);
@@ -22,15 +31,15 @@ const StudentDetailsModal = ({ isOpen, onClose, student }) => {
           <div className="p-4 space-y-4">
             <div>
               <label className="text-sm text-gray-500">Name</label>
-              <p className="text-base font-medium">{student?.fullName|| "N/A"}</p>
+              <p className="text-base font-medium">{student?.fullName || "N/A"}</p>
             </div>
             <div>
               <label className="text-sm text-gray-500">Student ID</label>
-              <p className="text-base font-medium">{student?.ID||student?.id|| "Missing ID"}</p>
+              <p className="text-base font-medium">{student?.ID || student?.id || "Missing ID"}</p>
             </div>
             <div>
               <label className="text-sm text-gray-500">Email</label>
-              <p className="text-base font-medium">{student?.Email||student?.email|| "Missing Email"}</p>
+              <p className="text-base font-medium">{student?.Email || student?.email || "Missing Email"}</p>
             </div>
           </div>
 

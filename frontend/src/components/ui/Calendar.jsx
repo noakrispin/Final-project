@@ -1,27 +1,52 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
+/**
+ * This component renders a calendar with the ability to navigate between months.
+ * It highlights the current day, selected day, and days with tasks.
+ * 
+ * Props:
+ * - tasks: Array of task objects, each containing a deadline date.
+ * - selectedDate: The currently selected date.
+ * - setSelectedDate: Function to update the selected date.
+ */
 export const Calendar = ({ tasks = [], selectedDate, setSelectedDate }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
 
+  /**
+   * Returns the number of days in the given month.
+   * @param {Date} date - The date object representing the month.
+   * @returns {number} - The number of days in the month.
+   */
   const daysInMonth = (date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   };
 
+  /**
+   * Returns the day of the week of the first day of the given month.
+   * @param {Date} date - The date object representing the month.
+   * @returns {number} - The day of the week (0-6) of the first day of the month.
+   */
   const firstDayOfMonth = (date) => {
     return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
   };
 
+  /**
+   * Renders the calendar for the current month.
+   * @returns {JSX.Element[]} - An array of table rows representing the weeks of the month.
+   */
   const renderCalendar = () => {
     const days = daysInMonth(currentDate);
     const firstDay = firstDayOfMonth(currentDate);
     const weeks = [];
     let week = [];
 
+    // Fill in the days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
       week.push(<td key={`empty-${i}`} className="p-2"></td>);
     }
 
+    // Fill in the days of the month
     for (let day = 1; day <= days; day++) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
       const isToday = date.toDateString() === new Date().toDateString();
@@ -45,6 +70,7 @@ export const Calendar = ({ tasks = [], selectedDate, setSelectedDate }) => {
         </td>
       );
 
+      // Start a new week after every 7 days or at the end of the month
       if ((firstDay + day) % 7 === 0 || day === days) {
         weeks.push(<tr key={day}>{week}</tr>);
         week = [];
@@ -54,6 +80,10 @@ export const Calendar = ({ tasks = [], selectedDate, setSelectedDate }) => {
     return weeks;
   };
 
+  /**
+   * Changes the current month by the given increment.
+   * @param {number} increment - The number of months to change (positive or negative).
+   */
   const changeMonth = (increment) => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + increment, 1));
   };

@@ -1,5 +1,14 @@
 import React from 'react';
 
+/**
+ * Tabs component that serves as the container for the tab navigation and content.
+ * 
+ * Props:
+ * - defaultValue: The default active tab value.
+ * - children: The tab navigation and content components.
+ * - onValueChange: Function to call when the active tab changes.
+ * - className: Additional class names for the tabs container.
+ */
 export const Tabs = ({ defaultValue, children, onValueChange, className = '' }) => {
   const [activeTab, setActiveTab] = React.useState(defaultValue);
 
@@ -24,6 +33,13 @@ export const Tabs = ({ defaultValue, children, onValueChange, className = '' }) 
   );
 };
 
+/**
+ * TabsList component that serves as the container for the tab triggers.
+ * 
+ * Props:
+ * - children: The tab trigger components.
+ * - className: Additional class names for the tabs list.
+ */
 export const TabsList = ({ children, className = '' }) => {
   return (
     <div className={`inline-flex h-10 items-center justify-center rounded-md bg-gray-100 p-1 text-gray-500 ${className}`}>
@@ -32,6 +48,16 @@ export const TabsList = ({ children, className = '' }) => {
   );
 };
 
+/**
+ * TabsTrigger component that serves as the trigger for switching tabs.
+ * 
+ * Props:
+ * - value: The value of the tab.
+ * - children: The content of the tab trigger.
+ * - activeTab: The currently active tab value.
+ * - onTabChange: Function to call when the tab is clicked.
+ * - className: Additional class names for the tab trigger.
+ */
 export const TabsTrigger = ({ value, children, activeTab, onTabChange, className = '' }) => {
   const isActive = activeTab === value;
   
@@ -52,6 +78,15 @@ export const TabsTrigger = ({ value, children, activeTab, onTabChange, className
   );
 };
 
+/**
+ * TabsContent component that serves as the content area for a tab.
+ * 
+ * Props:
+ * - value: The value of the tab.
+ * - children: The content of the tab.
+ * - activeTab: The currently active tab value.
+ * - className: Additional class names for the tab content.
+ */
 export const TabsContent = ({ value, children, activeTab, className = '' }) => {
   if (activeTab !== value) return null;
   
@@ -61,4 +96,3 @@ export const TabsContent = ({ value, children, activeTab, className = '' }) => {
     </div>
   );
 };
-

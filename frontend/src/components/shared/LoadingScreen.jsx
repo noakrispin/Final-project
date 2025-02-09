@@ -1,5 +1,12 @@
 import React from 'react';
 
+/**
+ * This component renders a spinner for indicating loading state.
+ * 
+ * Props:
+ * - size: The size of the spinner (default: 'h-16 w-16').
+ * - color: The color of the spinner (default: 'border-blue-500').
+ */
 const Spinner = ({ size = 'h-16 w-16', color = 'border-blue-500' }) => (
   <div
     className={`animate-spin rounded-full ${size} border-t-4 border-b-4 ${color} ease-linear`}
@@ -8,6 +15,14 @@ const Spinner = ({ size = 'h-16 w-16', color = 'border-blue-500' }) => (
   />
 );
 
+/**
+ * This component renders a loading screen with a spinner and a description.
+ * It is displayed when the `isLoading` prop is true.
+ * 
+ * Props:
+ * - isLoading: Boolean indicating if the loading screen should be displayed.
+ * - description: The description to display below the spinner (default: "Loading, please wait...").
+ */
 const LoadingScreen = ({ isLoading, description = "Loading, please wait..." }) => {
   if (isLoading) {
     return (
@@ -23,6 +38,5 @@ const LoadingScreen = ({ isLoading, description = "Loading, please wait..." }) =
   }
   return null;
 };
-
 
 export default LoadingScreen;

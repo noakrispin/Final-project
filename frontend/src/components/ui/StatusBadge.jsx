@@ -1,5 +1,11 @@
 import { Card } from '../ui/Card';
 
+/**
+ * This component renders a card displaying the total number of projects.
+ * 
+ * Props:
+ * - totalProjects: The total number of projects to display.
+ */
 export function ProjectStats({ totalProjects }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

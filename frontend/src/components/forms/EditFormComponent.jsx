@@ -6,12 +6,24 @@ import { Button } from "../ui/Button";
 import { formsApi } from "../../services/formAPI";
 import ConfirmationModal from "../shared/ConfirmationModal";
 
+/**
+ * This component handles the editing of questions within a form.
+ * 
+ * Props:
+ * - questions: Array of question objects.
+ * - setQuestions: Function to update the questions state.
+ * - reference: The reference type of the questions (e.g., "general" or "student").
+ * - formID: The ID of the form being edited.
+ */
 function QuestionEditor({ questions, setQuestions, reference, formID }) {
   const [deleteModal, setDeleteModal] = useState({
     isOpen: false,
     index: null,
   });
 
+  /**
+   * Handles adding a new question to the form.
+   */
   const handleAddQuestion = async () => {
     const newQuestion = {
       id: `new_${Date.now()}`,
@@ -44,10 +56,17 @@ function QuestionEditor({ questions, setQuestions, reference, formID }) {
     }
   };
 
+  /**
+   * Opens the delete confirmation modal for a specific question.
+   * @param {number} index - The index of the question to delete.
+   */
   const confirmDeleteQuestion = (index) => {
     setDeleteModal({ isOpen: true, index });
   };
 
+  /**
+   * Handles deleting a question from the form.
+   */
   const handleDeleteQuestion = async () => {
     const index = deleteModal.index;
     if (index === null) return;
@@ -67,6 +86,12 @@ function QuestionEditor({ questions, setQuestions, reference, formID }) {
     }
   };
 
+  /**
+   * Handles updating a specific field of a question.
+   * @param {number} index - The index of the question to update.
+   * @param {string} key - The key of the field to update.
+   * @param {any} value - The new value of the field.
+   */
   const handleUpdateQuestion = (index, key, value) => {
     let updatedValue = value;
     if (key === "order" || key === "weight") {
@@ -230,6 +255,12 @@ function QuestionEditor({ questions, setQuestions, reference, formID }) {
   );
 }
 
+/**
+ * This component handles the viewing of questions within a form.
+ * 
+ * Props:
+ * - questions: Array of question objects.
+ */
 function QuestionViewer({ questions }) {
   return (
     <div className="space-y-6">
@@ -286,6 +317,15 @@ function QuestionViewer({ questions }) {
   );
 }
 
+/**
+ * This component handles the editing of a form, including its general and student questions.
+ * 
+ * Props:
+ * - formTitle: The title of the form.
+ * - formDescription: The description of the form.
+ * - formID: The ID of the form being edited.
+ * - questions: Array of question objects.
+ */
 export default function EditFormComponent({
   formTitle,
   formDescription,
@@ -310,6 +350,9 @@ export default function EditFormComponent({
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  /**
+   * Confirms exit from edit mode if there are unsaved changes.
+   */
   const confirmExitEditMode = () => {
     if (hasUnsavedChanges) {
       setShowConfirmExit(true); // Ask for confirmation before exiting
@@ -318,6 +361,9 @@ export default function EditFormComponent({
     }
   };
 
+  /**
+   * Initializes the questions state when the component mounts or when the user or questions change.
+   */
   useEffect(() => {
     if (!user) {
       navigate("/login");
@@ -348,6 +394,9 @@ export default function EditFormComponent({
     }
   }, [user, questions]);
 
+  /**
+   * Handles the success modal timeout and navigation.
+   */
   useEffect(() => {
     if (showSuccessModal) {
       const timer = setTimeout(() => {
@@ -359,6 +408,9 @@ export default function EditFormComponent({
     }
   }, [showSuccessModal, navigate]);
 
+  /**
+   * Confirms saving changes and validates the total weight of questions.
+   */
   const confirmSaveChanges = () => {
     const totalWeight = [...generalQuestions, ...studentQuestions].reduce(
       (sum, q) => sum + parseFloat(q.weight || 0),
@@ -379,6 +431,9 @@ export default function EditFormComponent({
     setShowConfirmSave(true);
   };
 
+  /**
+   * Handles saving the form and its questions.
+   */
   const handleSave = async () => {
     setIsProcessing(true);
     console.log(

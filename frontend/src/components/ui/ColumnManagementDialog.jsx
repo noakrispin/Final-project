@@ -5,6 +5,18 @@ import { Button } from "./Button";
 import { ChevronRight, ChevronLeft, ChevronsRight, ChevronsLeft } from "lucide-react";
 import { useState } from "react";
 
+/**
+ * This component renders a dialog for managing the visibility of table columns.
+ * It allows users to move columns between available and displayed lists.
+ * 
+ * Props:
+ * - isOpen: Boolean indicating if the dialog is open.
+ * - onClose: Function to call when the dialog is closed.
+ * - columns: Array of all column objects.
+ * - visibleColumns: Array of keys of the currently visible columns.
+ * - onApply: Function to call when the apply button is clicked.
+ * - onRestore: Function to call when the restore button is clicked.
+ */
 export function ColumnManagementDialog({
   isOpen,
   onClose,
@@ -22,6 +34,10 @@ export function ColumnManagementDialog({
   );
   const [selectedDisplayed, setSelectedDisplayed] = useState([]);
 
+  /**
+   * Moves selected or all available columns to the displayed list.
+   * @param {boolean} all - If true, move all available columns; otherwise, move selected columns.
+   */
   const moveToDisplayed = (all = false) => {
     const toMove = all
       ? availableColumns
@@ -37,6 +53,10 @@ export function ColumnManagementDialog({
     setSelectedAvailable([]);
   };
 
+  /**
+   * Moves selected or all displayed columns to the available list.
+   * @param {boolean} all - If true, move all displayed columns; otherwise, move selected columns.
+   */
   const moveToAvailable = (all = false) => {
     const toMove = all
       ? displayedColumns
@@ -52,11 +72,17 @@ export function ColumnManagementDialog({
     setSelectedDisplayed([]);
   };
 
+  /**
+   * Handles applying the changes and closing the dialog.
+   */
   const handleApply = () => {
     onApply(displayedColumns.map((col) => col.key));
     onClose();
   };
 
+  /**
+   * Handles restoring the default column visibility and closing the dialog.
+   */
   const handleRestore = () => {
     onRestore();
     onClose();
@@ -65,12 +91,12 @@ export function ColumnManagementDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[500px] h-auto mx-auto mt-10 bg-white rounded-lg shadow-lg">
-      <DialogHeader>
-      <DialogTitle>Show/Hide Columns</DialogTitle>
-      <p className="text-sm text-gray-600 mt-1">
-        Select the columns you want to display or hide from the table. Use the arrows to move columns between the lists.
-      </p>
-    </DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Show/Hide Columns</DialogTitle>
+          <p className="text-sm text-gray-600 mt-1">
+            Select the columns you want to display or hide from the table. Use the arrows to move columns between the lists.
+          </p>
+        </DialogHeader>
         <div className="grid grid-cols-[1fr_auto_1fr] gap-6 p-4">
           {/* Displayed Columns */}
           <div className="border rounded-lg bg-gray-50">

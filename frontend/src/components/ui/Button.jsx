@@ -3,6 +3,19 @@ import PropTypes from 'prop-types';
 import { cva } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
 
+/**
+ * This component renders a customizable button with various styles and sizes.
+ * It supports different variants, sizes, loading state, and can be rendered as a different HTML element.
+ * 
+ * Props:
+ * - className: Additional class names for the button.
+ * - variant: The variant style of the button (default, outline, primary, destructive, secondary, ghost, link).
+ * - size: The size of the button (default, sm, lg, xl, icon).
+ * - asChild: Boolean indicating if the button should be rendered as a different HTML element.
+ * - loading: Boolean indicating if the button is in a loading state.
+ * - disabled: Boolean indicating if the button is disabled.
+ * - children: The content of the button.
+ */
 const buttonVariants = cva(
   'inline-flex items-center justify-center rounded-full text-xl font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
   {
@@ -75,4 +88,3 @@ Button.propTypes = {
 Button.displayName = 'Button';
 
 export { Button, buttonVariants };
-

@@ -5,14 +5,32 @@ import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
+/**
+ * Dialog component that serves as the root for the dialog.
+ */
 const Dialog = DialogPrimitive.Root
 
+/**
+ * DialogTrigger component that serves as the trigger for opening the dialog.
+ */
 const DialogTrigger = DialogPrimitive.Trigger
 
+/**
+ * DialogPortal component that serves as the portal for rendering the dialog.
+ */
 const DialogPortal = DialogPrimitive.Portal
 
+/**
+ * DialogClose component that serves as the button for closing the dialog.
+ */
 const DialogClose = DialogPrimitive.Close
 
+/**
+ * DialogOverlay component that serves as the overlay for the dialog.
+ * 
+ * Props:
+ * - className: Additional class names for the overlay.
+ */
 const DialogOverlay = React.forwardRef(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
@@ -25,6 +43,13 @@ const DialogOverlay = React.forwardRef(({ className, ...props }, ref) => (
 ))
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
+/**
+ * DialogContent component that serves as the content area of the dialog.
+ * 
+ * Props:
+ * - className: Additional class names for the content.
+ * - children: The content of the dialog.
+ */
 const DialogContent = React.forwardRef(({ className, children, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
@@ -46,6 +71,13 @@ const DialogContent = React.forwardRef(({ className, children, ...props }, ref) 
 ))
 DialogContent.displayName = DialogPrimitive.Content.displayName
 
+/**
+ * DialogHeader component that serves as the header section of the dialog.
+ * 
+ * Props:
+ * - className: Additional class names for the header.
+ * - children: The content of the header.
+ */
 const DialogHeader = ({ className, ...props }) => (
   <div
     className={cn(
@@ -57,6 +89,13 @@ const DialogHeader = ({ className, ...props }) => (
 )
 DialogHeader.displayName = 'DialogHeader'
 
+/**
+ * DialogFooter component that serves as the footer section of the dialog.
+ * 
+ * Props:
+ * - className: Additional class names for the footer.
+ * - children: The content of the footer.
+ */
 const DialogFooter = ({ className, ...props }) => (
   <div
     className={cn(
@@ -68,6 +107,13 @@ const DialogFooter = ({ className, ...props }) => (
 )
 DialogFooter.displayName = 'DialogFooter'
 
+/**
+ * DialogTitle component that serves as the title of the dialog.
+ * 
+ * Props:
+ * - className: Additional class names for the title.
+ * - children: The content of the title.
+ */
 const DialogTitle = React.forwardRef(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
@@ -80,6 +126,13 @@ const DialogTitle = React.forwardRef(({ className, ...props }, ref) => (
 ))
 DialogTitle.displayName = DialogPrimitive.Title.displayName
 
+/**
+ * DialogDescription component that serves as the description of the dialog.
+ * 
+ * Props:
+ * - className: Additional class names for the description.
+ * - children: The content of the description.
+ */
 const DialogDescription = React.forwardRef(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
@@ -101,4 +154,3 @@ export {
   DialogTitle,
   DialogDescription,
 }
-

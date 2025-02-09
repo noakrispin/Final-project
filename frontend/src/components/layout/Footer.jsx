@@ -1,6 +1,10 @@
 import React from "react";
 import { FaLinkedin } from "react-icons/fa";
 
+/**
+ * This component renders the footer of the application.
+ * It includes project description, supervisor information, team members' LinkedIn profiles, and copyright information.
+ */
 const Footer = () => {
   return (
     <footer className="bg-white text-gray-600 border-t border-gray-300 py-6 mt-10">

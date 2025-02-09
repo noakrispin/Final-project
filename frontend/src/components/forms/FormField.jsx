@@ -1,5 +1,22 @@
 import React, { useState } from "react";
 
+/**
+ * This component renders a form field with various input types and validation.
+ * 
+ * Props:
+ * - label: The label for the form field.
+ * - type: The type of the input field (e.g., "text", "number", "textarea", "select", "radio").
+ * - name: The name of the input field.
+ * - value: The current value of the input field.
+ * - onChange: Function to handle changes to the input field.
+ * - min: The minimum value for number inputs.
+ * - max: The maximum value for number inputs.
+ * - description: A description or helper text for the form field.
+ * - required: Boolean indicating if the field is required.
+ * - disabled: Boolean indicating if the field is disabled.
+ * - placeholder: Placeholder text for the input field.
+ * - options: Array of options for select or radio input types.
+ */
 const FormField = ({
   label,
   type,
@@ -16,6 +33,10 @@ const FormField = ({
 }) => {
   const [error, setError] = useState("");
 
+  /**
+   * Handles input changes and validates the input value.
+   * @param {Event} e - The input change event.
+   */
   const handleInputChange = (e) => {
     const { name, value, type } = e.target;
     let updatedValue = value;
@@ -44,6 +65,9 @@ const FormField = ({
     onChange({ target: { name, value: updatedValue } });
   };
 
+  /**
+   * Renders the appropriate input field based on the type prop.
+   */
   const renderInputField = () => {
     switch (type) {
       case "textarea":

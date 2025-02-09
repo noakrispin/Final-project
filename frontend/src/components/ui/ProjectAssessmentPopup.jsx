@@ -1,90 +1,121 @@
-import React, { useState, useEffect, useRef } from "react"
-import { X, ChevronDown, ChevronUp } from "lucide-react"
-import { formsApi } from "../../services/formAPI"
+import React, { useState, useEffect, useRef } from "react";
+import { X, ChevronDown, ChevronUp } from "lucide-react";
+import { formsApi } from "../../services/formAPI";
 
+/**
+ * This component renders a popup with detailed information about project assessments.
+ * It includes sections for book form responses and presentation form responses.
+ * 
+ * Props:
+ * - project: The project object containing details about the project.
+ * - onClose: Function to call when the popup is closed.
+ */
 const ProjectAssessmentPopup = ({ project, onClose }) => {
-  const [expandedSections, setExpandedSections] = useState({})
-  const [expandedQuestions, setExpandedQuestions] = useState({})
-  const [bookData, setBookData] = useState({ questions: [], responses: [] })
+  const [expandedSections, setExpandedSections] = useState({});
+  const [expandedQuestions, setExpandedQuestions] = useState({});
+  const [bookData, setBookData] = useState({ questions: [], responses: [] });
   const [presentationData, setPresentationData] = useState({
     questions: [],
     responses: [],
-  })
-  const [loading, setLoading] = useState(true)
-  const contentRef = useRef(null)
+  });
+  const [loading, setLoading] = useState(true);
+  const contentRef = useRef(null);
 
   useEffect(() => {
     if (project) {
-      fetchResponses(project)
+      fetchResponses(project);
     }
-  }, [project])
+  }, [project]);
 
+  /**
+   * Returns the form IDs based on the project part.
+   * @param {string} projectPart - The part of the project (e.g., "A" or "B").
+   * @returns {Object} - An object containing the form IDs for book and presentation forms.
+   */
   const getFormIDs = (projectPart) => {
     if (projectPart === "A") {
       return {
         bookForm: "bookReviewerFormA",
         presentationForm: "PresentationFormA",
-      }
+      };
     }
     if (projectPart === "B") {
       return {
         bookForm: "bookReviewerFormB",
         presentationForm: "PresentationFormB",
-      }
+      };
     }
-    return {}
-  }
+    return {};
+  };
 
+  /**
+   * Fetches the responses for the project from the API.
+   * @param {Object} project - The project object.
+   */
   const fetchResponses = async (project) => {
     try {
-      setLoading(true)
-      const { bookForm, presentationForm } = getFormIDs(project.part)
+      setLoading(true);
+      const { bookForm, presentationForm } = getFormIDs(project.part);
 
       if (!bookForm || !presentationForm) {
-        console.error("Form IDs not found for project part:", project.part)
-        return
+        console.error("Form IDs not found for project part:", project.part);
+        return;
       }
 
-      const bookQuestions = await formsApi.getQuestions(bookForm)
-      const bookFormResponses = await formsApi.getResponses(bookForm)
-      const filteredBookResponses = bookFormResponses.filter((response) => response.projectCode === project.projectCode)
+      const bookQuestions = await formsApi.getQuestions(bookForm);
+      const bookFormResponses = await formsApi.getResponses(bookForm);
+      const filteredBookResponses = bookFormResponses.filter((response) => response.projectCode === project.projectCode);
 
-      const presentationQuestions = await formsApi.getQuestions(presentationForm)
-      const presentationFormResponses = await formsApi.getResponses(presentationForm)
+      const presentationQuestions = await formsApi.getQuestions(presentationForm);
+      const presentationFormResponses = await formsApi.getResponses(presentationForm);
       const filteredPresentationResponses = presentationFormResponses.filter(
         (response) => response.projectCode === project.projectCode,
-      )
+      );
 
       setBookData({
         questions: bookQuestions.filter((q) => q.response_type === "textarea"),
         responses: filteredBookResponses,
-      })
+      });
 
       setPresentationData({
         questions: presentationQuestions.filter((q) => q.response_type === "textarea"),
         responses: filteredPresentationResponses,
-      })
+      });
     } catch (error) {
-      console.error("Error fetching responses:", error)
+      console.error("Error fetching responses:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
+  /**
+   * Toggles the expansion state of a section.
+   * @param {string} section - The section to toggle.
+   */
   const toggleSection = (section) => {
     setExpandedSections((prev) => ({
       ...prev,
       [section]: !prev[section],
-    }))
-  }
+    }));
+  };
 
+  /**
+   * Toggles the expansion state of a question.
+   * @param {string} question - The question to toggle.
+   */
   const toggleQuestion = (question) => {
     setExpandedQuestions((prev) => ({
       ...prev,
       [question]: !prev[question],
-    }))
-  }
+    }));
+  };
 
+  /**
+   * Renders the general responses for a question.
+   * @param {Array} responses - The array of responses.
+   * @param {string} questionID - The ID of the question.
+   * @returns {JSX.Element[]} - An array of list items representing the responses.
+   */
   const renderGeneralResponses = (responses, questionID) => {
     return responses
       .map((response) => response.general?.[questionID])
@@ -93,15 +124,21 @@ const ProjectAssessmentPopup = ({ project, onClose }) => {
         <li key={idx} className="text-gray-700 mb-2">
           {answer}
         </li>
-      ))
-  }
+      ));
+  };
 
+  /**
+   * Renders the student responses for a question.
+   * @param {Array} responses - The array of responses.
+   * @param {string} questionID - The ID of the question.
+   * @returns {JSX.Element[]} - An array of div elements representing the student responses.
+   */
   const renderStudentResponses = (responses, questionID) => {
     const studentMap = project.students.reduce((acc, student) => {
       acc[student.id] = student.name;
       return acc;
     }, {});
-  
+
     const aggregatedResponses = responses.reduce((acc, response) => {
       Object.entries(response.students || {}).forEach(([studentID, studentData]) => {
         if (!acc[studentID]) {
@@ -116,7 +153,7 @@ const ProjectAssessmentPopup = ({ project, onClose }) => {
       });
       return acc;
     }, {});
-  
+
     const responseElements = Object.values(aggregatedResponses).map(({ studentName, values }, idx) => (
       <div key={idx} className="mb-4 bg-gray-50 p-3 rounded-md">
         <h6 className="font-medium text-gray-800 mb-2">{studentName}</h6>
@@ -131,7 +168,7 @@ const ProjectAssessmentPopup = ({ project, onClose }) => {
         </ul>
       </div>
     ));
-  
+
     // Handle case where no responses exist for any student
     if (responseElements.length === 0) {
       return (
@@ -140,10 +177,9 @@ const ProjectAssessmentPopup = ({ project, onClose }) => {
         </div>
       );
     }
-  
+
     return responseElements;
   };
-  
 
   if (loading) {
     return (
@@ -152,7 +188,7 @@ const ProjectAssessmentPopup = ({ project, onClose }) => {
           <p className="text-lg font-semibold">Loading...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -277,7 +313,7 @@ const ProjectAssessmentPopup = ({ project, onClose }) => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ProjectAssessmentPopup
+export default ProjectAssessmentPopup;

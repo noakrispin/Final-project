@@ -4,12 +4,22 @@ import { FaCircleUser } from "react-icons/fa6";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import { useAuth } from '../../context/AuthContext';
 
+/**
+ * This component renders a user menu with options for navigating to the profile, admin dashboard, custom actions, and logging out.
+ * 
+ * Props:
+ * - customActions: Array of custom action objects with label and onClick properties.
+ */
 const UserMenu = ({ customActions = [] }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const dropdownRef = React.useRef(null);
 
+  /**
+   * Handles closing the dropdown when clicking outside of it.
+   * @param {Event} event - The click event.
+   */
   React.useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -63,4 +73,3 @@ const UserMenu = ({ customActions = [] }) => {
 };
 
 export default UserMenu;
-

@@ -1,6 +1,15 @@
 import React from 'react';
 import { RiMenu3Line } from "react-icons/ri";
 
+/**
+ * This component renders a mobile menu button and the menu content.
+ * It toggles the visibility of the menu content based on the `isOpen` state.
+ * 
+ * Props:
+ * - isOpen: Boolean indicating if the menu is open.
+ * - setIsOpen: Function to toggle the menu open state.
+ * - children: The content to display inside the menu.
+ */
 const MobileMenu = ({ isOpen, setIsOpen, children }) => {
   return (
     <>
@@ -21,4 +30,3 @@ const MobileMenu = ({ isOpen, setIsOpen, children }) => {
 };
 
 export default MobileMenu;
-

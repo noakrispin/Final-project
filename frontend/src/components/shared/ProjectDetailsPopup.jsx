@@ -4,36 +4,40 @@ import { X, Edit3 } from "lucide-react";
 import { userApi } from "../../services/userAPI.js";
 import { useAuth } from "../../context/AuthContext";
 
+/**
+ * This component renders a popup with detailed information about a project.
+ * It includes project details, supervisor information, student information, and personal notes.
+ * 
+ * Props:
+ * - project: The project object containing details about the project.
+ * - onClose: Function to call when the popup is closed.
+ * - userRole: The role of the current user (e.g., "Supervisor").
+ * - api: The API service to use for updating project details.
+ */
 const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
   const { user } = useAuth();
-  const [personalNotes, setPersonalNotes] = useState(
-    project.personalNotes || ""
-  );
+  const [personalNotes, setPersonalNotes] = useState(project.personalNotes || "");
   const [gitLink, setGitLink] = useState(project.gitLink || "");
   const [isEditingGitLink, setIsEditingGitLink] = useState(false);
   const [supervisors, setSupervisors] = useState([]);
   const [isEditingDetails, setIsEditingDetails] = useState(false);
   const [editedTitle, setEditedTitle] = useState(project.title || "");
-  const [editedDescription, setEditedDescription] = useState(
-    project.description || ""
-  );
+  const [editedDescription, setEditedDescription] = useState(project.description || "");
 
+  /**
+   * Fetches supervisor information when the component mounts or the project changes.
+   */
   useEffect(() => {
     const fetchSupervisors = async () => {
       try {
-        const supervisorIds = [project.supervisor1, project.supervisor2].filter(
-          Boolean
-        );
+        const supervisorIds = [project.supervisor1, project.supervisor2].filter(Boolean);
         console.log("Supervisor IDs to fetch:", supervisorIds);
 
         const fetchedSupervisors = await Promise.all(
           supervisorIds.map(async (id) => {
             try {
               const userResponse = await userApi.getUser(id);
-              console.log(
-                `Fetched supervisor data for ID ${id}:`,
-                userResponse
-              );
+              console.log(`Fetched supervisor data for ID ${id}:`, userResponse);
               return userResponse.fullName || `Supervisor with email: ${id}`;
             } catch (error) {
               console.error(`Error fetching supervisor with ID ${id}:`, error);
@@ -52,26 +56,25 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
     fetchSupervisors();
   }, [project]);
 
-  const isAdminOrSupervisor =
-    user.isAdmin === true ||
-    user.email === project.supervisor1 ||
-    user.email === project.supervisor2;
+  const isAdminOrSupervisor = user.isAdmin === true || user.email === project.supervisor1 || user.email === project.supervisor2;
 
-
-    
+  /**
+   * Handles saving the Git link.
+   */
   const handleSaveGitLink = async () => {
-    
-      try {
-        await api.updateProject(project.id, { gitLink });
-        alert("Git link saved successfully!");
-        setIsEditingGitLink(false);
-      } catch (error) {
-        console.error("Error saving Git link:", error);
-        alert("Failed to save Git link.");
-      }
-    
+    try {
+      await api.updateProject(project.id, { gitLink });
+      alert("Git link saved successfully!");
+      setIsEditingGitLink(false);
+    } catch (error) {
+      console.error("Error saving Git link:", error);
+      alert("Failed to save Git link.");
+    }
   };
 
+  /**
+   * Handles saving personal notes.
+   */
   const handleSaveNotes = async () => {
     try {
       await api.updateProject(project.id, { personalNotes });
@@ -82,6 +85,9 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
     }
   };
 
+  /**
+   * Handles saving project details.
+   */
   const handleSaveDetails = async () => {
     try {
       await api.updateProject(project.id, {
@@ -96,6 +102,9 @@ const ProjectDetailsPopup = ({ project, onClose, userRole, api }) => {
     }
   };
 
+  /**
+   * Handles emailing students associated with the project.
+   */
   const handleEmailStudents = () => {
     const studentEmails = [
       project.Student1?.Email || project.Student1?.email,
