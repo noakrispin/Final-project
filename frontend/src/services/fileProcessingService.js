@@ -5,6 +5,11 @@ const emailRegex = /^[^\s@]+@(e\.)?braude\.ac\.il$/;
 /**
  * Processes an uploaded Excel file based on the expected format.
  * Ensures only valid Projects or Evaluators files are processed.
+ *
+ * @param {File} file - The uploaded Excel file.
+ * @param {string} pageType - The type of data expected ("projects" or "evaluators").
+ * @returns {Promise<Array<Object>>} The processed and validated data.
+ * @throws {Error} If the file format is invalid or processing fails.
  */
 export const processExcelFile = async (file, pageType) => {
   try {
@@ -72,71 +77,80 @@ export const processExcelFile = async (file, pageType) => {
 
 /**
  * Reads an Excel file and extracts the data.
+ *
+ * @param {File} file - The uploaded Excel file.
+ * @returns {Promise<Array<Object>>} The extracted data.
+ * @throws {Error} If reading the file fails.
  */
 const readExcelFile = async (file) => {
   try {
-  const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load(await file.arrayBuffer());
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(await file.arrayBuffer());
 
-  const worksheet = workbook.worksheets[0];
-  if (!worksheet) {
-    throw new Error("No worksheet found in the Excel file.");
-  }
-
-  // Detect format by examining the header row
-  const headers = [];
-  worksheet.getRow(1).eachCell((cell) => headers.push(cell.text.trim()));
-
-  let format = null;
-  if (headers.includes("Project Title") && headers.includes("Student 1 ID")) {
-    format = "projects";
-  } else if (headers.includes("Presentation Evaluator") && headers.includes("Book Evaluator")) {
-    format = "evaluators";
-  } else {
-    throw new Error("Unrecognized Excel format. Please check the header row.");
-  }
-
-  const data = [];
-  worksheet.eachRow((row, rowNumber) => {
-    if (rowNumber > 1) {
-      if (format === "projects") {
-        const rowData = {
-          projectCode: row.getCell(1).text.trim(),
-          student1firstName: row.getCell(2).text.trim(),
-          student1lastName: row.getCell(3).text.trim(),
-          student1Id: row.getCell(4).text.trim(),
-          student1Email: row.getCell(5).text.trim(),
-          student2firstName: row.getCell(6).text.trim(),
-          student2lastName: row.getCell(7).text.trim(),
-          student2Id: row.getCell(8).text.trim() || "",
-          student2Email: row.getCell(9).text.trim() || "",
-          supervisor1: row.getCell(10).text.trim(),
-          supervisor2: row.getCell(11).text.trim() || "",
-          title: row.getCell(12).text.trim(),
-          description: row.getCell(13).text.trim() || "",
-          part: row.getCell(14).text.trim(),
-          type: row.getCell(15).text.trim(),
-        };
-        data.push(rowData);
-      } else if (format === "evaluators") {
-        const rowData = {
-          projectCode: row.getCell(1).text.trim(),
-          presentationEvaluator: row.getCell(2).text.trim(),
-          bookEvaluator: row.getCell(3).text.trim(),
-        };
-        data.push(rowData);
-      }
+    const worksheet = workbook.worksheets[0];
+    if (!worksheet) {
+      throw new Error("No worksheet found in the Excel file.");
     }
-  });
 
-  return data;
+    // Detect format by examining the header row
+    const headers = [];
+    worksheet.getRow(1).eachCell((cell) => headers.push(cell.text.trim()));
+
+    let format = null;
+    if (headers.includes("Project Title") && headers.includes("Student 1 ID")) {
+      format = "projects";
+    } else if (headers.includes("Presentation Evaluator") && headers.includes("Book Evaluator")) {
+      format = "evaluators";
+    } else {
+      throw new Error("Unrecognized Excel format. Please check the header row.");
+    }
+
+    const data = [];
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber > 1) {
+        if (format === "projects") {
+          const rowData = {
+            projectCode: row.getCell(1).text.trim(),
+            student1firstName: row.getCell(2).text.trim(),
+            student1lastName: row.getCell(3).text.trim(),
+            student1Id: row.getCell(4).text.trim(),
+            student1Email: row.getCell(5).text.trim(),
+            student2firstName: row.getCell(6).text.trim(),
+            student2lastName: row.getCell(7).text.trim(),
+            student2Id: row.getCell(8).text.trim() || "",
+            student2Email: row.getCell(9).text.trim() || "",
+            supervisor1: row.getCell(10).text.trim(),
+            supervisor2: row.getCell(11).text.trim() || "",
+            title: row.getCell(12).text.trim(),
+            description: row.getCell(13).text.trim() || "",
+            part: row.getCell(14).text.trim(),
+            type: row.getCell(15).text.trim(),
+          };
+          data.push(rowData);
+        } else if (format === "evaluators") {
+          const rowData = {
+            projectCode: row.getCell(1).text.trim(),
+            presentationEvaluator: row.getCell(2).text.trim(),
+            bookEvaluator: row.getCell(3).text.trim(),
+          };
+          data.push(rowData);
+        }
+      }
+    });
+
+    return data;
   } catch (error) {
-     throw new Error(error.message); 
+    throw new Error(error.message);
   }
 };
 
 /**
  * Validates the extracted data to ensure required fields exist.
+ *
+ * @param {Array<Object>} data - The extracted data.
+ * @param {string} pageType - The type of data expected ("projects" or "evaluators").
+ * @returns {Array<Object>} The validated data.
+ * @throws {Error} If validation fails.
  */
 const validateData = (data, pageType) => {
   if (!Array.isArray(data) || data.length === 0) {

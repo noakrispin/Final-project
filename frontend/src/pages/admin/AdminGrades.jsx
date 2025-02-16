@@ -13,6 +13,13 @@ import { LuRefreshCcw } from "react-icons/lu";
 import LoadingScreen from "../../components/shared/LoadingScreen";
 import "react-toastify/dist/ReactToastify.css";
 
+/**
+ * This component renders the admin grades management page.
+ * It allows administrators to view, manage, and export grades for all ongoing projects.
+ *
+ * The component fetches data from various APIs, processes the data, and displays it in a table.
+ * It also provides functionality to refresh grades and export data to Excel.
+ */
 const AdminGradesPage = () => {
   const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,6 +34,7 @@ const AdminGradesPage = () => {
     setSelectedStatus(event.target.value);
   };
 
+  //fetching data from the APIs
   useEffect(() => {
     const fetchAndProcessGrades = async () => {
       try {
@@ -87,7 +95,7 @@ const AdminGradesPage = () => {
           users,
           evaluators
         );
-        console.log("Processed Data:", processedData);
+        //console.log("Processed Data:", processedData);
 
         setProjects(processedData);
       } catch (error) {
@@ -101,6 +109,7 @@ const AdminGradesPage = () => {
     fetchAndProcessGrades();
   }, []);
 
+  // Function to preprocess projects with grades, projects, users, and evaluators
   const preprocessProjects = (grades, projects, users, evaluators) => {
     try {
       console.log("Preprocessing projects with grades, projects, and users...");
@@ -196,13 +205,17 @@ const AdminGradesPage = () => {
               id: student1.ID,
               firstName: student1.firstName || "",
               lastName: student1.lastName || "",
-              finalGrade: roundGrade(student1Grade ? student1Grade.finalGrade : "")
+              finalGrade: roundGrade(
+                student1Grade ? student1Grade.finalGrade : ""
+              ),
             },
             student2: {
               id: student2.ID,
               firstName: student2.firstName || "",
               lastName: student2.lastName || "",
-              finalGrade: roundGrade(student2Grade ? student2Grade.finalGrade : "")
+              finalGrade: roundGrade(
+                student2Grade ? student2Grade.finalGrade : ""
+              ),
             },
           };
         })
@@ -213,11 +226,13 @@ const AdminGradesPage = () => {
     }
   };
 
+  // Filter projects based on selected status
   const filteredProjects = useMemo(() => {
     if (selectedStatus === "All") return projects;
     return projects.filter((project) => project.status === selectedStatus);
   }, [projects, selectedStatus]);
 
+  // Function to handle refreshing grades - the refresh will update the grades in the database and then re-fetch the projects
   const handleRefreshClick = async () => {
     try {
       setIsLoading(true);
@@ -226,7 +241,7 @@ const AdminGradesPage = () => {
       for (const project of projects) {
         const { projectCode } = project;
         const evaluationsByForm = [];
-      
+
         for (const formID of [
           "SupervisorForm",
           "PresentationFormA",
@@ -260,7 +275,7 @@ const AdminGradesPage = () => {
                 ([studentID, grades]) => ({ studentID, grades })
               ),
             };
-      
+
             // Only push if there is at least one grade recorded
             if (evaluationEntry.grades.length > 0) {
               evaluationsByForm.push(evaluationEntry);
@@ -272,20 +287,21 @@ const AdminGradesPage = () => {
             );
           }
         }
-      
+
         // Filter evaluationsByForm once more just in case
         const validEvaluationsByForm = evaluationsByForm.filter(
           (entry) => entry.grades && entry.grades.length > 0
         );
-      
+
         if (validEvaluationsByForm.length > 0) {
           try {
-            console.log(
-              `Updating grades for project ${projectCode} with payload:`,
-              { projectCode, evaluationsByForm: validEvaluationsByForm }
-            );
-            await gradesApi.addOrUpdateGrade(projectCode, { evaluationsByForm });
-
+            // console.log(
+            //   `Updating grades for project ${projectCode} with payload:`,
+            //   { projectCode, evaluationsByForm: validEvaluationsByForm }
+            // );
+            await gradesApi.addOrUpdateGrade(projectCode, {
+              evaluationsByForm,
+            });
           } catch (error) {
             toast.error(`Failed to update grades for project ${projectCode}.`);
             console.error(
@@ -307,6 +323,7 @@ const AdminGradesPage = () => {
     }
   };
 
+  // Function to render the grade status badge
   const renderGradeStatus = (status) => {
     console.log("status in render status:", status);
 
@@ -325,6 +342,7 @@ const AdminGradesPage = () => {
       );
     }
 
+    // Define status classes for different statuses
     const statusClasses = {
       "Fully graded": "bg-green-100 text-green-700",
       "Partially graded": "bg-yellow-100 text-yellow-700",
@@ -346,7 +364,7 @@ const AdminGradesPage = () => {
       </span>
     );
   };
-
+// Define columns for the table
   const projectColumns = useMemo(
     () => [
       {
@@ -468,7 +486,7 @@ const AdminGradesPage = () => {
     []
   );
 
-  // Function to format data for export
+  // Function to format data for export to Excel for final grades
   const prepareExportData = (projects) => {
     const exportData = [];
     const seenStudentIds = new Set(); // Track processed student IDs
@@ -508,6 +526,7 @@ const AdminGradesPage = () => {
     return exportData;
   };
 
+  // Function to prepare data for export to Excel for project evaluations
   const prepareResponsesExportData = (
     projects,
     responsesData,
@@ -591,15 +610,16 @@ const AdminGradesPage = () => {
     return exportData;
   };
 
+  // Function to handle exporting data to Excel
   const handleExportToExcel = () => {
     try {
       // Prepare and export Final Grades Excel
       const exportData = prepareExportData(projects);
-      console.log("Export Data:", exportData);
+      //console.log("Export Data:", exportData);
       const workbook = XLSX.utils.book_new();
       const worksheet = XLSX.utils.json_to_sheet(exportData);
       XLSX.utils.book_append_sheet(workbook, worksheet, "Final Grades");
-      XLSX.writeFile(workbook, "Students_final_grades_export.xlsx");
+      XLSX.writeFile(workbook, "Students_final_grades_export.xlsx"); // Export to final grades Excel file
 
       toast.success("Grades exported successfully!");
 
@@ -616,7 +636,7 @@ const AdminGradesPage = () => {
         const worksheet = XLSX.utils.aoa_to_sheet(responsesExportData[formID]);
         XLSX.utils.book_append_sheet(responsesWorkbook, worksheet, formID);
       }
-      XLSX.writeFile(responsesWorkbook, "Project_Evaluations_Export.xlsx");
+      XLSX.writeFile(responsesWorkbook, "Project_Evaluations_Export.xlsx"); // Export to project evaluations Excel file
 
       toast.success("Project evaluations exported successfully!");
     } catch (error) {
@@ -638,6 +658,7 @@ const AdminGradesPage = () => {
     return <div className="text-center text-red-500 mt-10">{error}</div>;
   }
 
+// Filter projects based on selected status and search query - sent to the Table component as props
   const tableData = filteredProjects.map((project) => ({
     ...project,
     studentName: project.studentName,

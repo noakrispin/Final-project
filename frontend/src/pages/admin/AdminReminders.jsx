@@ -8,6 +8,13 @@ import { emailAPI } from "../../services/emailAPI";
 import LoadingScreen from "../../components/shared/LoadingScreen";
 import ConfirmationModal from "../../components/shared/ConfirmationModal";
 
+/**
+ * This component renders the admin reminders management page.
+ * It allows administrators to set deadlines, send reminders, and view the status of project evaluations.
+ * 
+ * The component fetches data from various APIs, processes the data, and displays it in a table.
+ * It also provides functionality to set deadlines and send reminder emails to evaluators.
+ */
 const AdminReminders = () => {
   const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,10 +29,6 @@ const AdminReminders = () => {
     isWarning: false,
     isSuccess: false,
   });
-
-  // const [scheduleDate, setScheduleDate] = useState("");
-  // const [scheduleTime, setScheduleTime] = useState("");
-  // const [scheduledReminder, setScheduledReminder] = useState(null);
 
   useEffect(() => {
     const fetchAndProcessData = async () => {
@@ -53,6 +56,13 @@ const AdminReminders = () => {
     fetchAndProcessData();
   }, []);
 
+  /**
+   * Preprocesses the projects, evaluators, and users data to merge and filter the necessary information.
+   * @param {Array} projects - The array of project objects.
+   * @param {Array} evaluators - The array of evaluator objects.
+   * @param {Array} users - The array of user objects.
+   * @returns {Array} - The processed data for the table.
+   */
   const preprocessProjects = (projects, evaluators, users) => {
     const mergedRows = {};
 
@@ -97,7 +107,7 @@ const AdminReminders = () => {
               : "No Deadline",
             part: project.part,
             supervisor1: project.supervisor1,
-          supervisor2: project.supervisor2,
+            supervisor2: project.supervisor2,
           };
         }
 
@@ -121,6 +131,9 @@ const AdminReminders = () => {
     return Object.values(mergedRows);
   };
 
+  /**
+   * Handles saving the deadline and sending notifications to supervisors.
+   */
   const handleSaveDeadline = () => {
     if (!deadline) {
       setConfirmationModal({
@@ -148,6 +161,9 @@ const AdminReminders = () => {
     });
   };
 
+  /**
+   * Processes the deadline saving and sends notifications to supervisors.
+   */
   const processSaveDeadline = async () => {
     // Show a "processing" modal
     setConfirmationModal({
@@ -210,7 +226,9 @@ const AdminReminders = () => {
   };
   
 
-  // Handle sending reminders
+  /**
+   * Handles sending reminders to evaluators.
+   */
   const handleSendReminders = () => {
     setConfirmationModal({
       isOpen: true,
@@ -224,6 +242,9 @@ const AdminReminders = () => {
     });
   };
 
+  /**
+   * Processes the sending of reminders to evaluators.
+   */
   const processSendReminders = async () => {
     setConfirmationModal({
       isOpen: true,

@@ -13,7 +13,11 @@ import {
   User,
 } from "lucide-react";
 
-// Helper function to format Firestore Timestamp
+/**
+ * Helper function to format Firestore Timestamp.
+ * @param {object} timestamp - The Firestore Timestamp object.
+ * @returns {string} - The formatted date string.
+ */
 const formatDate = (timestamp) => {
   if (!timestamp || !timestamp._seconds) return "No deadline provided";
   const date = new Date(timestamp._seconds * 1000); // Convert seconds to milliseconds
@@ -24,6 +28,12 @@ const formatDate = (timestamp) => {
   });
 };
 
+/**
+ * This component renders the project details page.
+ * It displays detailed information about a specific project, including project details, supervisors and students.
+ * 
+ * The component fetches the project details and supervisor information from the API and displays them in expandable sections.
+ */
 const ProjectDetailsPage = () => {
   const { projectCode } = useParams();
   const [project, setProject] = useState(null);
@@ -64,8 +74,11 @@ const ProjectDetailsPage = () => {
   
     fetchProjectDetails();
   }, [projectCode]);
-  
 
+  /**
+   * Toggles the expansion state of a section.
+   * @param {string} section - The section to toggle.
+   */
   const toggleSection = (section) => {
     setExpandedSections((prev) => ({
       ...prev,
@@ -74,7 +87,7 @@ const ProjectDetailsPage = () => {
   };
 
   if (loading) {
-    return <LoadingScreen isLoading={loading}  description="Looking for project details..."/>; 
+    return <LoadingScreen isLoading={loading} description="Looking for project details..." />;
   }
 
   if (error) {
@@ -85,6 +98,13 @@ const ProjectDetailsPage = () => {
     );
   }
 
+  /**
+   * DetailCard component to display expandable sections with project details.
+   * @param {string} title - The title of the section.
+   * @param {JSX.Element} icon - The icon to display next to the title.
+   * @param {JSX.Element} children - The content of the section.
+   * @param {boolean} expandable - Whether the section is expandable.
+   */
   const DetailCard = ({ title, icon, children, expandable = false }) => {
     const isExpanded = expandedSections[title] !== false;
     return (
@@ -173,29 +193,29 @@ const ProjectDetailsPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Supervisor Section */}
         <DetailCard
-        title="Supervisor"
-        icon={<User className="h-5 w-5 text-blue-500" />}
-      >
-        <ul className="space-y-2">
-          {supervisors.map((supervisor, index) => (
-            <li key={index}>
-              <strong>{supervisor.fullName || "Unknown Supervisor"}</strong>
-              {supervisor.topics && supervisor.topics.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {supervisor.topics.map((topic, i) => (
-                    <span
-                      key={i}
-                      className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm"
-                    >
-                      {topic}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
-      </DetailCard>
+          title="Supervisor"
+          icon={<User className="h-5 w-5 text-blue-500" />}
+        >
+          <ul className="space-y-2">
+            {supervisors.map((supervisor, index) => (
+              <li key={index}>
+                <strong>{supervisor.fullName || "Unknown Supervisor"}</strong>
+                {supervisor.topics && supervisor.topics.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {supervisor.topics.map((topic, i) => (
+                      <span
+                        key={i}
+                        className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm"
+                      >
+                        {topic}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </DetailCard>
 
         {/* Students Section */}
         <DetailCard
@@ -228,8 +248,8 @@ const ProjectDetailsPage = () => {
       </div>
 
       <div className="mt-6">
-        {/* Presentation Attendees Section */}
-        <DetailCard
+        {/* Presentation Attendees Section -- for future use (3rd part - assigning presentation attendees) */}
+        {/* <DetailCard
           title="Presentation Attendees"
           icon={<Calendar className="h-5 w-5 text-blue-500" />}
           expandable
@@ -245,7 +265,7 @@ const ProjectDetailsPage = () => {
               No attendees listed for the presentation.
             </p>
           )}
-        </DetailCard>
+        </DetailCard> */}
       </div>
     </div>
   );

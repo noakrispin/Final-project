@@ -2,7 +2,13 @@ import { api } from "./api";
 
 export const gradesApi = {
   /**
-   * Add or update a grade. - this is the main logic in refresh grades - its calculating all final grades 
+   * Add or update a grade.
+   * This is the main logic in refresh grades - it calculates all final grades.
+   *
+   * @param {string} projectCode - The code of the project to add or update the grade for.
+   * @param {Object} data - The grade data to add or update.
+   * @returns {Promise<Object>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   addOrUpdateGrade: async (projectCode, data) => {
     try {
@@ -16,6 +22,10 @@ export const gradesApi = {
 
   /**
    * Get a specific grade by ID.
+   *
+   * @param {string} id - The ID of the grade to fetch.
+   * @returns {Promise<Object>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   getGrade: async (id) => {
     try {
@@ -29,6 +39,9 @@ export const gradesApi = {
 
   /**
    * Get all grades.
+   *
+   * @returns {Promise<Object[]>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   getAllGrades: async () => {
     try {
@@ -42,6 +55,10 @@ export const gradesApi = {
 
   /**
    * Delete a specific grade by ID.
+   *
+   * @param {string} id - The ID of the grade to delete.
+   * @returns {Promise<Object>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   deleteGrade: async (id) => {
     try {

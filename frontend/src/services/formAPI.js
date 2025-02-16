@@ -3,58 +3,80 @@ import { api } from "./api"; // Import the shared API utilities
 export const formsApi = {
   /**
    * Get a specific form by ID.
+   *
+   * @param {string} formID - The ID of the form to fetch.
+   * @returns {Promise<Object>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   getForm: async (formID) => {
     try {
-      const response = await api.get(`/forms/${formID}`)
-      return response
+      const response = await api.get(`/forms/${formID}`);
+      return response;
     } catch (error) {
-      console.error("Error fetching form:", error)
-      throw error
+      console.error("Error fetching form:", error);
+      throw error;
     }
   },
+
   /**
    * Fetch all forms from the database.
+   *
+   * @returns {Promise<Object[]>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   getAllForms: async () => {
     try {
-      const response = await api.get(`/forms`); // Call the backend endpoint
-      return response; // Return the forms data
+      const response = await api.get(`/forms`);
+      return response;
     } catch (error) {
       console.error("Error fetching all forms:", error.message);
-      throw error; // Rethrow the error to handle it in calling code
+      throw error;
     }
   },
 
   /**
    * Update a specific form by ID.
+   *
+   * @param {string} formID - The ID of the form to update.
+   * @param {Object} updatedData - The updated form data.
+   * @returns {Promise<Object>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   updateForm: async (formID, updatedData) => {
     try {
-      const response = await api.put(`/forms/${formID}`, updatedData)
-      return response
+      const response = await api.put(`/forms/${formID}`, updatedData);
+      return response;
     } catch (error) {
-      console.error("Error updating form:", error)
-      throw error
+      console.error("Error updating form:", error);
+      throw error;
     }
   },
 
   /**
    * Get all questions for a specific form.
+   *
+   * @param {string} formID - The ID of the form to fetch questions for.
+   * @returns {Promise<Object[]>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   getQuestions: async (formID) => {
     try {
-      const response = await api.get(`/forms/${formID}/questions`)
-      console.log("Questions response:", response) // Debug log
-      return response
+      const response = await api.get(`/forms/${formID}/questions`);
+      console.log("Questions response:", response); // Debug log
+      return response;
     } catch (error) {
-      console.error("Error fetching questions:", error)
-      throw error
+      console.error("Error fetching questions:", error);
+      throw error;
     }
   },
 
   /**
    * Add a new question to a specific form.
+   *
+   * @param {string} formID - The ID of the form to add the question to.
+   * @param {Object} questionData - The data for the new question.
+   * @returns {Promise<Object>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   addQuestion: async (formID, questionData) => {
     try {
@@ -74,27 +96,28 @@ export const formsApi = {
     }
   },
 
-
-
   /**
    * Update a specific question in a form.
+   *
+   * @param {string} formID - The ID of the form to update the question in.
+   * @param {string} questionId - The ID of the question to update.
+   * @param {Object} updatedData - The updated question data.
+   * @returns {Promise<Object>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   updateQuestion: async (formID, questionId, updatedData) => {
     try {
       console.log("Sending update request:", { formID, questionId, updatedData });
 
-      // Sending the PUT request
       const response = await api.put(`/forms/${formID}/questions/${questionId}`, updatedData);
 
-      // Debugging log
       console.log("Update question response:", response);
 
-      // Adjust validation logic
       if (!response || !response.updatedData) {
         throw new Error("Invalid response from server while updating question.");
       }
 
-      return response.updatedData; // Return the updated question data
+      return response.updatedData;
     } catch (error) {
       console.error(
         `Error updating question (ID: ${questionId}, Title: ${updatedData?.title || "N/A"}):`,
@@ -104,40 +127,49 @@ export const formsApi = {
     }
   },
 
-
-
-
   /**
    * Delete a specific question from a form.
+   *
+   * @param {string} formID - The ID of the form to delete the question from.
+   * @param {string} questionId - The ID of the question to delete.
+   * @returns {Promise<Object>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   deleteQuestion: async (formID, questionId) => {
     try {
       const response = await api.delete(`/forms/${formID}/questions/${questionId}`);
-      console.log("Delete question response:", response) // Debug log
+      console.log("Delete question response:", response); // Debug log
       return response;
     } catch (error) {
-      console.error("Error deleting question:", error)
-      throw error
+      console.error("Error deleting question:", error);
+      throw error;
     }
   },
 
   /**
    * Submit a form with the given data.
+   *
    * @param {string} formID - The ID of the form to submit.
-   * @param {object} formData - The data to submit for the form.
+   * @param {Object} formData - The data to submit for the form.
+   * @returns {Promise<Object>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   submitForm: async (formID, formData) => {
     try {
       const response = await api.post(`/forms/${formID}/submit`, formData);
       return response;
     } catch (error) {
-      console.error("Error submitting form:", error)
-      throw error
+      console.error("Error submitting form:", error);
+      throw error;
     }
   },
 
   /**
    * Fetch all responses for a specific form.
+   *
+   * @param {string} formID - The ID of the form to fetch responses for.
+   * @returns {Promise<Object[]>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   getResponses: async (formID) => {
     try {
@@ -157,12 +189,14 @@ export const formsApi = {
     }
   },
 
-
   /**
    * Fetch the last response for a specific evaluator and optionally for a specific student.
+   *
    * @param {string} formID - The form ID.
    * @param {string} evaluatorID - The evaluator's ID.
-   * @param {string} [studentID] - The student's ID (optional).
+   * @param {string} projectCode - The project's code.
+   * @returns {Promise<Object>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   getLastResponse: async (formID, evaluatorID, projectCode) => {
     if (!formID || !evaluatorID || !projectCode) {
@@ -170,73 +204,96 @@ export const formsApi = {
     }
 
     try {
-
-      console.log("Sending GET request with params:", { evaluatorID, projectCode, formID }); // Debugging
+      console.log("Sending GET request with params:", { evaluatorID, projectCode, formID });
       const response = await api.get(
         `/forms/${formID}/last-response?evaluatorID=${evaluatorID}&projectCode=${projectCode}`
       );
-      console.log("API Response:", response); // Log the raw response
-      return response.data || response; // Adjust if the data is nested
+      console.log("API Response:", response);
+      return response.data || response;
     } catch (error) {
       console.error("Error fetching the last response:", error.message);
       throw error;
     }
   },
 
-
   /**
    * Delete a specific response from a form.
+   *
+   * @param {string} formID - The ID of the form to delete the response from.
+   * @param {string} responseId - The ID of the response to delete.
+   * @returns {Promise<Object>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   deleteResponse: async (formID, responseId) => {
     try {
-      const response = await api.delete(`/forms/${formID}/responses/${responseId}`)
-      return response
+      const response = await api.delete(`/forms/${formID}/responses/${responseId}`);
+      return response;
     } catch (error) {
-      console.error("Error deleting response:", error)
-      throw error
+      console.error("Error deleting response:", error);
+      throw error;
     }
   },
+
   /**
    * Fetch all evaluations for a specific form.
+   *
+   * @param {string} formID - The ID of the form to fetch evaluations for.
+   * @returns {Promise<Object[]>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   getEvaluations: async (formID) => {
     try {
-      const response = await api.get(`/forms/${formID}/evaluations`)
-      return response
+      const response = await api.get(`/forms/${formID}/evaluations`);
+      return response;
     } catch (error) {
-      console.error("Error fetching evaluations:", error)
-      throw error
+      console.error("Error fetching evaluations:", error);
+      throw error;
     }
   },
 
   /**
    * Update a specific evaluation in a form.
+   *
+   * @param {string} formID - The ID of the form to update the evaluation in.
+   * @param {string} evaluationId - The ID of the evaluation to update.
+   * @param {Object} updatedData - The updated evaluation data.
+   * @returns {Promise<Object>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   updateEvaluation: async (formID, evaluationId, updatedData) => {
     try {
-      const response = await api.put(`/forms/${formID}/evaluations/${evaluationId}`, updatedData)
-      return response
+      const response = await api.put(`/forms/${formID}/evaluations/${evaluationId}`, updatedData);
+      return response;
     } catch (error) {
-      console.error("Error updating evaluation:", error)
-      throw error
+      console.error("Error updating evaluation:", error);
+      throw error;
     }
   },
 
   /**
    * Delete a specific evaluation from a form.
+   *
+   * @param {string} formID - The ID of the form to delete the evaluation from.
+   * @param {string} evaluationId - The ID of the evaluation to delete.
+   * @returns {Promise<Object>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   deleteEvaluation: async (formID, evaluationId) => {
     try {
-      const response = await api.delete(`/forms/${formID}/evaluations/${evaluationId}`)
-      return response
+      const response = await api.delete(`/forms/${formID}/evaluations/${evaluationId}`);
+      return response;
     } catch (error) {
-      console.error("Error deleting evaluation:", error)
-      throw error
+      console.error("Error deleting evaluation:", error);
+      throw error;
     }
   },
 
   /**
    * Fetch evaluations for a specific evaluator.
+   *
+   * @param {string} evaluatorID - The ID of the evaluator to fetch evaluations for.
+   * @returns {Promise<Object[]>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   getEvaluationsByEvaluator: async (evaluatorID) => {
     if (!evaluatorID) {
@@ -247,16 +304,22 @@ export const formsApi = {
     try {
       console.log("Fetching evaluations by evaluatorID:", evaluatorID);
       const response = await api.get(`/forms/evaluations/all?evaluatorID=${evaluatorID}`);
-      console.log("API Response (formAPI):", response); // Log the raw response
+      console.log("API Response (formAPI):", response);
 
-      return response || []; // Return the data or an empty array
+      return response || [];
     } catch (error) {
       console.error("Error fetching evaluations by evaluator:", error);
-      throw error; // Re-throw to handle in calling code
+      throw error;
     }
   },
+
   /**
    * Fetch evaluations for a specific evaluator and project.
+   *
+   * @param {string} evaluatorID - The ID of the evaluator.
+   * @param {string} projectCode - The code of the project.
+   * @returns {Promise<Object[]>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   getEvaluationByEvaluatorAndProject: async (evaluatorID, projectCode) => {
     if (!evaluatorID || !projectCode) {
@@ -267,17 +330,21 @@ export const formsApi = {
       const response = await api.get(
         `/forms/evaluations/by-evaluator-project?evaluatorID=${evaluatorID}&projectCode=${projectCode}`
       );
-      console.log("API Response (formAPI):", response); // Log the raw response
-      return response; // Adjust response handling based on your API format
+      console.log("API Response (formAPI):", response);
+      return response;
     } catch (error) {
       console.error("Error fetching evaluations by evaluator and project:", error.message);
       throw error;
     }
   },
 
-
   /**
    * Add a new evaluation for a specific form.
+   *
+   * @param {string} formID - The ID of the form to add the evaluation to.
+   * @param {Object} evaluationData - The data for the new evaluation.
+   * @returns {Promise<Object>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   addEvaluation: async (formID, evaluationData) => {
     try {
@@ -288,7 +355,4 @@ export const formsApi = {
       throw error;
     }
   },
-
-
-
 };

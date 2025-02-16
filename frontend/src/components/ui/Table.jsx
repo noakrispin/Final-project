@@ -5,6 +5,7 @@ import { ColumnManagementDialog } from "./ColumnManagementDialog";
 import { sortData } from "../../utils/sortData";
 import SearchBar from "../shared/SearchBar";
 import { getGrade } from "../../utils/getGrade";
+import { Info } from "lucide-react";
 
 /**
  * This component renders a table with sortable columns, search functionality, and column management.
@@ -22,6 +23,8 @@ import { getGrade } from "../../utils/getGrade";
  * - showDescription: Boolean indicating if a description should be displayed.
  * - description: The description text to display.
  */
+const FILTERS = ["All", "Part A", "Part B"];
+
 export const Table = ({
   data,
   apiResponse,

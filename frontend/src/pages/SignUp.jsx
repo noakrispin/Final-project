@@ -1,7 +1,16 @@
+/**
+ * SignUp Component
+ *
+ * This component renders a sign-up form for creating a new account.
+ * It includes fields for full name, email, role selection, and password.
+ * The form validates the input fields and provides feedback for errors.
+ * Upon successful submission, it creates a new account and redirects to the login page.
+ */
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, Eye, EyeOff } from "lucide-react";
-import { useForm, Controller, set } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { Button } from "../components/ui/Button";
 import ErrorMessage from "../components/shared/ErrorMessage";
 import toast, { Toaster } from "react-hot-toast";
@@ -157,7 +166,10 @@ function SignUp() {
 
 export default SignUp;
 
-// Background Blur Elements
+/**
+ * Background Blur Elements
+ * Adds visual effects to the background.
+ */
 const BlurElements = () => (
   <>
     <div className="absolute top-[432px] left-[613px] w-[300px] h-[294px] bg-[#8bd8ff]/40 rounded-full blur-[80px]" />
@@ -165,7 +177,19 @@ const BlurElements = () => (
   </>
 );
 
-// Reusable InputField Component
+/**
+ * InputField Component
+ * Reusable input field with label and error message.
+ *
+ * @param {Object} props - Component props
+ * @param {string} props.label - Label for the input field
+ * @param {string} props.name - Name of the input field
+ * @param {string} [props.type="text"] - Type of the input field
+ * @param {Object} props.register - React Hook Form register function
+ * @param {string} props.required - Required validation message
+ * @param {Object} [props.pattern] - Pattern validation object
+ * @param {Object} props.errors - Form errors object
+ */
 const InputField = ({
   label,
   name,
@@ -190,7 +214,17 @@ const InputField = ({
   </div>
 );
 
-// Role Dropdown Component
+/**
+ * RoleDropdown Component
+ * Dropdown for selecting user role.
+ *
+ * @param {Object} props - Component props
+ * @param {boolean} props.isOpen - Whether the dropdown is open
+ * @param {function} props.onSelect - Function to call when a role is selected
+ * @param {function} props.toggle - Function to toggle the dropdown
+ * @param {string} props.selectedRole - Currently selected role
+ * @param {string} props.error - Error message for role selection
+ */
 const RoleDropdown = ({ isOpen, onSelect, toggle, selectedRole, error }) => (
   <div>
     <label htmlFor="role" className="block text-gray-600 mb-1">
@@ -225,7 +259,16 @@ const RoleDropdown = ({ isOpen, onSelect, toggle, selectedRole, error }) => (
   </div>
 );
 
-// Password Input Component
+/**
+ * PasswordInput Component
+ * Input field for password with show/hide functionality.
+ *
+ * @param {Object} props - Component props
+ * @param {Object} props.register - React Hook Form register function
+ * @param {boolean} props.showPassword - Whether to show the password
+ * @param {function} props.toggleShowPassword - Function to toggle password visibility
+ * @param {string} props.error - Error message for password field
+ */
 const PasswordInput = ({
   register,
   showPassword,

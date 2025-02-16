@@ -1,11 +1,29 @@
+/**
+ * API Service
+ *
+ * This module provides a set of functions to interact with the backend API.
+ * It includes methods for making GET, POST, PUT, and DELETE requests.
+ * The base URL for the API is determined by the environment variable `VITE_API_BASE_URL`.
+ */
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api";
 
+/**
+ * Generates authorization headers for API requests.
+ *
+ * @returns {Object} Headers object containing the Authorization token if available.
+ */
 const authHeaders = () => {
   const token = localStorage.getItem("token");
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+/**
+ * Handles API errors by logging them and returning a user-friendly message.
+ *
+ * @param {Error} error - The error object thrown by the fetch API.
+ * @returns {string} A user-friendly error message.
+ */
 const handleError = (error) => {
   console.error("API Error:", error.message);
   if (error.message.includes("NetworkError")) {
@@ -14,6 +32,12 @@ const handleError = (error) => {
   return error.message || "An unexpected error occurred.";
 };
 
+/**
+ * Serializes an object into a query string.
+ *
+ * @param {Object} params - The parameters to serialize.
+ * @returns {string} The serialized query string.
+ */
 const serializeParams = (params) => {
   return Object.keys(params)
     .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
@@ -21,6 +45,14 @@ const serializeParams = (params) => {
 };
 
 export const api = {
+  /**
+   * Makes a POST request to the specified endpoint with the given data.
+   *
+   * @param {string} endpoint - The API endpoint to send the request to.
+   * @param {Object} data - The data to send in the request body.
+   * @returns {Promise<Object>} The response data from the API.
+   * @throws {Error} If the request fails.
+   */
   post: async (endpoint, data) => {
     try {
       console.log(`POST Request to: ${BASE_URL}${endpoint}`, data);
@@ -43,6 +75,14 @@ export const api = {
     }
   },
 
+  /**
+   * Makes a GET request to the specified endpoint with the given parameters.
+   *
+   * @param {string} endpoint - The API endpoint to send the request to.
+   * @param {Object} [params={}] - The query parameters to include in the request.
+   * @returns {Promise<Object>} The response data from the API.
+   * @throws {Error} If the request fails.
+   */
   get: async (endpoint, params = {}) => {
     try {
       const queryString = serializeParams(params);
@@ -64,6 +104,14 @@ export const api = {
     }
   },
 
+  /**
+   * Makes a PUT request to the specified endpoint with the given data.
+   *
+   * @param {string} endpoint - The API endpoint to send the request to.
+   * @param {Object} data - The data to send in the request body.
+   * @returns {Promise<Object>} The response data from the API.
+   * @throws {Error} If the request fails.
+   */
   put: async (endpoint, data) => {
     try {
       const response = await fetch(`${BASE_URL}${endpoint}`, {
@@ -84,6 +132,13 @@ export const api = {
     }
   },
 
+  /**
+   * Makes a DELETE request to the specified endpoint.
+   *
+   * @param {string} endpoint - The API endpoint to send the request to.
+   * @returns {Promise<Object>} The response data from the API.
+   * @throws {Error} If the request fails.
+   */
   delete: async (endpoint) => {
     try {
       const response = await fetch(`${BASE_URL}${endpoint}`, {

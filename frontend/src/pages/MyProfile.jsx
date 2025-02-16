@@ -7,6 +7,12 @@ import { evaluatorsApi } from "../services/evaluatorsAPI";
 import LoadingScreen from "../components/shared/LoadingScreen";
 import { FaEdit, FaCheck, FaTimes } from "react-icons/fa";
 
+
+/**
+ * This component renders the user's profile page.
+ * It displays the user's information, allows editing of the user's name, and shows counts of supervised projects and pending reviews.
+ */
+
 export default function MyProfile() {
   const { user: authUser } = useAuth();
   const [user, setUser] = useState(null);
@@ -47,14 +53,14 @@ export default function MyProfile() {
         const evaluatorsResponse = await evaluatorsApi.getProjectsByEvaluator(
           authUser.email
         );
-        console.log("evaluatorsResponse:", evaluatorsResponse);
+        //console.log("evaluatorsResponse:", evaluatorsResponse);
         const pendingReviews = evaluatorsResponse.filter(
           (evaluator) => evaluator.status === "Not Submitted"
         );
-        console.log("pendingReviews", pendingReviews);
+        //console.log("pendingReviews", pendingReviews);
         setPendingReviewsCount(pendingReviews.length);
       } catch (err) {
-        console.error("Error fetching profile or projects:", err.message);
+        //console.error("Error fetching profile or projects:", err.message);
         setError("Unable to fetch profile or projects data.");
       } finally {
         setLoading(false);
@@ -88,6 +94,9 @@ export default function MyProfile() {
     );
   }
 
+  /**
+   * Handles updating the user's name.
+   */
   const handleNameUpdate = async () => {
     if (!editedName.trim() || editedName === user.fullName) {
       setIsEditing(false);
@@ -96,7 +105,7 @@ export default function MyProfile() {
   
     try {
       const response = await userApi.updateUserRole(user.email, { fullName: editedName });
-      console.log("response updateUserRole:", response);
+      //console.log("response updateUserRole:", response);
       if (response.success) {
         setUser((prevUser) => ({ ...prevUser, fullName: editedName }));
         setIsEditing(false);

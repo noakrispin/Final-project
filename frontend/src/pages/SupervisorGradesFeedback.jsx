@@ -1,3 +1,11 @@
+/**
+ * SupervisorGradesFeedback Component
+ *
+ * This component displays a table of projects supervised by the logged-in user,
+ * along with their grades and feedback. It allows the supervisor to filter projects
+ * by grade status, refresh grades, and view detailed project assessments.
+ */
+
 import React, { useState, useEffect, useMemo } from "react";
 import { Table } from "../components/ui/Table";
 import ProjectAssessmentPopup from "../components/ui/ProjectAssessmentPopup";
@@ -21,11 +29,13 @@ const SupervisorGradesFeedback = () => {
   const [selectedGrade, setSelectedGrade] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState("All");
 
+  // Filter projects based on the selected status
   const filteredProjects = useMemo(() => {
     if (selectedStatus === "All") return projects;
     return projects.filter((project) => project.status === selectedStatus);
   }, [projects, selectedStatus]);
 
+  // Fetch and process grades and projects data
   useEffect(() => {
     const fetchAndProcessGrades = async () => {
       try {
@@ -34,22 +44,22 @@ const SupervisorGradesFeedback = () => {
         console.log("Fetching final grades...");
         const gradesResponse = await gradesApi.getAllGrades();
         const grades = gradesResponse || [];
-        console.log("Final grades fetched:", grades);
+        //console.log("Final grades fetched:", grades);
 
         console.log("Fetching all projects...");
         const projects = await projectsApi.getAllProjects();
-        console.log("All projects fetched:", projects);
+       // console.log("All projects fetched:", projects);
 
         console.log("Filtering projects for supervisor...");
         const filteredProjects = filterProjectsForSupervisor(
           projects,
           user.email
         );
-        console.log("Filtered projects:", filteredProjects);
+        //console.log("Filtered projects:", filteredProjects);
 
         console.log("Processing final grades...");
         const processedData = preprocessProjects(grades, filteredProjects);
-        console.log("Processed Data:", processedData);
+        //console.log("Processed Data:", processedData);
 
         setProjects(processedData);
       } catch (error) {
@@ -63,6 +73,7 @@ const SupervisorGradesFeedback = () => {
     fetchAndProcessGrades();
   }, [user]);
 
+  // Filter projects based on the supervisor's email
   const filterProjectsForSupervisor = (projects, supervisorEmail) => {
     return projects.filter(
       (project) =>
@@ -71,17 +82,18 @@ const SupervisorGradesFeedback = () => {
     );
   };
 
+  // Preprocess projects with grades and project details
   const preprocessProjects = (grades, projects) => {
     try {
       console.log("Preprocessing projects with grades and projects...");
-      console.log("Grades:", grades);
-      console.log("Projects:", projects);
+      //console.log("Grades:", grades);
+      //console.log("Projects:", projects);
 
       // Get the project codes from the filtered projects
       const filteredProjectCodes = projects.map(
         (project) => project.projectCode
       );
-      console.log("Filtered Project Codes:", filteredProjectCodes);
+      //console.log("Filtered Project Codes:", filteredProjectCodes);
 
       // Filter grades to only include those matching the filtered project codes
       const filteredGrades = grades.filter(
@@ -90,7 +102,7 @@ const SupervisorGradesFeedback = () => {
           filteredProjectCodes.includes(grade.projectCode) &&
           grade.projectCode !== "placeholderProject"
       );
-      console.log("Filtered Grades:", filteredGrades);
+      //console.log("Filtered Grades:", filteredGrades);
 
       // Map grades to project details
       return filteredGrades
@@ -141,6 +153,8 @@ const SupervisorGradesFeedback = () => {
       throw new Error("Failed to preprocess project data.");
     }
   };
+
+  // Handle refresh grades button click - updating grades for all projects
   const handleRefreshClick = async () => {
     try {
       setIsLoading(true);
@@ -192,7 +206,6 @@ const SupervisorGradesFeedback = () => {
         if (evaluationsByForm.length > 0) {
           try {
             await gradesApi.addOrUpdateGrade(projectCode, { evaluationsByForm });
-
           } catch (error) {
             toast.error(`Failed to update grades for project ${projectCode}.`);
           }
@@ -211,6 +224,7 @@ const SupervisorGradesFeedback = () => {
     }
   };
 
+  // Define columns for the projects table
   const projectColumns = useMemo(
     () => [
       {
@@ -287,7 +301,6 @@ const SupervisorGradesFeedback = () => {
           );
         },
       },
-
       {
         key: "status",
         header: "Grade Status",
@@ -304,6 +317,7 @@ const SupervisorGradesFeedback = () => {
     []
   );
 
+  // Render grade status with appropriate styling
   const renderGradeStatus = (status) => {
     console.log("status in render status:", status);
 
@@ -348,7 +362,7 @@ const SupervisorGradesFeedback = () => {
     return (
       <LoadingScreen
         isLoading={isLoading}
-        description="Updateding grades, please wait..."
+        description="Updating grades, please wait..."
       />
     );
   }

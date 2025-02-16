@@ -3,6 +3,12 @@ import { api } from "./api"; // Import the shared API utilities
 export const evaluatorsApi = {
   /**
    * Add or update an evaluator.
+   *
+   * This function sends a request to add or update an evaluator in the backend.
+   *
+   * @param {Object} data - The evaluator data to add or update.
+   * @returns {Promise<Object>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   addOrUpdateEvaluator: async (data) => {
     try {
@@ -13,10 +19,15 @@ export const evaluatorsApi = {
       throw error;
     }
   },
-  
 
   /**
-   * Get details of a specific evaluator by emailID.
+   * Get details of a specific evaluator by ID.
+   *
+   * This function fetches the details of an evaluator by their ID.
+   *
+   * @param {string} id - The ID of the evaluator to fetch.
+   * @returns {Promise<Object>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   getEvaluator: async (id) => {
     try {
@@ -30,6 +41,11 @@ export const evaluatorsApi = {
 
   /**
    * Get all evaluators.
+   *
+   * This function fetches all evaluators from the backend.
+   *
+   * @returns {Promise<Object[]>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   getAllEvaluators: async () => {
     try {
@@ -42,7 +58,13 @@ export const evaluatorsApi = {
   },
 
   /**
-   * Delete a specific evaluator by emailID.
+   * Delete a specific evaluator by ID.
+   *
+   * This function sends a request to delete an evaluator by their ID.
+   *
+   * @param {string} id - The ID of the evaluator to delete.
+   * @returns {Promise<Object>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   deleteEvaluator: async (id) => {
     try {
@@ -55,7 +77,13 @@ export const evaluatorsApi = {
   },
 
   /**
-   * Get all projects assigned to a particular evaluator by emailID.
+   * Get all projects assigned to a particular evaluator by ID.
+   *
+   * This function fetches all projects assigned to a specific evaluator.
+   *
+   * @param {string} evaluatorID - The ID of the evaluator to fetch projects for.
+   * @returns {Promise<Object[]>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   getProjectsByEvaluator: async (evaluatorID) => {
     try {
@@ -69,6 +97,12 @@ export const evaluatorsApi = {
 
   /**
    * Get all evaluators assigned to a specific project.
+   *
+   * This function fetches all evaluators assigned to a specific project.
+   *
+   * @param {string} projectCode - The code of the project to fetch evaluators for.
+   * @returns {Promise<Object[]>} The response data from the API.
+   * @throws {Error} If the request fails.
    */
   getEvaluatorsByProject: async (projectCode) => {
     try {
@@ -80,6 +114,16 @@ export const evaluatorsApi = {
     }
   },
 
+  /**
+   * Get all projects assigned to a particular evaluator by form ID.
+   *
+   * This function fetches all projects assigned to a specific evaluator by form ID.
+   *
+   * @param {string} evaluatorID - The ID of the evaluator to fetch projects for.
+   * @param {string} formID - The ID of the form to filter projects by.
+   * @returns {Promise<Object[]>} The response data from the API.
+   * @throws {Error} If the request fails.
+   */
   getProjectsForEvaluatorByForm: async (evaluatorID, formID) => {
     try {
       const response = await api.get(`/evaluators/${evaluatorID}/projects/${formID}`);
@@ -89,6 +133,4 @@ export const evaluatorsApi = {
       throw error;
     }
   },
-  
-  
 };

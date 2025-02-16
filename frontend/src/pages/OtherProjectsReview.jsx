@@ -13,6 +13,14 @@ import LoadingScreen from "../components/shared/LoadingScreen";
 
 const TABS = ["My Projects", "Other Projects"];
 
+/**
+ * This component renders the page for reviewing projects assigned to the logged-in user as a committee member.
+ * It displays a list of projects that the user needs to grade and shows him which evaluation he needs to submit (Book/presentation).
+ * 
+ * The component includes tabs for switching between "My Projects" and "Other Projects".
+ * It fetches the projects and evaluations data from various APIs, processes the data, and displays it in a table.
+ * It also provides functionality to view project details and add/edit evaluations.
+ */
 const OtherProjectsReview = () => {
   const [activeTab, setActiveTab] = useState(TABS[1]);
   const [projects, setProjects] = useState([]);
@@ -68,7 +76,7 @@ const OtherProjectsReview = () => {
         const evaluationsData = await formsApi.getEvaluationsByEvaluator(
           user.email
         );
-        console.log("Evaluations Data:", evaluationsData);
+        //console.log("Evaluations Data:", evaluationsData);
 
         const formattedProjects = allProjects.map((project) => {
           const students = Object.keys(project)
@@ -91,7 +99,7 @@ const OtherProjectsReview = () => {
           };
         });
 
-        console.log("Formatted Projects:", formattedProjects);
+        //console.log("Formatted Projects:", formattedProjects);
 
         setProjects(formattedProjects);
         setGrades(Array.isArray(evaluationsData) ? evaluationsData : []);
@@ -106,6 +114,11 @@ const OtherProjectsReview = () => {
     fetchData();
   }, [user]);
 
+  /**
+   * Checks if the deadline has passed.
+   * @param {Date|string|object} deadline - The deadline to check.
+   * @returns {boolean} - True if the deadline has passed, false otherwise.
+   */
   const isDeadlinePassed = (deadline) => {
     if (!deadline) return false;
 
@@ -144,6 +157,11 @@ const OtherProjectsReview = () => {
       ? (progressStats.graded / progressStats.total) * 100
       : 0;
 
+  /**
+   * Handles row click events in the table.
+   * @param {Object} data - The data associated with the clicked row.
+   * @param {boolean} isGradeAction - Indicates if the click is related to a grade action.
+   */
   const handleRowClick = (data, isGradeAction) => {
     if (isGradeAction) {
       const { gradeType, project, studentName } = data;
@@ -187,6 +205,9 @@ const OtherProjectsReview = () => {
     }
   };
 
+  /**
+   * Handles closing the project details popup.
+   */
   const handleClosePopup = () => {
     setSelectedProject(null);
   };
@@ -264,6 +285,12 @@ const OtherProjectsReview = () => {
     [grades, user]
   );
 
+  /**
+   * Renders the grade cell for a project and grade type.
+   * @param {Object} project - The project object.
+   * @param {string} gradeType - The type of grade to render.
+   * @returns {JSX.Element} - The rendered grade cell.
+   */
   const renderGradeCell = (project, gradeType) => {
     const grade = getGrade(grades, project.projectCode, gradeType);
     if (grade === null) {

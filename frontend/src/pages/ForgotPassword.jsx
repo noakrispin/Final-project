@@ -2,12 +2,20 @@ import React, { useState } from 'react';
 import { toast, Toaster } from 'react-hot-toast';
 import { api } from '../services/api';
 
+/**
+ * This component renders the forgot password page.
+ * It allows users to verify their email and reset their password.
+ */
 function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [isVerified, setIsVerified] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  /**
+   * Handles the user verification process.
+   * @param {Event} e - The form submission event.
+   */
   const handleVerifyUser = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -27,10 +35,14 @@ function ForgotPassword() {
     }
   };
 
+  /**
+   * Handles the password reset process.
+   * @param {Event} e - The form submission event.
+   */
   const handleResetPassword = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-  
+
     try {
       const response = await api.post('/auth/reset-password', { email, newPassword });
       if (response.success) {
@@ -47,7 +59,6 @@ function ForgotPassword() {
       setIsSubmitting(false);
     }
   };
-  
 
   return (
     <div className="min-h-screen bg-white relative overflow-hidden flex justify-center items-center py-12">

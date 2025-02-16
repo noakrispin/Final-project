@@ -1,3 +1,37 @@
+/**
+ * This component renders the admin projects management page.
+ * It allows administrators to view, manage, and export projects for all ongoing parts (Part A and Part B).
+ * 
+ * The component includes tabs for switching between "All Projects", "Part A", and "Part B".
+ * It fetches project data from the API, processes the data, and displays it in a table.
+ * It also provides functionality to move projects from Part A to Part B, export and delete Part B projects, and upload new projects via an Excel file.
+ * 
+ * The component uses various modals for confirming actions, displaying student details, editing project fields, and adding notes.
+ * 
+ * State Variables:
+ * - activeTab: The currently active tab.
+ * - projects: The list of projects fetched from the API.
+ * - loading: Boolean indicating if the data is being loaded.
+ * - error: Error message if the data fails to load.
+ * - supervisorMap: A map of supervisor emails to their full names.
+ * - showSuccessModal: Boolean indicating if the success modal should be displayed.
+ * - confirmationModal: Object containing the state of the confirmation modal.
+ * - deleteModal: Object containing the state of the delete modal.
+ * - isDeleting: Boolean indicating if a project is being deleted.
+ * 
+ * Functions:
+ * - showWarningModal: Displays a warning modal with a given title and message.
+ * - handleMoveToPartB: Handles moving all Part A projects to Part B.
+ * - moveToPartB: Moves all Part A projects to Part B and updates the database.
+ * - handleExportAndDelete: Handles exporting and deleting all Part B projects.
+ * - exportToExcel: Exports Part B projects, final grades, and evaluators to Excel and deletes the related data.
+ * - openDeleteModal: Opens the delete modal for a specific project.
+ * - closeDeleteModal: Closes the delete modal.
+ * - handleDeleteProject: Deletes a project and its related data from the database.
+ * 
+ * The component also uses custom hooks and utility functions for managing modals and processing data.
+ */
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/Button";

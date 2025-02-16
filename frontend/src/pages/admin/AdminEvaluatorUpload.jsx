@@ -5,6 +5,13 @@ import { Button } from "../../components/ui/Button";
 import { processExcelFile } from "../../services/fileProcessingService";
 import { ExcelDatabaseService } from "../../services/ExcelDatabaseService";
 
+/**
+ * This component renders the admin evaluator upload page.
+ * It allows administrators to upload an Excel file containing evaluator assignments.
+ * 
+ * The component includes tabs for switching between "Projects" and "Evaluators" uploads.
+ * It processes the selected Excel file, validates its structure, and uploads the data to the database.
+ */
 const AdminEvaluatorUpload = () => {
   const navigate = useNavigate();
   const tabs = ["Projects", "Evaluators"];
@@ -13,6 +20,10 @@ const AdminEvaluatorUpload = () => {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [error, setError] = useState(null);
 
+  /**
+   * Handles the file selection and upload process.
+   * @param {File} file - The selected Excel file.
+   */
   const handleFileSelect = async (file) => {
     setIsUploading(true);
     setError(null);
@@ -36,6 +47,8 @@ const AdminEvaluatorUpload = () => {
           : err.message
       );
       console.error("Error uploading file:", err);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -44,31 +57,29 @@ const AdminEvaluatorUpload = () => {
       <div className="max-w-4xl mx-auto">
         {/* Tabs Section */}
         <div className="relative z-10 bg-white border-b border-gray-300">
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div className="flex justify-center py-4">
-
-                {tabs.map((tab) => (
-                  <button
-                    key={tab}
-                    className={`inline-flex items-center px-3 pt-2 pb-3 border-b-2 text-base font-medium ${
-                      activeTab === tab
-                        ? "border-blue-900 text-blue-900"
-                        : "border-transparent text-gray-500 hover:border-blue-900 hover:text-blue-900"
-                    }`}
-                    onClick={() => {
-                      setActiveTab(tab);
-                      if (tab === "Projects") {
-                        navigate("/admin-upload");
-                      }
-                    }}
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-center py-4">
+              {tabs.map((tab) => (
+                <button
+                  key={tab}
+                  className={`inline-flex items-center px-3 pt-2 pb-3 border-b-2 text-base font-medium ${
+                    activeTab === tab
+                      ? "border-blue-900 text-blue-900"
+                      : "border-transparent text-gray-500 hover:border-blue-900 hover:text-blue-900"
+                  }`}
+                  onClick={() => {
+                    setActiveTab(tab);
+                    if (tab === "Projects") {
+                      navigate("/admin-upload");
+                    }
+                  }}
+                >
+                  {tab}
+                </button>
+              ))}
             </div>
           </div>
-        
+        </div>
 
         {/* Tab Content */}
         {activeTab === "Evaluators" && (

@@ -3,9 +3,13 @@ import { collection, doc, writeBatch, getDocs } from 'firebase/firestore';
 
 export const ExcelDatabaseService = {
 
-  //functions for projects Upload files
-
-  //insert new projects to projects collection from excel file
+  /**
+   * Insert new projects to the projects collection from an Excel file.
+   *
+   * @param {Array<Object>} projects - The list of projects to insert.
+   * @returns {Promise<Array<Object>>} The inserted projects.
+   * @throws {Error} If the request fails.
+   */
   insertProjects: async (projects) => {
     try {
       const batch = writeBatch(db);
@@ -26,67 +30,79 @@ export const ExcelDatabaseService = {
     }
   },
 
-//insert new projects' Supervisors as evaluators of SupervisorForm to evaluators collection from excel file
-insertSupervisorsEvaluators: async (projects) => {
-  try {
-    // Fetch all existing evaluators and map by unique combination of evaluatorID, projectCode, and formID
-    const evaluatorsSnapshot = await getDocs(collection(db, "evaluators"));
-    const existingEvaluatorsSet = new Set(
-      evaluatorsSnapshot.docs.map((doc) =>
-        JSON.stringify({
-          evaluatorID: doc.data().evaluatorID,
-          projectCode: doc.data().projectCode,
-          formID: doc.data().formID,
-        })
-      )
-    );
+  /**
+   * Insert new projects' supervisors as evaluators of SupervisorForm to the evaluators collection from an Excel file.
+   *
+   * @param {Array<Object>} projects - The list of projects to process.
+   * @returns {Promise<void>}
+   * @throws {Error} If the request fails.
+   */
+  insertSupervisorsEvaluators: async (projects) => {
+    try {
+      // Fetch all existing evaluators and map by unique combination of evaluatorID, projectCode, and formID
+      const evaluatorsSnapshot = await getDocs(collection(db, "evaluators"));
+      const existingEvaluatorsSet = new Set(
+        evaluatorsSnapshot.docs.map((doc) =>
+          JSON.stringify({
+            evaluatorID: doc.data().evaluatorID,
+            projectCode: doc.data().projectCode,
+            formID: doc.data().formID,
+          })
+        )
+      );
 
-    const batch = writeBatch(db);
+      const batch = writeBatch(db);
 
-    projects.forEach((project) => {
-      if (project.supervisor1) {
-        const evaluatorRecord1 = {
-          evaluatorID: project.supervisor1,
-          projectCode: project.projectCode,
-          formID: "SupervisorForm",
-        };
+      projects.forEach((project) => {
+        if (project.supervisor1) {
+          const evaluatorRecord1 = {
+            evaluatorID: project.supervisor1,
+            projectCode: project.projectCode,
+            formID: "SupervisorForm",
+          };
 
-        if (!existingEvaluatorsSet.has(JSON.stringify(evaluatorRecord1))) {
-          const evaluatorRef1 = doc(collection(db, "evaluators"));
-          batch.set(evaluatorRef1, {
-            ...evaluatorRecord1,
-            status: "Not Submitted",
-          });
+          if (!existingEvaluatorsSet.has(JSON.stringify(evaluatorRecord1))) {
+            const evaluatorRef1 = doc(collection(db, "evaluators"));
+            batch.set(evaluatorRef1, {
+              ...evaluatorRecord1,
+              status: "Not Submitted",
+            });
+          }
         }
-      }
 
-      if (project.supervisor2) {
-        const evaluatorRecord2 = {
-          evaluatorID: project.supervisor2,
-          projectCode: project.projectCode,
-          formID: "SupervisorForm",
-        };
+        if (project.supervisor2) {
+          const evaluatorRecord2 = {
+            evaluatorID: project.supervisor2,
+            projectCode: project.projectCode,
+            formID: "SupervisorForm",
+          };
 
-        if (!existingEvaluatorsSet.has(JSON.stringify(evaluatorRecord2))) {
-          const evaluatorRef2 = doc(collection(db, "evaluators"));
-          batch.set(evaluatorRef2, {
-            ...evaluatorRecord2,
-            status: "Not Submitted",
-          });
+          if (!existingEvaluatorsSet.has(JSON.stringify(evaluatorRecord2))) {
+            const evaluatorRef2 = doc(collection(db, "evaluators"));
+            batch.set(evaluatorRef2, {
+              ...evaluatorRecord2,
+              status: "Not Submitted",
+            });
+          }
         }
-      }
-    });
+      });
 
-    await batch.commit();
-    console.log("Evaluators successfully inserted (excluding duplicates).");
-  } catch (error) {
-    console.error("Error inserting evaluators:", error.message);
-    throw new Error("Database error: " + error.message);
-  }
-},
+      await batch.commit();
+      console.log("Evaluators successfully inserted (excluding duplicates).");
+    } catch (error) {
+      console.error("Error inserting evaluators:", error.message);
+      throw new Error("Database error: " + error.message);
+    }
+  },
 
-
-insertStudentsToFinalGrades: async (projects) => {
+  /**
+   * Insert students to the finalGrades collection from an Excel file.
+   *
+   * @param {Array<Object>} projects - The list of projects to process.
+   * @returns {Promise<void>}
+   * @throws {Error} If the request fails.
+   */
+  insertStudentsToFinalGrades: async (projects) => {
     try {
       // Fetch all existing finalGrades and map by unique combination of studentID, projectCode, and part
       const finalGradesSnapshot = await getDocs(collection(db, "finalGrades"));
@@ -99,9 +115,9 @@ insertStudentsToFinalGrades: async (projects) => {
           })
         )
       );
-  
+
       const batch = writeBatch(db);
-  
+
       projects.forEach((project) => {
         if (project.Student1 && project.Student1.ID) {
           const finalGradeRecord1 = {
@@ -109,7 +125,7 @@ insertStudentsToFinalGrades: async (projects) => {
             projectCode: project.projectCode,
             part: project.part,
           };
-  
+
           if (!existingFinalGradesSet.has(JSON.stringify(finalGradeRecord1))) {
             const finalGradeRef1 = doc(collection(db, "finalGrades"));
             batch.set(finalGradeRef1, {
@@ -122,14 +138,14 @@ insertStudentsToFinalGrades: async (projects) => {
             });
           }
         }
-  
+
         if (project.Student2 && project.Student2.ID) {
           const finalGradeRecord2 = {
             studentID: project.Student2.ID,
             projectCode: project.projectCode,
             part: project.part,
           };
-  
+
           if (!existingFinalGradesSet.has(JSON.stringify(finalGradeRecord2))) {
             const finalGradeRef2 = doc(collection(db, "finalGrades"));
             batch.set(finalGradeRef2, {
@@ -143,7 +159,7 @@ insertStudentsToFinalGrades: async (projects) => {
           }
         }
       });
-  
+
       await batch.commit();
       console.log("Students successfully added to finalGrades (excluding duplicates).");
     } catch (error) {
@@ -151,26 +167,29 @@ insertStudentsToFinalGrades: async (projects) => {
       throw new Error("Database error: " + error.message);
     }
   },
-  
 
-
-  //functions for Evaluators Upload files
-  //Inserting evaluators by evaluators excel file (for presentation and book evaluators)
-insertEvaluators: async (processedData) => {
+  /**
+   * Insert evaluators by evaluators Excel file (for presentation and book evaluators).
+   *
+   * @param {Array<Object>} processedData - The processed data from the Excel file.
+   * @returns {Promise<void>}
+   * @throws {Error} If the request fails.
+   */
+  insertEvaluators: async (processedData) => {
     try {
       if (!Array.isArray(processedData) || processedData.length === 0) {
         throw new Error('No valid data found in the processed data.');
       }
-  
+
       // Fetch all projects once and map them by projectCode
       const projectsSnapshot = await getDocs(collection(db, 'projects'));
       const projectsMap = new Map(
         projectsSnapshot.docs.map((doc) => [doc.data().projectCode, doc.data()])
       );
-  
+
       // Fetch all existing evaluators once
       const evaluatorsSnapshot = await getDocs(collection(db, 'evaluators'));
-  
+
       // Build a Set of existing evaluator records (for presentation evaluators and others)
       const existingEvaluatorsSet = new Set(
         evaluatorsSnapshot.docs.map((doc) =>
@@ -181,7 +200,7 @@ insertEvaluators: async (processedData) => {
           })
         )
       );
-  
+
       // Build a map of existing book evaluators (keyed by projectCode)
       const bookEvaluatorsMap = new Map();
       evaluatorsSnapshot.docs.forEach(doc => {
@@ -190,28 +209,28 @@ insertEvaluators: async (processedData) => {
           bookEvaluatorsMap.set(data.projectCode, { docRef: doc.ref, data });
         }
       });
-  
+
       // Create a local Set to track unique evaluator records in the current batch
       const localEvaluatorSet = new Set();
-  
+
       const batch = writeBatch(db);
       const failedRows = []; // Collect failed rows for debugging
-  
+
       for (const [index, row] of processedData.entries()) {
         try {
           const { projectCode, presentationEvaluator, bookEvaluator } = row;
-  
+
           if (!projectCode) {
             throw new Error(`Missing projectCode in row ${index + 1}`);
           }
-  
+
           const project = projectsMap.get(projectCode);
           if (!project) {
             throw new Error(`Project with code ${projectCode} not found`);
           }
-  
+
           const projectPart = project.part; // Get the part (A or B)
-  
+
           // Add Presentation Evaluator
           if (presentationEvaluator) {
             const evaluatorRecord = {
@@ -219,9 +238,9 @@ insertEvaluators: async (processedData) => {
               formID: `PresentationForm${projectPart}`,
               projectCode,
             };
-  
+
             const evaluatorKey = JSON.stringify(evaluatorRecord);
-  
+
             if (
               !existingEvaluatorsSet.has(evaluatorKey) &&
               !localEvaluatorSet.has(evaluatorKey)
@@ -234,7 +253,7 @@ insertEvaluators: async (processedData) => {
               localEvaluatorSet.add(evaluatorKey);
             }
           }
-  
+
           // Add Book Evaluator with replacement logic
           if (bookEvaluator) {
             const evaluatorRecord = {
@@ -242,7 +261,7 @@ insertEvaluators: async (processedData) => {
               formID: `bookReviewerForm${projectPart}`,
               projectCode,
             };
-  
+
             // Check if a book reviewer already exists for this project.
             const existingBookEvaluator = bookEvaluatorsMap.get(projectCode);
             if (existingBookEvaluator) {
@@ -252,7 +271,7 @@ insertEvaluators: async (processedData) => {
               // only the first deletion is scheduled.
               bookEvaluatorsMap.delete(projectCode);
             }
-  
+
             const evaluatorKey = JSON.stringify(evaluatorRecord);
             if (
               !existingEvaluatorsSet.has(evaluatorKey) &&
@@ -271,36 +290,51 @@ insertEvaluators: async (processedData) => {
           console.error(`Error processing row ${index + 1}:`, error.message);
         }
       }
-  
+
       await batch.commit();
-  
+
       if (failedRows.length > 0) {
         console.warn(
           `${failedRows.length} rows failed to process. Details:`,
           failedRows
         );
       }
-  
+
       console.log('Evaluators successfully inserted (excluding duplicates).');
     } catch (error) {
       console.error('Error inserting evaluators:', error.message);
       throw new Error('Database error: ' + error.message);
     }
   },
-  
-  
-getProjects: async () => {
+
+  /**
+   * Get all projects from the projects collection.
+   *
+   * @returns {Promise<Array<Object>>} The list of projects.
+   * @throws {Error} If the request fails.
+   */
+  getProjects: async () => {
     const snapshot = await getDocs(collection(db, "projects"));
     return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   },
 
-  // Optional: Fetch Uploaded Projects (if different logic is required)
+  /**
+   * Optional: Fetch uploaded projects (if different logic is required).
+   *
+   * @returns {Promise<Array<Object>>} The list of uploaded projects.
+   * @throws {Error} If the request fails.
+   */
   getUploadedProjects: async () => {
     const snapshot = await getDocs(collection(db, "projects"));
     return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   },
 
-  // Optional: Clear Uploaded Projects (if needed)
+  /**
+   * Optional: Clear uploaded projects (if needed).
+   *
+   * @returns {Promise<void>}
+   * @throws {Error} If the request fails.
+   */
   clearUploadedProjects: async () => {
     console.warn("clearUploadedProjects not implemented.");
   },

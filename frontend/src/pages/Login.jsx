@@ -7,6 +7,10 @@ import ErrorMessage from '../components/shared/ErrorMessage';
 import toast, { Toaster } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
+/**
+ * This component renders the login page.
+ * It allows users to log in to the Final Project Portal using their email and password.
+ */
 function Login() {
   const navigate = useNavigate();
   const { login } = useAuth(); // Use the login function from AuthContext
@@ -14,6 +18,10 @@ function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm();
 
+  /**
+   * Handles the form submission for logging in.
+   * @param {Object} data - The form data containing email and password.
+   */
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {

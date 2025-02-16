@@ -14,19 +14,24 @@ import LoadingScreen from "../components/shared/LoadingScreen";
 
 const TABS = ["My Projects", "Other Projects"];
 
+/**
+ * This component renders the page for reviewing projects assigned to the logged-in user.
+ * It displays a list of projects that the user needs to grade as a supervisor.
+ * 
+ * The component includes tabs for switching between "My Projects" and "Other Projects".
+ * It fetches the projects and evaluations data from various APIs, processes the data, and displays it in a table.
+ * It also provides functionality to view project details and add/edit evaluations.
+ */
 const MyProjectsReview = () => {
   const [activeTab, setActiveTab] = useState(TABS[0]);
-
   const [projects, setProjects] = useState([]);
   const [grades, setGrades] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
-
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
   const [formSubmitted, setFormSubmitted] = useState(false);
 
   useEffect(() => {
@@ -53,14 +58,14 @@ const MyProjectsReview = () => {
           evaluatorsApi.getProjectsForEvaluatorByForm(user.email, formID),
           formsApi.getEvaluationsByEvaluator(user.email),
         ]);
-        console.log("Evaluations Data from API:", evaluationsData);
-        console.log("Projects Data (before formatting):", projectsData);
+        //console.log("Evaluations Data from API:", evaluationsData);
+        //console.log("Projects Data (before formatting):", projectsData);
 
         const uniqueProjects = Array.from(
           new Map(projectsData.map((item) => [item.projectCode, item])).values()
         );
 
-        console.log("unique projects:", uniqueProjects);
+        //console.log("unique projects:", uniqueProjects);
 
         // Ensure evaluationsData is an array
         const evaluationsArray = Array.isArray(evaluationsData)
@@ -84,7 +89,7 @@ const MyProjectsReview = () => {
             }))
             .filter((student) => student.id); // Remove students with missing IDs
 
-          console.log("Extracted students for project:", students);
+          //console.log("Extracted students for project:", students);
 
           return {
             ...project,
@@ -98,7 +103,7 @@ const MyProjectsReview = () => {
           };
         });
 
-        console.log("Formatted Projects:", formattedProjects);
+        //console.log("Formatted Projects:", formattedProjects);
 
         // Update state
         setProjects(formattedProjects);
@@ -121,6 +126,11 @@ const MyProjectsReview = () => {
     fetchData();
   }, [user]);
 
+  /**
+   * Checks if the deadline has passed.
+   * @param {Date|string|object} deadline - The deadline to check.
+   * @returns {boolean} - True if the deadline has passed, false otherwise.
+   */
   const isDeadlinePassed = (deadline) => {
     if (!deadline) return false; // Return false if deadline is missing
 
@@ -161,6 +171,11 @@ const MyProjectsReview = () => {
       ? (progressStats.graded / progressStats.total) * 100
       : 0;
 
+  /**
+   * Handles row click events in the table.
+   * @param {Object} data - The data associated with the clicked row.
+   * @param {boolean} isGradeAction - Indicates if the click is related to a grade action.
+   */
   const handleRowClick = (data, isGradeAction) => {
     if (isGradeAction) {
       const { gradeType, project, studentName } = data;
@@ -201,6 +216,9 @@ const MyProjectsReview = () => {
     }
   };
 
+  /**
+   * Handles closing the project details popup.
+   */
   const handleClosePopup = () => {
     setSelectedProject(null);
   };
@@ -271,6 +289,12 @@ const MyProjectsReview = () => {
     [grades, user]
   );
 
+  /**
+   * Renders the grade cell for a project and grade type.
+   * @param {Object} project - The project object.
+   * @param {string} gradeType - The type of grade to render.
+   * @returns {JSX.Element} - The rendered grade cell.
+   */
   const renderGradeCell = (
     project,
     gradeType,

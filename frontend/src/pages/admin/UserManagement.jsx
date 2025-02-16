@@ -5,6 +5,13 @@ import { userApi } from "../../services/userAPI";
 import UserTable from "../../components/admin/UserTable";
 import LoadingScreen from "../../components/shared/LoadingScreen";
 
+/**
+ * This component renders the user management page.
+ * It allows administrators to view, edit, and delete users in the system.
+ * Here admins can promote supervisors to Admin as needed.
+ * The component includes tabs for switching between "User Management" and "Forms Management".
+ * It fetches the users from the API and displays them in a table.
+ */
 const UserManagement = () => {
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
@@ -56,7 +63,10 @@ const UserManagement = () => {
     setFilteredUsers(updatedUsers);
   }, [users, roleFilter]); // Use roleFilter instead of selectedRole
 
-  // Open the delete modal
+  /**
+   * Opens the delete modal for the selected user.
+   * @param {Object} user - The user object to delete.
+   */
   const openDeleteModal = (user) => {
     if (!user || typeof user !== "object") {
       console.error("Invalid user passed to openDeleteModal:", user);
@@ -65,12 +75,16 @@ const UserManagement = () => {
     setDeleteModal({ isOpen: true, user });
   };
 
-  // Close the delete modal
+  /**
+   * Closes the delete modal.
+   */
   const closeDeleteModal = () => {
     setDeleteModal({ isOpen: false, user: null });
   };
 
-  // Handle user deletion
+  /**
+   * Handles user deletion.
+   */
   const handleDeleteUser = async () => {
     if (!deleteModal.user) {
       console.error("No user is selected for deletion.");
@@ -97,7 +111,10 @@ const UserManagement = () => {
     }
   };
 
-  // Open the edit role modal
+  /**
+   * Opens the edit role modal for the selected user.
+   * @param {Object} user - The user object to edit.
+   */
   const openEditRoleModal = (user) => {
     if (!user || typeof user !== "object") {
       console.error("Invalid user passed to openEditRoleModal:", user);
@@ -107,14 +124,18 @@ const UserManagement = () => {
     setEditingRole(user.role); // Set editingRole instead of selectedRole
   };
 
-  // Close the edit role modal
+  /**
+   * Closes the edit role modal.
+   */
   const closeEditRoleModal = () => {
     console.log("Closing Edit Role Modal...");
     setEditRoleModal({ isOpen: false, user: null });
     setEditingRole(""); // Reset the correct state
   };
 
-  // Save role change
+  /**
+   * Handles saving the role change for the selected user.
+   */
   const handleSaveRoleChange = async () => {
     if (!editRoleModal.user) {
       console.error("No user is selected for role editing.");
@@ -141,13 +162,13 @@ const UserManagement = () => {
           )
         );
 
-      closeEditRoleModal();
-      setTimeout(() => {
-        setShowSuccessPopup(true);
+        closeEditRoleModal();
         setTimeout(() => {
-          setShowSuccessPopup(false);
-        }, 3000);
-      }, 300);
+          setShowSuccessPopup(true);
+          setTimeout(() => {
+            setShowSuccessPopup(false);
+          }, 3000);
+        }, 300);
         console.log("User role updated successfully.");
       } else {
         console.error("Failed to update user role.");

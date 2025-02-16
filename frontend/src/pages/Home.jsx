@@ -47,14 +47,14 @@ export default function Home() {
               />
             </div>
 
-            {/* Social Links */}
+            {/* Social Links
             <div className="flex gap-6 justify-center lg:justify-start pt-4">
               <SocialIcon Icon={FaFacebookF} href="#" />
               <SocialIcon Icon={FaTwitter} href="#" />
               <SocialIcon Icon={FaLinkedinIn} href="#" />
               <SocialIcon Icon={FaYoutube} href="#" />
               <SocialIcon Icon={FaInstagram} href="#" />
-            </div>
+            </div> */}
           </div>
 
           {/* Right Column */}

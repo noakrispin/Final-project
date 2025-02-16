@@ -1,8 +1,7 @@
 import React from 'react';
-// Import React to create a functional component.
-
 import { Link } from 'react-router-dom';
-// Import Link from React Router for navigation within the app.
+
+// NotFound component to display a 404 error message.
 
 const NotFound = () => {
   return (
@@ -23,4 +22,3 @@ const NotFound = () => {
 };
 
 export default NotFound;
-// Export NotFound component as default.

@@ -5,6 +5,13 @@ import { Button } from "../../components/ui/Button";
 import { processExcelFile } from "../../services/fileProcessingService";
 import { ExcelDatabaseService } from "../../services/ExcelDatabaseService";
 
+/**
+ * This component renders the admin file upload page.
+ * It allows administrators to upload an Excel file containing project details.
+ * 
+ * The component includes tabs for switching between "Projects" and "Evaluators" uploads.
+ * It processes the selected Excel file, validates its structure, and uploads the data to the database.
+ */
 const AdminFileUpload = () => {
   const navigate = useNavigate();
   const [uploadedProjects, setUploadedProjects] = useState([]);
@@ -15,6 +22,10 @@ const AdminFileUpload = () => {
 
   const tabs = ["Projects", "Evaluators"];
 
+  /**
+   * Handles the file selection and upload process.
+   * @param {File} file - The selected Excel file.
+   */
   const handleFileSelect = async (file) => {
     setIsUploading(true);
     setError(null);
